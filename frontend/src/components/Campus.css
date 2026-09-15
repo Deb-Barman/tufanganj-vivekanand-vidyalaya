@@ -1,0 +1,25 @@
+.campus-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
+}
+.campus-main {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+}
+.campus-main h3 { font-family: var(--serif); font-size: 24px; margin-top: 16px; }
+.campus-main p { margin-top: 14px; color: var(--fg-soft); line-height: 1.7; font-size: 15px; }
+.campus-side { display: flex; flex-direction: column; gap: 18px; }
+.campus-mini {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.campus-mini h4 { font-size: 15px; }
+.campus-mini p { margin-top: 8px; color: var(--fg-soft); font-size: 13.5px; line-height: 1.6; }
+
+@media (max-width: 800px) {
+  .campus-grid { grid-template-columns: 1fr; }
+}

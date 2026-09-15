@@ -1,0 +1,21 @@
+.admissions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 40px;
+}
+.admissions-h2 { font-size: clamp(28px, 3.6vw, 40px); line-height: 1.14; }
+.steps { display: flex; flex-direction: column; gap: 26px; }
+.steps li { display: flex; gap: 18px; }
+.step-n {
+  font-family: var(--mono);
+  color: var(--accent);
+  font-size: 13px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.steps h4 { font-size: 15.5px; }
+.steps p { margin-top: 8px; color: var(--fg-soft); font-size: 14px; line-height: 1.65; max-width: 48ch; }
+
+@media (max-width: 800px) {
+  .admissions-grid { grid-template-columns: 1fr; }
+}

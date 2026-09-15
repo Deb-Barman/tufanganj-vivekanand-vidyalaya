@@ -1,0 +1,18 @@
+.faq-list { display: flex; flex-direction: column; }
+.faq-item { border-bottom: 1px solid var(--border); }
+.faq-q {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  color: var(--fg);
+  padding: 20px 0;
+  text-align: left;
+  font-size: 15.5px;
+}
+.faq-q svg { width: 18px; height: 18px; color: var(--fg-faint); transition: transform 0.2s ease; flex-shrink: 0; }
+.faq-q svg.rot { transform: rotate(180deg); color: var(--accent); }
+.faq-a { padding-bottom: 22px; max-width: 65ch; }
+.faq-a p { color: var(--fg-soft); font-size: 14.5px; line-height: 1.7; }

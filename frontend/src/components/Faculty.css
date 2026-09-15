@@ -1,0 +1,20 @@
+.todo-panel {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: rgba(var(--accent-glow), 0.06);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  color: var(--accent);
+}
+.todo-panel svg { flex-shrink: 0; margin-top: 2px; }
+.todo-panel strong { display: block; margin-bottom: 6px; font-size: 14.5px; }
+.todo-panel p { color: var(--fg-soft); font-size: 14px; line-height: 1.7; max-width: 62ch; }
+.todo-panel code {
+  font-family: var(--mono);
+  background: var(--muted-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12.5px;
+}

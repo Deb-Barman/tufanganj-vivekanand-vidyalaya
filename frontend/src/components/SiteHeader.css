@@ -1,0 +1,84 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(8, 9, 11, 0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 14px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.brand .name {
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.2;
+}
+.brand .name small {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.primary {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  font-size: 14px;
+  color: var(--fg-soft);
+}
+.primary a:hover { color: var(--fg); }
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.burger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--fg);
+  padding: 6px;
+}
+.burger svg { width: 24px; height: 24px; }
+
+.mobile-menu {
+  border-top: 1px solid var(--border);
+  background: var(--bg-raised);
+}
+.mobile-menu .wrap {
+  display: flex;
+  flex-direction: column;
+  padding-block: 18px;
+  gap: 4px;
+}
+.mobile-menu a {
+  padding: 12px 0;
+  font-size: 15px;
+  border-bottom: 1px solid var(--border);
+}
+.mobile-menu .cta {
+  margin-top: 16px;
+}
+
+@media (max-width: 940px) {
+  .primary { display: none; }
+  .burger { display: block; }
+}
