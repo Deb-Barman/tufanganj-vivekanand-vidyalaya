@@ -1,0 +1,4 @@
+// Vite exposes env vars prefixed with VITE_ on import.meta.env.
+// See frontend/.env.example — never hardcode the API URL here.
+export const API_BASE_URL: string =
+  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api";
