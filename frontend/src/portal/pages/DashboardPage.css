@@ -1,0 +1,63 @@
+.dashboard { padding-block: 40px 80px; }
+.dashboard, .dashboard .wrap { max-width: 980px; margin-inline: auto; padding-inline: 24px; }
+
+.dash-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+.dash-who { display: flex; align-items: center; gap: 12px; font-size: 14.5px; color: var(--fg-soft); }
+
+.role-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+}
+.role-super_admin { color: var(--accent); border-color: var(--accent-deep); }
+.role-teacher { color: var(--good); }
+.role-student { color: var(--warn); }
+
+.dash-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 24px;
+}
+.dash-panel h2 { font-family: var(--serif); font-size: 20px; }
+.dash-panel-sub { margin-top: 6px; color: var(--fg-soft); font-size: 13.5px; }
+.dash-panel-todo { border-style: dashed; }
+.dash-panel-todo code { font-family: var(--mono); background: var(--muted-2); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+.notice-form { margin-top: 22px; display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+.ff-row { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+@media (max-width: 600px) { .ff-row { grid-template-columns: 1fr; } }
+
+.dash-loading { margin-top: 20px; color: var(--fg-faint); font-size: 13.5px; }
+
+.module-table-wrap { margin-top: 20px; overflow-x: auto; }
+.module-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.module-table th {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--fg-faint);
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.module-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg-soft);
+}
+
+.portal-loading { padding: 80px 20px; text-align: center; color: var(--fg-faint); }
