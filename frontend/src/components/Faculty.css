@@ -1,0 +1,35 @@
+.todo-panel {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: rgba(var(--accent-glow), 0.06);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  color: var(--accent);
+}
+.todo-panel svg { flex-shrink: 0; margin-top: 2px; }
+.todo-panel strong { display: block; margin-bottom: 6px; font-size: 14.5px; }
+.todo-panel p { color: var(--fg-soft); font-size: 14px; line-height: 1.7; max-width: 62ch; }
+.todo-panel code {
+  font-family: var(--mono);
+  background: var(--muted-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12.5px;
+}
+
+.teacher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 18px;
+}
+.teacher-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  background: var(--card);
+}
+.teacher-card h4 { font-size: 15.5px; }
+.teacher-card .pill { display: inline-block; margin-top: 8px; }
+.teacher-card p { margin-top: 10px; color: var(--fg-soft); font-size: 13.5px; line-height: 1.6; }
