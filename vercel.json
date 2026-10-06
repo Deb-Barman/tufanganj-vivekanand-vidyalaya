@@ -1,0 +1,7 @@
+{
+  "git": {
+    "deploymentEnabled": {
+      "V2-Development": false
+    }
+  }
+}
