@@ -35,8 +35,8 @@ export default function App() {
     <Routes>
       <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
       <Route path="/blog" element={<PublicLayout><BlogPage /></PublicLayout>} />
-      <Route path="/portal" element={<PublicLayout><LoginPage /></PublicLayout>} />
-      <Route path="/portal/admin" element={<PublicLayout><AdminLoginPage /></PublicLayout>} />
+      <Route path="/portal" element={<LoginPage />} />
+      <Route path="/portal/admin" element={<AdminLoginPage />} />
       <Route
         path="/portal/change-password"
         element={
