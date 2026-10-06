@@ -17,7 +17,7 @@ export function BlogPage() {
   return (
     <section className="section">
       <div className="wrap">
-        <div className="section-head">
+        <div className="section-head" data-reveal>
           <div className="eyebrow">School Blog</div>
           <h2>News & articles from TVV.</h2>
         </div>
@@ -29,8 +29,8 @@ export function BlogPage() {
         )}
         {!error && articles !== null && articles.length > 0 && (
           <div className="blog-grid">
-            {articles.map((a) => (
-              <article className="blog-card" key={a.id}>
+            {articles.map((a, i) => (
+              <article className="blog-card lift" key={a.id} data-reveal style={{ ["--d" as string]: i % 3 }}>
                 {a.cover_image && <img src={a.cover_image} alt="" className="blog-card-cover" />}
                 <h3>{a.title}</h3>
                 {a.excerpt && <p>{a.excerpt}</p>}
