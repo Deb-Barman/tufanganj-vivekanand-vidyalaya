@@ -7,6 +7,8 @@ from .models import User
 from .permissions import IsSuperAdmin
 from .serializers import (
     AdminCreateUserSerializer,
+    AdminPortalTokenObtainPairSerializer,
+    StaffStudentPortalTokenObtainPairSerializer,
     AdminResetPasswordSerializer,
     AdminUpdateUserSerializer,
     ChangePasswordSerializer,
@@ -19,6 +21,18 @@ class LoginView(TokenObtainPairView):
     """POST username + password -> access/refresh tokens. No signup counterpart exists."""
 
     serializer_class = RoleAwareTokenObtainPairSerializer
+
+
+class AdminPortalLoginView(TokenObtainPairView):
+    """POST /api/auth/admin-login/ — Super User page. Rejects every non-Super-Admin."""
+
+    serializer_class = AdminPortalTokenObtainPairSerializer
+
+
+class StaffStudentPortalLoginView(TokenObtainPairView):
+    """POST /api/auth/staff-login/ — Student/Teacher page. Rejects Super Admins."""
+
+    serializer_class = StaffStudentPortalTokenObtainPairSerializer
 
 
 class MeView(APIView):
