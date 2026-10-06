@@ -9,16 +9,15 @@ interface Props {
   subtitle: string;
   children: ReactNode;
   footer?: ReactNode;
-  showTabs?: boolean;
 }
 
 /**
  * Shared login layout: animated aurora + floating orbs behind a glass card
  * with a rotating neon border. `variant` swaps the colour system
- * (staff = lilac/teal, admin = amber/rose) and the tab switcher highlights
- * which portal you're on.
+ * (staff = lilac/teal, admin = amber/rose). Now only used by the forced
+ * "set a new password" page; the login pages have their own designs.
  */
-export function AuthShell({ variant, title, subtitle, children, footer, showTabs = true }: Props) {
+export function AuthShell({ variant, title, subtitle, children, footer }: Props) {
   return (
     <div className={`auth auth-${variant}`}>
       <div className="auth-bg" aria-hidden="true">
@@ -28,18 +27,6 @@ export function AuthShell({ variant, title, subtitle, children, footer, showTabs
       </div>
 
       <div className="auth-stage">
-        {showTabs && (
-        <nav className="auth-tabs" aria-label="Choose portal">
-          <Link to="/portal" className={variant === "staff" ? "on" : ""} aria-current={variant === "staff" ? "page" : undefined}>
-            Student &amp; Teacher
-          </Link>
-          <Link to="/portal/admin" className={variant === "admin" ? "on" : ""} aria-current={variant === "admin" ? "page" : undefined}>
-            Super User
-          </Link>
-          <span className="auth-tab-thumb" aria-hidden="true" />
-        </nav>
-        )}
-
         <div className="auth-card-wrap">
           <div className="auth-card">
             <div className="auth-logo" aria-hidden="true">
