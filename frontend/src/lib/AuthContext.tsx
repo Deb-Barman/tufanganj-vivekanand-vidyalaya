@@ -20,6 +20,16 @@ const LOGIN_PATH: Record<LoginPortal, string> = {
   admin: "/auth/admin-login/", // Super Admin only
 };
 
+const PORTAL_KEY = "tvv_last_portal";
+/** Where RequireAuth sends a signed-out visitor: the page they last signed in through. */
+export function loginPathForLastPortal(): string {
+  try {
+    return localStorage.getItem(PORTAL_KEY) === "admin" ? "/portal/admin" : "/portal";
+  } catch {
+    return "/portal";
+  }
+}
+
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -54,6 +64,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // already the safe, user-facing text the backend chose to return.
     const data = await api.post<LoginResponse>(LOGIN_PATH[portal], { username, password }, { auth: false });
     tokenStorage.setTokens(data.access, data.refresh);
+    try {
+      localStorage.setItem(PORTAL_KEY, portal);
+    } catch {
+      /* non-fatal */
+    }
     setUser(data.user);
   }, []);
 
