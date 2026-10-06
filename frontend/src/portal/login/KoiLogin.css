@@ -1,0 +1,53 @@
+.lg-koi{--bg:#e1e6f4;--sd:#bcc3dc;--sl:#fff;--ink:#2b2e48;--mu:#5d617e;--ac:#e8672f;--ac2:#f48f45;--ok:#1fa97a;--bad:#c2410c;--fish:#fff;--ripple:110,120,180;
+--raise:10px 10px 24px var(--sd),-10px -10px 24px var(--sl);--raise-s:5px 5px 12px var(--sd),-5px -5px 12px var(--sl);--inset:inset 5px 5px 11px var(--sd),inset -5px -5px 11px var(--sl);
+color-scheme:light}
+:root[data-theme=dark] .lg-koi{--bg:#1c2030;--sd:#10121c;--sl:#2a2f46;--ink:#eceefb;--mu:#9a9fc2;--ac:#f0733a;--ac2:#ff9d55;--bad:#ff9a6b;--fish:#f1f2ff;--ripple:150,160,230;color-scheme:dark}
+.lg-koi *{box-sizing:border-box;margin:0}
+.lg-koi{min-height:100vh;min-height:100dvh;position:relative}
+.lg-koi{background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;display:grid;place-items:center;overflow-x:hidden;padding:max(24px,env(safe-area-inset-top)) 48px max(24px,env(safe-area-inset-bottom));transition:background .4s}
+.lg-koi button,.lg-koi input{font:inherit;color:inherit}
+.lg-koi .fx{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.lg-koi .card{position:relative;z-index:2;width:min(380px,calc(100vw - 96px));padding:36px 30px 26px;border-radius:28px;background:var(--bg);box-shadow:var(--raise);animation:kRise .9s cubic-bezier(.16,1,.3,1) both}
+@keyframes kRise{from{opacity:0;transform:translateY(24px) scale(.97)}}
+.lg-koi h1{font-size:25px;font-weight:600;letter-spacing:-.015em;text-align:center;margin-bottom:26px;line-height:1.2}
+.lg-koi .f{position:relative;margin-bottom:16px}
+.lg-koi .f input{width:100%;height:54px;padding:20px 16px 0;border:0;border-radius:16px;background:var(--bg);color:var(--ink);box-shadow:var(--inset);outline:none;transition:box-shadow .3s}
+.lg-koi .f input:focus{box-shadow:var(--inset),0 0 0 2px var(--ac)}
+.lg-koi .f label{position:absolute;left:16px;top:17px;color:var(--mu);font-size:14px;pointer-events:none;transform-origin:left;transition:transform .25s cubic-bezier(.3,1,.4,1),color .25s}
+.lg-koi .f input:focus+label,.lg-koi .f input:not(:placeholder-shown)+label{transform:translateY(-10px) scale(.78)}
+.lg-koi .f input:focus+label{color:var(--ac)}
+.lg-koi .f.bad input{box-shadow:var(--inset),0 0 0 2px var(--bad)}
+.lg-koi .err{display:none;margin:6px 4px 0;color:var(--bad);font-size:12px}
+.lg-koi .bad .err{display:block}
+.lg-koi .eye{position:absolute;right:8px;top:11px;height:32px;padding:0 10px;border:0;border-radius:10px;background:none;color:var(--mu);font-size:12.5px;font-weight:600;cursor:pointer}
+.lg-koi .eye:hover{color:var(--ac)}
+.lg-koi .cta{position:relative;width:100%;height:52px;margin-top:6px;border:0;border-radius:16px;background:linear-gradient(145deg,var(--ac2),var(--ac));color:#fff;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 14px 26px -10px var(--ac),inset 0 1px 0 rgba(255,255,255,.3);transition:transform .25s cubic-bezier(.3,1.5,.5,1),box-shadow .25s,background .4s}
+.lg-koi .cta:hover:not(:disabled){transform:translateY(-2px)}
+.lg-koi .cta:active:not(:disabled){transform:none;box-shadow:inset 3px 3px 9px rgba(0,0,0,.28)}
+.lg-koi .cta:disabled{cursor:default}
+.lg-koi .cta.load span{opacity:0}
+.lg-koi .cta.load:after{content:"";position:absolute;left:50%;top:50%;width:20px;height:20px;margin:-10px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:kSp .7s linear infinite}
+.lg-koi .cta.ok{background:linear-gradient(145deg,#3fd29b,#1fa97a);box-shadow:0 14px 26px -10px var(--ok)}
+@keyframes kSp{to{transform:rotate(360deg)}}
+.lg-koi .shake{animation:kShake .45s}
+@keyframes kShake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.lg-koi .sw{margin-top:18px;text-align:center;font-size:13px;color:var(--mu)}
+.lg-koi .lnk{text-decoration:none;display:inline;border:0;background:none;font-weight:700;color:var(--ink);cursor:pointer;text-underline-offset:3px}
+.lg-koi .lnk:hover{color:var(--ac);text-decoration:underline}
+.lg-koi .st{min-height:18px;margin-top:10px;text-align:center;font-size:12.5px;color:var(--mu)}
+.lg-koi .hint{position:fixed;left:0;right:0;bottom:max(18px,env(safe-area-inset-bottom));z-index:3;text-align:center;font-size:12.5px;color:var(--mu);pointer-events:none;transition:opacity .6s}
+.lg-koi .th{position:fixed;top:max(14px,env(safe-area-inset-top));right:16px;z-index:5;width:46px;height:46px;border:0;border-radius:50%;background:var(--bg);color:var(--ink);cursor:pointer;display:grid;place-items:center;box-shadow:var(--raise-s);transition:transform .5s cubic-bezier(.3,1.5,.5,1),box-shadow .2s}
+.lg-koi .th:hover{transform:rotate(25deg) scale(1.06)}
+.lg-koi .th:active{box-shadow:var(--inset)}
+.lg-koi .th svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.lg-koi .th .mn{display:none}
+:root[data-theme=light] .lg-koi .th .sn{display:none}
+:root[data-theme=light] .lg-koi .th .mn{display:block}
+.lg-koi :focus-visible{outline:2px solid var(--ac);outline-offset:3px;border-radius:12px}
+@media(prefers-reduced-motion:reduce){.lg-koi .card{animation:none}
+.lg-koi *{transition-duration:.01ms!important}}
+/* additions needed because this runs inside the school app, not a blank page */
+.lg-koi h1{color:inherit}
+.lg-koi button:disabled{opacity:1}
+.lg-koi .sub{margin:-14px 0 24px;text-align:center;color:var(--mu);font-size:13px;line-height:1.45}
+.lg-koi .lnk{font:inherit;font-weight:700}
