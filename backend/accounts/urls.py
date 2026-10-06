@@ -6,7 +6,6 @@ from . import views
 app_name = "accounts"
 
 urlpatterns = [
-    path("login/", views.LoginView.as_view(), name="login"),
     path("admin-login/", views.AdminPortalLoginView.as_view(), name="admin_login"),
     path("staff-login/", views.StaffStudentPortalLoginView.as_view(), name="staff_login"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -12,27 +13,31 @@ from .serializers import (
     AdminResetPasswordSerializer,
     AdminUpdateUserSerializer,
     ChangePasswordSerializer,
-    RoleAwareTokenObtainPairSerializer,
     UserSerializer,
 )
 
 
-class LoginView(TokenObtainPairView):
-    """POST username + password -> access/refresh tokens. No signup counterpart exists."""
+class LoginRateThrottle(SimpleRateThrottle):
+    """Per-IP cap on sign-in attempts (on top of the per-account lockout)."""
 
-    serializer_class = RoleAwareTokenObtainPairSerializer
+    scope = "login"
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
 
 
 class AdminPortalLoginView(TokenObtainPairView):
     """POST /api/auth/admin-login/ — Super User page. Rejects every non-Super-Admin."""
 
     serializer_class = AdminPortalTokenObtainPairSerializer
+    throttle_classes = [LoginRateThrottle]
 
 
 class StaffStudentPortalLoginView(TokenObtainPairView):
     """POST /api/auth/staff-login/ — Student/Teacher page. Rejects Super Admins."""
 
     serializer_class = StaffStudentPortalTokenObtainPairSerializer
+    throttle_classes = [LoginRateThrottle]
 
 
 class MeView(APIView):
