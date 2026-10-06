@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../lib/AuthContext";
+import { loginPathForLastPortal, useAuth } from "../lib/AuthContext";
 
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -9,7 +9,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   if (loading) return <div className="portal-loading">Loading…</div>;
 
   if (!user) {
-    return <Navigate to="/portal" state={{ from: location.pathname }} replace />;
+    return <Navigate to={loginPathForLastPortal()} state={{ from: location.pathname }} replace />;
   }
 
   if (!user.is_active_account) {
