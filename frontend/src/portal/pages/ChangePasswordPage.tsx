@@ -42,7 +42,6 @@ export function ChangePasswordPage() {
   return (
     <AuthShell
       variant={user?.role === "SUPER_ADMIN" ? "admin" : "staff"}
-      showTabs={false}
       title="Set a new password"
       subtitle={`${user?.full_name ? `Welcome, ${user.full_name}. ` : ""}This is a temporary password issued by the office — choose a new one before continuing.`}
     >

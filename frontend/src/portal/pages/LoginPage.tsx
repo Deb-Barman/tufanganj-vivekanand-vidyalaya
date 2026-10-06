@@ -1,67 +1,32 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useCallback, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/AuthContext";
-import { ApiError } from "../../lib/api";
-import { AuthShell } from "../components/AuthShell";
-import { AuthPasswordField, AuthTextField } from "../components/AuthFields";
+import { LoginExperience } from "../login/LoginExperience";
 
-/** Student & Teacher sign-in. Backed by /api/auth/staff-login/ (rejects Super Admins). */
+/**
+ * The one login page for Students and Teachers (backend: /api/auth/staff-login/,
+ * which refuses Super Admins). One of two designs is shown at random.
+ */
 export function LoginPage() {
-  const { user, loading, login } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+  const state = location.state as { from?: string; disabled?: boolean } | null;
+  const dest = state?.from ?? "/portal/dashboard";
 
-  if (!loading && user) {
-    const dest = (location.state as { from?: string })?.from ?? "/portal/dashboard";
-    return <Navigate to={dest} replace />;
-  }
+  const onSuccess = useCallback(() => navigate(dest, { replace: true }), [navigate, dest]);
 
-  const disabledNotice = (location.state as { disabled?: boolean })?.disabled;
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setSubmitting(true);
-    try {
-      await login(username.trim(), password, "staff");
-      navigate("/portal/dashboard", { replace: true });
-    } catch (err) {
-      // The backend's own message is already safe to show verbatim — it
-      // covers wrong credentials, disabled accounts and lockout timers.
-      setError(err instanceof ApiError ? err.message : "Could not sign in. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  // Already signed in (e.g. opened /portal again) -> straight to the dashboard.
+  // Held back while a sign-in is running so its success animation can finish.
+  if (!loading && user && !signingIn) return <Navigate to={dest} replace />;
 
   return (
-    <AuthShell
-      variant="staff"
-      title="Student & Teacher Login"
-      subtitle="Use the username and password issued by the school office."
-      footer={
-        <p className="auth-note">
-          No public sign-up — accounts are issued only by the school office.
-          <br />
-          Head Sir? <Link to="/portal/admin">Use the Super User login</Link>.
-        </p>
-      }
-    >
-      {disabledNotice && <p className="alert alert-error" style={{ marginTop: 16 }}>Your account has been disabled. Contact the school office.</p>}
-      <form onSubmit={handleSubmit} className="auth-form">
-        <AuthTextField id="loginUser" label="Username" icon="user" autoComplete="username" value={username} onChange={setUsername} />
-        <AuthPasswordField id="loginPass" label="Password" autoComplete="current-password" value={password} onChange={setPassword} />
-        {error && <p className="alert alert-error" role="alert">{error}</p>}
-        <button type="submit" className="auth-submit" disabled={submitting}>
-          {submitting && <span className="spin" aria-hidden="true" />}
-          {submitting ? "Signing in…" : "Sign In"}
-        </button>
-      </form>
-    </AuthShell>
+    <LoginExperience
+      portal="staff"
+      initialNotice={state?.disabled ? "Your account has been disabled. Contact the school office." : undefined}
+      onSigningIn={setSigningIn}
+      onSuccess={onSuccess}
+    />
   );
 }
