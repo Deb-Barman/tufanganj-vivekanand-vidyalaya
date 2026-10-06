@@ -8,7 +8,7 @@ from rest_framework.throttling import AnonRateThrottle
 from accounts.permissions import IsSuperAdmin, IsSuperAdminOrReadOnly
 
 from .models import Admission, Article, Event, GalleryImage, SchoolForm
-from .serializers import AdmissionSerializer, ArticleSerializer, EventSerializer, GalleryImageSerializer, SchoolFormSerializer
+from .serializers import AdmissionAdminSerializer, AdmissionSerializer, ArticleSerializer, EventSerializer, GalleryImageSerializer, SchoolFormSerializer
 
 
 # --- Articles / Blog -------------------------------------------------------
@@ -37,7 +37,14 @@ class ArticleListCreateView(generics.ListCreateAPIView):
 class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdminOrReadOnly]
     serializer_class = ArticleSerializer
-    queryset = Article.objects.all()
+
+    def get_queryset(self):
+        # Same rule as the list view: drafts are visible to the Super Admin only.
+        # (Without this, any signed-in user could read a draft by guessing its ID.)
+        user = self.request.user
+        if user.is_authenticated and user.is_super_admin:
+            return Article.objects.all()
+        return Article.objects.filter(published=True)
 
 
 # --- Events -----------------------------------------------------------------
@@ -126,7 +133,9 @@ class AdmissionCreateView(generics.CreateAPIView):
     throttle_classes = [AdmissionRateThrottle]
 
     def perform_create(self, serializer):
-        ip = self.request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip() or self.request.META.get("REMOTE_ADDR")
+        # Resolved by DRF so it honours NUM_PROXIES (see settings.py); never read
+        # the raw X-Forwarded-For header here, a caller can put anything in it.
+        ip = AdmissionRateThrottle().get_ident(self.request)
         # Coarse additional guard beyond DRF throttling: block a contact
         # number that has already submitted 3+ enquiries in the last 24h,
         # even from a different IP (DRF throttling alone is IP-scoped).
@@ -151,5 +160,5 @@ class AdmissionListView(generics.ListAPIView):
 
 class AdmissionDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdmin]
-    serializer_class = AdmissionSerializer
+    serializer_class = AdmissionAdminSerializer
     queryset = Admission.objects.all()

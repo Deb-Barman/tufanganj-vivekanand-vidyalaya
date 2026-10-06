@@ -20,12 +20,22 @@ def validate_image_upload(file):
         raise serializers.ValidationError("Only JPEG, PNG, or WebP images are allowed.")
 
 
+# First bytes of the formats we accept: PDF, legacy .doc (OLE2), .docx (zip).
+_DOC_SIGNATURES = (b"%PDF-", b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1", b"PK\x03\x04")
+
+
 def validate_doc_upload(file):
     if file.size > MAX_DOC_SIZE:
         raise serializers.ValidationError("File must be under 10 MB.")
     content_type = getattr(file, "content_type", None)
     if content_type not in ALLOWED_DOC_TYPES:
         raise serializers.ValidationError("Only PDF or Word documents are allowed.")
+    # The content type comes from the uploader's browser and can be faked, so
+    # also check the file's real first bytes.
+    head = file.read(8)
+    file.seek(0)
+    if not head.startswith(_DOC_SIGNATURES):
+        raise serializers.ValidationError("This file does not look like a real PDF or Word document.")
 
 
 class ArticleSerializer(serializers.ModelSerializer):
@@ -135,3 +145,11 @@ class AdmissionSerializer(serializers.ModelSerializer):
 
     def validate_message(self, value):
         return sanitize(value.strip())
+
+
+class AdmissionAdminSerializer(AdmissionSerializer):
+    """Super Admin view of an enquiry: identical, except `status` can be changed
+    (the public submit serializer keeps it read-only so a visitor can't set it)."""
+
+    class Meta(AdmissionSerializer.Meta):
+        read_only_fields = ["id", "submitted_at"]
