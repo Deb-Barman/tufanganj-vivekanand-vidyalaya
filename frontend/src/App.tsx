@@ -5,6 +5,7 @@ import { SiteFooter } from "./components/SiteFooter";
 import { HomePage } from "./pages/HomePage";
 import { BlogPage } from "./pages/BlogPage";
 import { LoginPage } from "./portal/pages/LoginPage";
+import { AdminLoginPage } from "./portal/pages/AdminLoginPage";
 import { ChangePasswordPage } from "./portal/pages/ChangePasswordPage";
 import { DashboardShell } from "./portal/pages/DashboardShell";
 import { OverviewPage } from "./portal/pages/OverviewPage";
@@ -35,6 +36,7 @@ export default function App() {
       <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
       <Route path="/blog" element={<PublicLayout><BlogPage /></PublicLayout>} />
       <Route path="/portal" element={<PublicLayout><LoginPage /></PublicLayout>} />
+      <Route path="/portal/admin" element={<PublicLayout><AdminLoginPage /></PublicLayout>} />
       <Route
         path="/portal/change-password"
         element={

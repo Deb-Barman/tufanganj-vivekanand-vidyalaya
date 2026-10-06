@@ -1,14 +1,76 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/school_logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#08090b" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#181b27" />
+    <meta name="color-scheme" content="dark light" />
     <meta name="description" content="Tufanganj Vivekananda Vidyalaya (H.S.) — Cooch Behar, West Bengal. Official school website and secure student/staff portal." />
     <title>Tufanganj Vivekananda Vidyalaya (H.S.)</title>
+
+    <!-- display=swap: text renders instantly in a system font, then swaps in. Never blocks. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!--
+      Runs BEFORE first paint so the page never flashes the wrong theme.
+      Preference is "dark" | "light" | "system" (default: system). The
+      resolved theme is written to <html data-theme>. Mirrors src/lib/theme.tsx.
+    -->
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem("tvv-theme") || "system";
+          var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var resolved = pref === "system" ? (dark ? "dark" : "light") : pref;
+          var root = document.documentElement;
+          root.setAttribute("data-theme", resolved);
+          root.setAttribute("data-theme-pref", pref);
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", resolved === "dark" ? "#181b27" : "#e4e7f0");
+        } catch (e) {}
+      })();
+    </script>
+
+    <!--
+      Zero-JS boot screen. Painted by the browser immediately from this
+      HTML, long before the React bundle downloads, so visitors on slow
+      rural connections see a branded screen instead of a blank page.
+      React removes it (with a fade) once the app is ready — see
+      src/components/BootLoader.tsx.
+    -->
+    <style>
+      /* Neumorphic soft-UI palette, hardcoded here (not from tokens.css,
+         which hasn't loaded yet) so the instant paint matches the React
+         BootLoader that takes over a moment later — no visual jump. */
+      #boot{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;
+        background:#e4e7f0;color:#2b2e42;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
+      html[data-theme="dark"] #boot{background:#181b27;color:#e8eaf5}
+      #boot .b-disc{position:relative;width:108px;height:108px;border-radius:50%;
+        background:#e9ecf4;
+        box-shadow:11px 11px 26px rgba(147,153,182,.55),-11px -11px 24px rgba(255,255,255,.95);
+        display:grid;place-items:center;animation:b-float 3.2s ease-in-out infinite}
+      html[data-theme="dark"] #boot .b-disc{background:#1c1f2d;
+        box-shadow:11px 11px 26px rgba(5,6,11,.82),-9px -9px 22px rgba(68,74,108,.45)}
+      #boot .b-ring{position:absolute;inset:-8px;border-radius:50%;
+        border:3px solid transparent;border-top-color:#6a5cff;border-right-color:#1fae7a;
+        animation:b-spin 1s linear infinite}
+      html[data-theme="dark"] #boot .b-ring{border-top-color:#8477ff;border-right-color:#3ecf96}
+      #boot .b-core{width:62%;height:62%;border-radius:50%;background:#e9ecf4;
+        box-shadow:inset 5px 5px 11px rgba(142,148,178,.6),inset -5px -5px 11px rgba(255,255,255,.85)}
+      html[data-theme="dark"] #boot .b-core{background:#1c1f2d;
+        box-shadow:inset 5px 5px 11px rgba(4,5,10,.82),inset -4px -4px 10px rgba(66,72,104,.4)}
+      @keyframes b-spin{to{transform:rotate(360deg)}}
+      @keyframes b-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+      @media (prefers-reduced-motion:reduce){#boot .b-ring,#boot .b-disc{animation:none}}
+    </style>
   </head>
   <body>
+    <div id="boot" aria-hidden="true">
+      <div class="b-disc"><div class="b-ring"></div><div class="b-core"></div></div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

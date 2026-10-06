@@ -64,6 +64,46 @@ class RoleAwareTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 
+class AdminPortalTokenObtainPairSerializer(RoleAwareTokenObtainPairSerializer):
+    """
+    Login for the *Super User* page only. Reuses every protection of the
+    base serializer (lockout, disabled-account check) and then additionally
+    refuses any account that is not a SUPER_ADMIN. This is enforced here on
+    the server — hiding the tab in the UI would not be a security boundary.
+
+    The rejection message is deliberately the same generic text a wrong
+    password produces, so this endpoint cannot be used to discover which
+    usernames belong to staff/students.
+    """
+
+    portal_roles = (Role.SUPER_ADMIN,)
+
+    def validate(self, attrs):
+        # The Super User page asks for an EMAIL. Map it to the account's
+        # Django username (looked up among Super Admins only) before the
+        # normal checks run. If nothing matches we leave it untouched, so
+        # the failure is indistinguishable from a wrong password.
+        typed = (attrs.get(self.username_field) or "").strip()
+        if "@" in typed:
+            match = (
+                User.objects.filter(role=Role.SUPER_ADMIN, email__iexact=typed)
+                .order_by("created_at")
+                .first()
+            )
+            if match:
+                attrs[self.username_field] = match.get_username()
+        data = super().validate(attrs)
+        if self.user.role not in self.portal_roles:
+            raise AuthenticationFailed("No active account found with the given credentials")
+        return data
+
+
+class StaffStudentPortalTokenObtainPairSerializer(AdminPortalTokenObtainPairSerializer):
+    """Login for the Student / Teacher page only — Super Admins must use their own page."""
+
+    portal_roles = (Role.TEACHER, Role.STUDENT)
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

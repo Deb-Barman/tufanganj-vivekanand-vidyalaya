@@ -34,7 +34,7 @@ export function Faq() {
   return (
     <section className="section" id="faq">
       <div className="wrap">
-        <div className="section-head">
+        <div className="section-head" data-reveal>
           <div className="eyebrow">
             <span className="num">07</span>Questions Parents Ask
           </div>
@@ -42,7 +42,7 @@ export function Faq() {
         </div>
         <div className="faq-list">
           {FAQS.map((item, i) => (
-            <div className="faq-item" key={item.q}>
+            <div className={`faq-item${openIndex === i ? " is-open" : ""}`} key={item.q} data-reveal style={{ ["--d" as string]: i % 3 }}>
               <button
                 type="button"
                 className="faq-q"
@@ -54,11 +54,11 @@ export function Faq() {
                   <path d="M6 9l6 6 6-6" />
                 </svg>
               </button>
-              {openIndex === i && (
+              <div className={`faq-a-wrap${openIndex === i ? " open" : ""}`}>
                 <div className="faq-a">
                   <p>{item.a}</p>
                 </div>
-              )}
+              </div>
             </div>
           ))}
         </div>

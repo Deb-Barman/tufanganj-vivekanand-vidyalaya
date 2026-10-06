@@ -7,11 +7,18 @@ import type { LoginResponse, User } from "../types/api";
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string, portal?: LoginPortal) => Promise<void>;
   logout: () => void;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   refreshUser: () => Promise<void>;
 }
+
+/** Which login page is calling: each maps to a role-scoped backend endpoint. */
+export type LoginPortal = "staff" | "admin";
+const LOGIN_PATH: Record<LoginPortal, string> = {
+  staff: "/auth/staff-login/", // Teacher + Student only
+  admin: "/auth/admin-login/", // Super Admin only
+};
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -40,12 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = useCallback(async (username: string, password: string) => {
+  const login = useCallback(async (username: string, password: string, portal: LoginPortal = "staff") => {
     // Errors (including account-lockout messages from the backend, e.g.
     // "Too many failed attempts. Try again in N minute(s)") propagate as
     // ApiError — the LoginPage displays err.message directly, which is
     // already the safe, user-facing text the backend chose to return.
-    const data = await api.post<LoginResponse>("/auth/login/", { username, password }, { auth: false });
+    const data = await api.post<LoginResponse>(LOGIN_PATH[portal], { username, password }, { auth: false });
     tokenStorage.setTokens(data.access, data.refresh);
     setUser(data.user);
   }, []);

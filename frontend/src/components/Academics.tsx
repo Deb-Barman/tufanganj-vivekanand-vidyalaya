@@ -19,7 +19,7 @@ export function Academics() {
   return (
     <section className="section" id="academics">
       <div className="wrap">
-        <div className="section-head">
+        <div className="section-head" data-reveal>
           <div className="eyebrow">
             <span className="num">02</span>Academics
           </div>
@@ -30,8 +30,8 @@ export function Academics() {
           </p>
         </div>
         <div className="stream-grid">
-          {STREAMS.map((stream) => (
-            <article className="stream-card" key={stream.title}>
+          {STREAMS.map((stream, i) => (
+            <article className="stream-card lift" key={stream.title} data-reveal style={{ ["--d" as string]: i }}>
               <span className="pill">{stream.tag}</span>
               <h3>{stream.title}</h3>
               <p>{stream.body}</p>

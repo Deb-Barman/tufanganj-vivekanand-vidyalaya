@@ -21,7 +21,7 @@ export function Faculty() {
   return (
     <section className="section" id="teachers">
       <div className="wrap">
-        <div className="section-head">
+        <div className="section-head" data-reveal>
           <div className="eyebrow">
             <span className="num">03</span>Our Faculty
           </div>
@@ -32,7 +32,7 @@ export function Faculty() {
         {teachers === null && <p className="notice-loading">Loading…</p>}
 
         {teachers !== null && teachers.length === 0 && (
-          <div className="todo-panel">
+          <div className="todo-panel" data-reveal>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" width="22" height="22">
               <path d="M12 9v4M12 16.5h.01" />
               <circle cx="12" cy="12" r="9" />
@@ -50,8 +50,8 @@ export function Faculty() {
 
         {teachers !== null && teachers.length > 0 && (
           <div className="teacher-grid">
-            {teachers.map((t) => (
-              <article className="teacher-card" key={t.user}>
+            {teachers.map((t, i) => (
+              <article className="teacher-card lift" key={t.user} data-reveal style={{ ["--d" as string]: i % 4 }}>
                 <h4>{t.full_name}</h4>
                 {t.department && <span className="pill">{t.department}</span>}
                 {t.bio && <p>{t.bio}</p>}

@@ -4,7 +4,7 @@ export function Contact() {
   return (
     <section className="section" id="contact">
       <div className="wrap contact-grid">
-        <div>
+        <div data-reveal="left">
           <div className="eyebrow">
             <span className="num">09</span>Visit or Write to Us
           </div>
@@ -24,7 +24,7 @@ export function Contact() {
             </div>
           </div>
         </div>
-        <div className="todo-panel">
+        <div className="todo-panel" data-reveal="right">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" width="22" height="22">
             <path d="M12 9v4M12 16.5h.01" />
             <circle cx="12" cy="12" r="9" />

@@ -43,7 +43,7 @@ export function Admissions() {
   return (
     <section className="section" id="admissions">
       <div className="wrap admissions-grid">
-        <div>
+        <div data-reveal="left">
           <div className="eyebrow">
             <span className="num">08</span>Admissions
           </div>
@@ -78,8 +78,8 @@ export function Admissions() {
           </form>
         </div>
         <ol className="steps">
-          {STEPS.map((step) => (
-            <li key={step.n}>
+          {STEPS.map((step, i) => (
+            <li key={step.n} className="lift" data-reveal="right" style={{ ["--d" as string]: i }}>
               <span className="step-n">{step.n}</span>
               <div>
                 <h4>{step.title}</h4>

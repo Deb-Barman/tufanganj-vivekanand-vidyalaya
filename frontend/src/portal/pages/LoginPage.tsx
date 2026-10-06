@@ -1,11 +1,12 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/AuthContext";
 import { ApiError } from "../../lib/api";
-import { SchoolLogo } from "../../components/SchoolLogo";
-import "./LoginPage.css";
+import { AuthShell } from "../components/AuthShell";
+import { AuthPasswordField, AuthTextField } from "../components/AuthFields";
 
+/** Student & Teacher sign-in. Backed by /api/auth/staff-login/ (rejects Super Admins). */
 export function LoginPage() {
   const { user, loading, login } = useAuth();
   const navigate = useNavigate();
@@ -27,13 +28,11 @@ export function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login(username, password);
+      await login(username.trim(), password, "staff");
       navigate("/portal/dashboard", { replace: true });
     } catch (err) {
       // The backend's own message is already safe to show verbatim — it
-      // covers wrong credentials, disabled accounts, and lockout timers
-      // ("Too many failed attempts. Try again in N minute(s)...") without
-      // leaking anything the frontend needs to reinterpret.
+      // covers wrong credentials, disabled accounts and lockout timers.
       setError(err instanceof ApiError ? err.message : "Could not sign in. Please try again.");
     } finally {
       setSubmitting(false);
@@ -41,53 +40,28 @@ export function LoginPage() {
   }
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <div className="login-logo">
-          <SchoolLogo size={48} />
-        </div>
-        <h1>Sign in to the Smart Portal</h1>
-        <p className="login-sub">Use the username and password issued by the school office.</p>
-        {disabledNotice && (
-          <p className="alert alert-error" style={{ marginTop: 12 }}>
-            Your account has been disabled. Contact the school office.
-          </p>
-        )}
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-field">
-            <label htmlFor="loginUser">Username</label>
-            <input
-              id="loginUser"
-              type="text"
-              autoComplete="username"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-          <div className="form-field">
-            <label htmlFor="loginPass">Password</label>
-            <input
-              id="loginPass"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          {error && <p className="alert alert-error">{error}</p>}
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={submitting}
-            style={{ width: "100%", justifyContent: "center" }}
-          >
-            {submitting ? "Signing in…" : "Sign In"}
-          </button>
-        </form>
-        <p className="login-note">No public sign-up — accounts are issued only by the Super Admin.</p>
-      </div>
-    </div>
+    <AuthShell
+      variant="staff"
+      title="Student & Teacher Login"
+      subtitle="Use the username and password issued by the school office."
+      footer={
+        <p className="auth-note">
+          No public sign-up — accounts are issued only by the school office.
+          <br />
+          Head Sir? <Link to="/portal/admin">Use the Super User login</Link>.
+        </p>
+      }
+    >
+      {disabledNotice && <p className="alert alert-error" style={{ marginTop: 16 }}>Your account has been disabled. Contact the school office.</p>}
+      <form onSubmit={handleSubmit} className="auth-form">
+        <AuthTextField id="loginUser" label="Username" icon="user" autoComplete="username" value={username} onChange={setUsername} />
+        <AuthPasswordField id="loginPass" label="Password" autoComplete="current-password" value={password} onChange={setPassword} />
+        {error && <p className="alert alert-error" role="alert">{error}</p>}
+        <button type="submit" className="auth-submit" disabled={submitting}>
+          {submitting && <span className="spin" aria-hidden="true" />}
+          {submitting ? "Signing in…" : "Sign In"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

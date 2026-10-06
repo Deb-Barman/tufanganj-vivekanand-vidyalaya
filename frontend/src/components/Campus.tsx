@@ -10,7 +10,7 @@ export function Campus() {
   return (
     <section className="section" id="campus">
       <div className="wrap">
-        <div className="section-head">
+        <div className="section-head" data-reveal>
           <div className="eyebrow">
             <span className="num">05</span>Campus &amp; Facilities
           </div>
@@ -18,7 +18,7 @@ export function Campus() {
           <p className="lede">A school is more than lessons. Our campus gives students room to run, build, read and compete.</p>
         </div>
         <div className="campus-grid">
-          <article className="campus-main">
+          <article className="campus-main lift" data-reveal="left">
             <span className="pill">Sports &amp; Athletics</span>
             <h3>A genuinely large playing field</h3>
             <p>
@@ -28,8 +28,8 @@ export function Campus() {
             </p>
           </article>
           <div className="campus-side">
-            {FACILITIES.map((f) => (
-              <article className="campus-mini" key={f.title}>
+            {FACILITIES.map((f, i) => (
+              <article className="campus-mini lift" key={f.title} data-reveal="right" style={{ ["--d" as string]: i }}>
                 <h4>{f.title}</h4>
                 <p>{f.body}</p>
               </article>

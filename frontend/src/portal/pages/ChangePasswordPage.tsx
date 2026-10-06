@@ -3,7 +3,8 @@ import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/AuthContext";
 import { ApiError } from "../../lib/api";
-import "./LoginPage.css";
+import { AuthShell } from "../components/AuthShell";
+import { AuthPasswordField } from "../components/AuthFields";
 
 export function ChangePasswordPage() {
   const { changePassword, user } = useAuth();
@@ -39,60 +40,22 @@ export function ChangePasswordPage() {
   }
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <h1>Set a new password</h1>
-        <p className="login-sub">
-          {user?.full_name ? `Welcome, ${user.full_name}. ` : ""}
-          This is a temporary password issued by the office — choose a new one before continuing.
-        </p>
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-field">
-            <label htmlFor="curPass">Current (temporary) password</label>
-            <input
-              id="curPass"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-            />
-          </div>
-          <div className="form-field">
-            <label htmlFor="newPass">New password</label>
-            <input
-              id="newPass"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={10}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-          </div>
-          <div className="form-field">
-            <label htmlFor="confirmPass">Confirm new password</label>
-            <input
-              id="confirmPass"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={10}
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-            />
-          </div>
-          {error && <p className="alert alert-error">{error}</p>}
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={submitting}
-            style={{ width: "100%", justifyContent: "center" }}
-          >
-            {submitting ? "Saving…" : "Save & Continue"}
-          </button>
-        </form>
-      </div>
-    </div>
+    <AuthShell
+      variant={user?.role === "SUPER_ADMIN" ? "admin" : "staff"}
+      showTabs={false}
+      title="Set a new password"
+      subtitle={`${user?.full_name ? `Welcome, ${user.full_name}. ` : ""}This is a temporary password issued by the office — choose a new one before continuing.`}
+    >
+      <form onSubmit={handleSubmit} className="auth-form">
+        <AuthPasswordField id="curPass" label="Current (temporary) password" autoComplete="current-password" value={currentPassword} onChange={setCurrentPassword} />
+        <AuthPasswordField id="newPass" label="New password (min 10 characters)" autoComplete="new-password" value={newPassword} onChange={setNewPassword} />
+        <AuthPasswordField id="confirmPass" label="Confirm new password" autoComplete="new-password" value={confirm} onChange={setConfirm} />
+        {error && <p className="alert alert-error" role="alert">{error}</p>}
+        <button type="submit" className="auth-submit" disabled={submitting}>
+          {submitting && <span className="spin" aria-hidden="true" />}
+          {submitting ? "Saving…" : "Save & Continue"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }
