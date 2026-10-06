@@ -11,8 +11,8 @@ export function TrustBar() {
   return (
     <section className="trust-bar" id="about">
       <div className="wrap trust-bar-inner">
-        {ITEMS.map((item) => (
-          <div className="trust-item" key={item}>
+        {ITEMS.map((item, i) => (
+          <div className="trust-item" key={item} data-reveal style={{ ["--d" as string]: i }}>
             <span className="dot" aria-hidden="true" />
             <span>{item}</span>
           </div>

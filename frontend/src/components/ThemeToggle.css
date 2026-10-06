@@ -1,0 +1,32 @@
+.theme-toggle {
+  --size: 30px;
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(3, var(--size));
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: var(--inset-sm);
+  isolation: isolate;
+}
+.tt-thumb {
+  position: absolute;
+  z-index: -1;
+  top: 4px; left: 4px;
+  width: var(--size); height: var(--size);
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--accent-2), var(--accent));
+  box-shadow: var(--raise-sm), 0 3px 9px rgba(var(--accent-glow), 0.45);
+  transform: translateX(calc(var(--i, 1) * var(--size)));
+  transition: transform 0.38s var(--ease-spring);
+}
+.tt-btn {
+  width: var(--size); height: var(--size);
+  display: grid; place-items: center;
+  background: none; border: 0; border-radius: 50%;
+  color: var(--fg-faint);
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+.tt-btn svg { width: 16px; height: 16px; }
+.tt-btn:hover { color: var(--fg); }
+.tt-btn.on { color: var(--accent-ink); }

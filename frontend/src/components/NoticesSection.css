@@ -1,30 +1,11 @@
 .notice-loading, .notice-empty {
-  color: var(--fg-faint);
-  font-size: 14.5px;
-  padding: 32px 0;
-  text-align: center;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
+  color: var(--fg-faint); font-size: 14.5px; padding: 36px 0; text-align: center;
+  border-radius: var(--radius-lg); background: var(--panel); box-shadow: var(--inset);
 }
-.notice-list { display: flex; flex-direction: column; gap: 14px; }
-.notice-item {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px 22px;
-  background: var(--card);
-}
-.notice-item-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.notice-item h4 { font-size: 15.5px; }
-.notice-item p { margin-top: 8px; color: var(--fg-soft); font-size: 14px; line-height: 1.6; }
-.notice-date {
-  display: block;
-  margin-top: 12px;
-  font-family: var(--mono);
-  font-size: 11.5px;
-  color: var(--fg-faint);
-}
+.notice-list { display: flex; flex-direction: column; gap: 16px; }
+.notice-item { position: relative; border-radius: var(--radius-lg); padding: 22px 24px 22px 28px; background: var(--surface); box-shadow: var(--raise); overflow: hidden; }
+.notice-item::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 4px; border-radius: 4px; background: linear-gradient(to bottom, var(--accent), var(--neon)); }
+.notice-item-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.notice-item h4 { font-size: 16.5px; }
+.notice-item p { margin-top: 8px; color: var(--fg-soft); font-size: 14.5px; line-height: 1.65; }
+.notice-date { display: block; margin-top: 12px; font-family: var(--mono); font-size: 11.5px; color: var(--fg-faint); }

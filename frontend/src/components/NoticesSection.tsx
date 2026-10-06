@@ -27,7 +27,7 @@ export function NoticesSection() {
   return (
     <section className="section" id="notices">
       <div className="wrap">
-        <div className="section-head">
+        <div className="section-head" data-reveal>
           <div className="eyebrow">
             <span className="num">06</span>Notice Board
           </div>
@@ -45,8 +45,8 @@ export function NoticesSection() {
 
         {!error && notices !== null && notices.length > 0 && (
           <ul className="notice-list">
-            {notices.map((notice) => (
-              <li className="notice-item" key={notice.id}>
+            {notices.map((notice, i) => (
+              <li className="notice-item lift" key={notice.id} data-reveal style={{ ["--d" as string]: i % 4 }}>
                 <div className="notice-item-head">
                   <h4>{notice.title}</h4>
                   {notice.target_class && <span className="pill">{notice.target_class}</span>}
