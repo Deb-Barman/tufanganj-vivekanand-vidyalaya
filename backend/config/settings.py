@@ -195,6 +195,13 @@ else:
 # Django REST Framework
 # ---------------------------------------------------------------------------
 
+# How many reverse proxies sit in front of Django (Render's load balancer, and
+# Cloudflare on top of it if present). DRF uses this to pick the real client IP
+# out of X-Forwarded-For for rate limiting. Leave unset until you have checked
+# the right number for your deployment (see docs/DEPLOYMENT.md), because a wrong
+# value makes every visitor share one rate-limit bucket.
+_num_proxies = os.environ.get("NUM_PROXIES", "").strip()
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     # Deny-by-default: every view must declare its own permission_classes
@@ -209,10 +216,12 @@ REST_FRAMEWORK = {
         "anon": "30/minute",
         "user": "180/minute",
         "admission_submit": "3/hour",
+        "login": "10/minute",
     },
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,
     "EXCEPTION_HANDLER": "config.exception_handlers.security_aware_exception_handler",
+    **({"NUM_PROXIES": int(_num_proxies)} if _num_proxies.isdigit() else {}),
 }
 
 SIMPLE_JWT = {
