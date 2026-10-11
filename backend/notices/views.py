@@ -4,15 +4,21 @@ from rest_framework.permissions import AllowAny
 from accounts.permissions import IsSuperAdminOrReadOnly
 
 from .models import Notice
-from .serializers import NoticeSerializer
+from .serializers import NoticeSerializer, PublicNoticeSerializer
 
 
 class PublicNoticeListView(generics.ListAPIView):
     """Unauthenticated read for the public website — school announcements are public content."""
 
     permission_classes = [AllowAny]
-    serializer_class = NoticeSerializer
-    queryset = Notice.objects.all()[:20]
+    serializer_class = PublicNoticeSerializer
+    queryset = Notice.objects.select_related("created_by").all()
+
+
+class PublicNoticeDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = PublicNoticeSerializer
+    queryset = Notice.objects.select_related("created_by").all()
 
 
 class NoticeListCreateView(generics.ListCreateAPIView):
