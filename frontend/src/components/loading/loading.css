@@ -1,1 +1,33 @@
+/* ───────────── Loading system ─────────────
+   1. Logo intro        — only when the website first loads (index.html)
+   2. Route progress    — thin bar at the top while moving between pages
+   3. Skeletons         — shape-of-the-page placeholders while UI or data loads (YouTube / Facebook / LinkedIn style)
+   4. Spinner           — small, simple, for buttons and tiny areas
+*/
+.route-progress { position: fixed; z-index: 9999; top: 0; left: 0; right: 0; height: 3px; pointer-events: none; opacity: 0; transition: opacity 0.3s ease 0.15s; }
+.route-progress.on { opacity: 1; transition-delay: 0s; }
+.route-progress i { display: block; height: 100%; width: 0; border-radius: 0 3px 3px 0; background: linear-gradient(90deg, var(--accent), #e9b44c, var(--accent)); background-size: 200% 100%; box-shadow: 0 0 12px rgba(var(--accent-glow), 0.8), 0 0 4px var(--accent); transition: width 0.45s cubic-bezier(0.2, 0.7, 0.2, 1); animation: rp-flow 1.2s linear infinite; }
+.route-progress.busy i { width: 0; animation: rp-grow 6s cubic-bezier(0.1, 0.8, 0.2, 1) forwards, rp-flow 1.2s linear infinite; }
+@keyframes rp-grow { to { width: 88%; } }
+@keyframes rp-flow { to { background-position: -200% 0; } }
 
+.spinner { display: inline-block; width: 1.1em; height: 1.1em; border-radius: 50%; border: 2px solid color-mix(in srgb, currentColor 22%, transparent); border-top-color: currentColor; animation: sp-spin 0.7s linear infinite; vertical-align: -0.18em; flex: none; }
+.spinner.lg { width: 34px; height: 34px; border-width: 3px; color: var(--accent); }
+@keyframes sp-spin { to { transform: rotate(360deg); } }
+.spin-center { display: grid; place-items: center; gap: 12px; padding: 40px 0; color: var(--fg-faint); font-size: 13px; }
+
+/* skeleton blocks */
+.sk { position: relative; overflow: hidden; border-radius: 10px; background: var(--panel); box-shadow: var(--inset-sm); }
+.sk::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(100deg, transparent 20%, color-mix(in srgb, var(--fg) 8%, transparent) 50%, transparent 80%); animation: sk-sweep 1.5s ease-in-out infinite; }
+@keyframes sk-sweep { to { transform: translateX(100%); } }
+.sk-line { height: 14px; } .sk-line.sm { height: 10px; } .sk-line.lg { height: 22px; } .sk-line.xl { height: 38px; border-radius: 12px; }
+.sk-circle { border-radius: 50%; flex: none; }
+.sk-box { border-radius: 16px; }
+.sk-card { display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--raise-sm); }
+.sk-row { display: flex; align-items: center; gap: 12px; }
+.sk-col { display: flex; flex-direction: column; gap: 9px; flex: 1; min-width: 0; }
+.sk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: 20px; }
+.sk-list { display: flex; flex-direction: column; gap: 14px; }
+.sk-page { padding-block: clamp(40px, 7vw, 90px); display: flex; flex-direction: column; gap: 34px; }
+.sk-hero { display: flex; flex-direction: column; gap: 14px; max-width: 640px; }
+@media (prefers-reduced-motion: reduce) { .sk::after, .route-progress i, .spinner { animation-duration: 3s; } }
