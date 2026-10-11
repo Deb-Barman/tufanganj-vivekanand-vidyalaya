@@ -1,1 +1,130 @@
-
+{
+  "400": {
+    "title": "Bad request",
+    "label": "Bad request",
+    "heading": "The request could not be understood.",
+    "support": "Something in the link or form we received wasn’t valid. Please check it and try again.",
+    "quote": "The remedy for weakness is not brooding over weakness, but thinking of strength.",
+    "cite": "— Swami Vivekananda",
+    "primary": [
+      "retry",
+      "Try again"
+    ],
+    "secondary": [
+      "home",
+      "Return home"
+    ]
+  },
+  "401": {
+    "title": "Sign in required",
+    "label": "Sign in required",
+    "heading": "Authentication is required to access this page.",
+    "support": "Please sign in with your school account to continue to this page.",
+    "quote": "Have faith in yourselves, and stand up on that faith and be strong; that is what we need.",
+    "cite": "— Swami Vivekananda",
+    "primary": [
+      "portal",
+      "Sign in"
+    ],
+    "secondary": [
+      "home",
+      "Return home"
+    ]
+  },
+  "403": {
+    "title": "Access denied",
+    "label": "Access denied",
+    "heading": "You do not have permission to access this page.",
+    "support": "This area is restricted to certain roles. If you believe this is a mistake, please contact the school office.",
+    "quote": "Let nothing daunt you. … Work on with the courage of a lion but, at the same time with the tenderness of a flower.",
+    "cite": "— Swami Vivekananda",
+    "primary": [
+      "home",
+      "Return home"
+    ],
+    "secondary": [
+      "back",
+      "Go back"
+    ]
+  },
+  "404": {
+    "title": "Page not found",
+    "label": "Page not found",
+    "heading": "This page could not be found.",
+    "support": "The link may be broken, or the page may have moved. Let’s get you back on track.",
+    "quote": "Arise, awake, sleep no more; within each of you there is the power to remove all wants and all miseries. Believe this, and that power will be manifested.",
+    "cite": "— Swami Vivekananda",
+    "primary": [
+      "home",
+      "Return home"
+    ],
+    "secondary": [
+      "back",
+      "Go back"
+    ]
+  },
+  "408": {
+    "title": "Request timed out",
+    "label": "Request timed out",
+    "heading": "The request took too long to complete.",
+    "support": "Your connection may be slow. Please check it and try again.",
+    "quote": "But will you, on that account, sit inactive? As far as you can, you must go on doing good work.",
+    "cite": "— Swami Vivekananda",
+    "primary": [
+      "retry",
+      "Try again"
+    ],
+    "secondary": [
+      "home",
+      "Return home"
+    ]
+  },
+  "500": {
+    "title": "Server error",
+    "label": "Server error",
+    "heading": "Something went wrong on our server.",
+    "support": "This is on our side, not yours. Please try again in a moment.",
+    "quote": "The world is the great gymnasium where we come to make ourselves strong.",
+    "cite": "— Swami Vivekananda",
+    "primary": [
+      "retry",
+      "Try again"
+    ],
+    "secondary": [
+      "home",
+      "Return home"
+    ]
+  },
+  "502": {
+    "title": "Connection problem",
+    "label": "Connection problem",
+    "heading": "We’re having trouble connecting to the server.",
+    "support": "The school server may still be waking up. Please wait about a minute, then try again.",
+    "quote": "Come all of you to my assistance and set yourselves to work.",
+    "cite": "— Swami Vivekananda",
+    "primary": [
+      "retry",
+      "Try again"
+    ],
+    "secondary": [
+      "home",
+      "Return home"
+    ]
+  },
+  "503": {
+    "title": "Temporarily unavailable",
+    "label": "Temporarily unavailable",
+    "heading": "This service is temporarily unavailable.",
+    "support": "We’re briefly down for maintenance or heavy traffic. Please check back shortly.",
+    "quote": "Arise, awake, and stop not till the goal is reached.",
+    "cite": "— Swami Vivekananda",
+    "primary": [
+      "retry",
+      "Try again"
+    ],
+    "secondary": [
+      "home",
+      "Return home"
+    ]
+  }
+}
