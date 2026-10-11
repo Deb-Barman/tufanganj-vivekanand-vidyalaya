@@ -77,11 +77,20 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
     if (access) headers.Authorization = `Bearer ${access}`;
   }
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : isMultipart ? (body as FormData) : JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body === undefined ? undefined : isMultipart ? (body as FormData) : JSON.stringify(body),
+    });
+  } catch {
+    // fetch() only throws when the server could not be reached at all. On
+    // Render's free plan that usually means the service is waking up (~30-60 s).
+    throw new ApiError(0, {
+      detail: "Could not reach the school server. It may be waking up — please wait about a minute and try again.",
+    });
+  }
 
   if (res.status === 401 && auth && !isRetry && tokenStorage.getRefresh()) {
     const newAccess = await refreshAccessToken();
