@@ -2,7 +2,9 @@
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/school_logo.png" />
+    <link rel="icon" type="image/png" href="/favicon-64.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" as="image" href="/loader-medallion.webp" type="image/webp" fetchpriority="high" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#181b27" />
     <meta name="color-scheme" content="dark light" />
@@ -12,7 +14,7 @@
     <!-- display=swap: text renders instantly in a system font, then swaps in. Never blocks. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet" />
 
     <!--
       Runs BEFORE first paint so the page never flashes the wrong theme.
@@ -34,44 +36,356 @@
       })();
     </script>
 
-    <!--
-      Zero-JS boot screen. Painted by the browser immediately from this
-      HTML, long before the React bundle downloads, so visitors on slow
-      rural connections see a branded screen instead of a blank page.
-      React removes it (with a fade) once the app is ready — see
-      src/components/BootLoader.tsx.
-    -->
-    <style>
-      /* Neumorphic soft-UI palette, hardcoded here (not from tokens.css,
-         which hasn't loaded yet) so the instant paint matches the React
-         BootLoader that takes over a moment later — no visual jump. */
-      #boot{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;
-        background:#e4e7f0;color:#2b2e42;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
-      html[data-theme="dark"] #boot{background:#181b27;color:#e8eaf5}
-      #boot .b-disc{position:relative;width:108px;height:108px;border-radius:50%;
-        background:#e9ecf4;
-        box-shadow:11px 11px 26px rgba(147,153,182,.55),-11px -11px 24px rgba(255,255,255,.95);
-        display:grid;place-items:center;animation:b-float 3.2s ease-in-out infinite}
-      html[data-theme="dark"] #boot .b-disc{background:#1c1f2d;
-        box-shadow:11px 11px 26px rgba(5,6,11,.82),-9px -9px 22px rgba(68,74,108,.45)}
-      #boot .b-ring{position:absolute;inset:-8px;border-radius:50%;
-        border:3px solid transparent;border-top-color:#6a5cff;border-right-color:#1fae7a;
-        animation:b-spin 1s linear infinite}
-      html[data-theme="dark"] #boot .b-ring{border-top-color:#8477ff;border-right-color:#3ecf96}
-      #boot .b-core{width:62%;height:62%;border-radius:50%;background:#e9ecf4;
-        box-shadow:inset 5px 5px 11px rgba(142,148,178,.6),inset -5px -5px 11px rgba(255,255,255,.85)}
-      html[data-theme="dark"] #boot .b-core{background:#1c1f2d;
-        box-shadow:inset 5px 5px 11px rgba(4,5,10,.82),inset -4px -4px 10px rgba(66,72,104,.4)}
-      @keyframes b-spin{to{transform:rotate(360deg)}}
-      @keyframes b-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-      @media (prefers-reduced-motion:reduce){#boot .b-ring,#boot .b-disc{animation:none}}
+    <!-- ══ 1/4 · HEAD SCRIPT ═══════════════════════════════════════════════ -->
+    <script>
+    (function(){
+     var d=document.documentElement,
+         c=window.TVVIntro={oncePerSession:true,revealMs:4200,maxWaitMs:2500,failsafeMs:12000};
+     try{
+      var seen=c.oncePerSession&&sessionStorage.getItem('tvv-intro')==='1';
+      if(/[?&]intro=(1|replay)(&|$)/.test(location.search))seen=false;
+      if(!seen)d.classList.add('tvv-on','tvv-lock');
+     }catch(e){d.classList.add('tvv-on','tvv-lock')}
+    })();
+    </script>
+
+    <!-- ══ 2/4 · INTRO STYLES ══════════════════════════════════════════════ -->
+    <style id="tvv-intro-css">
+    @font-face{font-family:"TVV Cinzel";font-weight:700;font-style:normal;font-display:block;src:url(data:font/woff2;base64,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) format("woff2")}
+    
+    /* root — isolated from any site CSS, always black + gold, never theme-aware */
+    #tvv-loader{all:initial;display:none;position:fixed;inset:0;z-index:2147483000;overflow:hidden;background:#000;color-scheme:dark;contain:layout paint style;touch-action:none;-webkit-tap-highlight-color:transparent;
+     --tvv-font:"TVV Cinzel","Cinzel","Trajan Pro 3","Trajan Pro",Optima,"Palatino Linotype",Georgia,serif;
+     --sz:min(80vw,60vh,600px);
+     transition:background-color .9s cubic-bezier(.4,0,.2,1) .35s}
+    @supports(height:1svh){#tvv-loader{--sz:min(80vw,60svh,600px)}}
+    html.tvv-on #tvv-loader{display:block}
+    html.tvv-lock{overflow:hidden;overscroll-behavior:none}
+    #tvv-loader *,#tvv-loader *::before,#tvv-loader *::after{box-sizing:border-box}
+    #tvv-loader svg,#tvv-loader img{display:block}
+    #tvv-loader.is-exit{background-color:rgba(0,0,0,0);pointer-events:none}
+    #tvv-loader:not(.is-play) .tvv-stage{visibility:hidden}
+    .tvv-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+    .tvv-stage{position:absolute;inset:0}
+    
+    /* ambient light + dust */
+    .tvv-bloom{position:absolute;left:50%;top:50%;width:calc(var(--sz)*1.9);height:calc(var(--sz)*1.9);margin:calc(var(--sz)*-.95) 0 0 calc(var(--sz)*-.95);pointer-events:none;
+     background:radial-gradient(closest-side,rgba(255,244,214,.07),rgba(255,176,64,.17) 30%,rgba(255,146,36,.06) 62%,rgba(255,140,30,0))}
+    .tvv-dust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+    
+    /* the mark */
+    .tvv-mark{position:absolute;left:50%;top:50%;width:var(--sz);height:var(--sz);margin:calc(var(--sz)/-2) 0 0 calc(var(--sz)/-2);
+     transition:opacity .85s cubic-bezier(.65,0,.35,1),transform 1.1s cubic-bezier(.4,0,.2,1)}
+    .tvv-dolly,.tvv-back,.tvv-front,.tvv-glow,.tvv-sweep{position:absolute;inset:0}
+    .tvv-back>*,.tvv-front{width:100%;height:100%}
+    .tvv-glow{left:3.75%;top:2.63%;right:auto;bottom:auto;width:91.66%;height:90.03%;border-radius:50%;
+     box-shadow:0 0 38px 4px rgba(255,176,60,.30),inset 0 0 28px rgba(255,190,70,.12)}
+    .tvv-navy{position:absolute;left:4.28%;top:3.15%;width:90.49%;height:88.99%;border-radius:50%;
+     background:radial-gradient(circle at 50% 42%,#132a5c 0%,#0a1836 60%,#040a1c 100%)}
+    .tvv-med{position:absolute;inset:0;clip-path:ellipse(31.74% 30.7% at 49.76% 46.09%)}
+    .tvv-settle{position:absolute;inset:0;transform-origin:49.76% 46.09%;transform:scale(1.035)}
+    .tvv-img{position:absolute;left:17.862%;top:15.231%;width:63.796%;height:61.722%;pointer-events:none;-webkit-user-drag:none;user-select:none}
+    .tvv-rays{position:absolute;inset:0;width:100%;height:100%;opacity:.3;transform-origin:49.76% 37.48%}
+    .tvv-flame{position:absolute;left:39.63%;top:51.59%;width:19.94%;height:19.94%;border-radius:50%;opacity:.5;
+     background:radial-gradient(closest-side,rgba(255,210,122,.95),rgba(255,154,42,.45) 45%,rgba(255,122,16,0))}
+    .tvv-veil{position:absolute;inset:0;background:#000;opacity:0}
+    
+    /* front vector layer */
+    .tvv-front{overflow:visible}
+    .tvv-rg{fill:none;stroke-dasharray:1;stroke-dashoffset:0}
+    .tvv-comet{fill:none;stroke-linecap:round;stroke-dasharray:.05 .95;opacity:0}
+    .tvv-ch,.tvv-hs{font-family:var(--tvv-font);font-weight:700;fill:url(#tvv-gold);stroke:#5c3504;paint-order:stroke;text-rendering:geometricPrecision}
+    .tvv-ch{stroke-width:1.2px}
+    .tvv-hs{stroke-width:1.5px}
+    .tvv-stem{fill:none;stroke:url(#tvv-goldH);stroke-width:3.5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0}
+    .tvv-lf{fill:url(#tvv-leaf);stroke:#7a4a06;stroke-width:.8}
+    
+    /* one light pass across the finished seal */
+    .tvv-sweep{left:3%;top:1.95%;right:auto;bottom:auto;width:93.14%;height:91.39%;border-radius:50%;overflow:hidden;pointer-events:none}
+    .tvv-sweep i{position:absolute;top:-12%;bottom:-12%;left:0;width:26%;transform:translateX(480%) skewX(-18deg);
+     background:linear-gradient(90deg,rgba(255,246,214,0),rgba(255,244,210,.5) 50%,rgba(255,246,214,0));mix-blend-mode:screen}
+    
+    /* hairline progress + skip */
+    .tvv-line{position:absolute;left:50%;top:calc(50% + var(--sz)/2 + clamp(20px,4.2vh,40px));width:min(44vw,220px);height:1px;transform:translateX(-50%);background:rgba(255,244,214,.12);overflow:hidden}
+    .tvv-line i{position:absolute;inset:0;transform-origin:left;background:linear-gradient(90deg,rgba(201,150,43,0),#e9c46a 45%,#fff3c4)}
+    .tvv-skip{all:unset;box-sizing:border-box;position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));padding:16px 18px;
+     font:700 11px/1 var(--tvv-font);letter-spacing:.3em;color:rgba(255,244,214,.5);cursor:pointer;transition:color .25s,opacity .6s;-webkit-tap-highlight-color:transparent}
+    .tvv-skip:hover{color:rgba(255,244,214,.95)}
+    .tvv-skip:focus-visible{outline:2px solid #e9c46a;outline-offset:-4px;border-radius:2px;color:#fff3c4}
+    
+    /* ── timeline (only while playing). Base styles above are the FINISHED state, so
+          reduced-motion / no-animation simply shows the finished seal. ───────────── */
+    .is-play .tvv-bloom{animation:tvv-bloom 2.6s cubic-bezier(.16,1,.3,1) .3s backwards}
+    .is-play .tvv-dust{animation:tvv-fade 2.4s ease-out 1.1s backwards}
+    .is-play .tvv-dolly{will-change:transform;animation:tvv-dolly 4.6s cubic-bezier(.22,.61,.36,1) backwards}
+    .is-play .tvv-glow{will-change:opacity;animation:tvv-fade 1.6s ease-out 1.7s backwards}
+    .is-play .tvv-navy{animation:tvv-fade 1.3s ease-out .8s backwards}
+    .is-play .tvv-med{animation:tvv-iris 1.5s cubic-bezier(.22,.9,.25,1) 1.3s backwards}
+    .is-play .tvv-settle{animation:tvv-settle 2.6s cubic-bezier(.16,1,.3,1) 1.3s backwards}
+    .is-play .tvv-veil{animation:tvv-veil 1.6s cubic-bezier(.3,.1,.2,1) 1.3s backwards}
+    .is-play .tvv-rays{animation:tvv-rays 1.8s cubic-bezier(.16,1,.3,1) 1.6s backwards}
+    .is-play .tvv-flame{animation:tvv-fade 1.3s ease-out 2.3s backwards,tvv-breathe 3.6s ease-in-out 3.6s infinite alternate}
+    .is-play .tvv-rg{animation:tvv-draw var(--t,1.5s) cubic-bezier(.65,0,.35,1) var(--d,.45s) backwards}
+    .is-play .tvv-comet{animation:tvv-comet 1.5s cubic-bezier(.65,0,.35,1) .45s}
+    .is-play .tvv-ch{animation:tvv-letter var(--t,1s) cubic-bezier(.16,1,.3,1) var(--d) backwards}
+    .is-play .tvv-stem{animation:tvv-draw 1.1s cubic-bezier(.4,0,.2,1) 2.3s backwards}
+    .is-play .tvv-lf{animation:tvv-leaf .7s cubic-bezier(.22,.9,.3,1) calc(2.35s + var(--i)*.05s) backwards}
+    .is-play .tvv-star{animation:tvv-star 1.1s cubic-bezier(.16,1,.3,1) var(--d) backwards}
+    .is-play .tvv-hs{animation:tvv-rise 1.1s cubic-bezier(.16,1,.3,1) 3s backwards}
+    .is-play .tvv-sweep i{will-change:transform;animation:tvv-sweep 1.3s cubic-bezier(.45,.05,.3,1) 3.3s backwards}
+    .is-play .tvv-line{animation:tvv-fade .8s ease-out .4s backwards}
+    .is-play .tvv-line i{animation:tvv-line 3.5s cubic-bezier(.45,0,.2,1) .5s backwards}
+    .is-play .tvv-skip{animation:tvv-fade .8s ease-out 1.2s backwards}
+    .is-wait .tvv-line i{animation:tvv-wait 1.4s ease-in-out infinite}
+    
+    @keyframes tvv-fade{from{opacity:0}}
+    @keyframes tvv-bloom{from{opacity:0;transform:scale(.8)}}
+    @keyframes tvv-dolly{from{transform:scale(.955)}}
+    @keyframes tvv-iris{from{clip-path:ellipse(.8% .8% at 49.76% 46.09%)}}
+    @keyframes tvv-settle{from{transform:scale(1.12)}}
+    @keyframes tvv-veil{from{opacity:1}}
+    @keyframes tvv-rays{from{opacity:0;transform:scale(.86)}}
+    @keyframes tvv-breathe{from{opacity:.4}to{opacity:.62}}
+    @keyframes tvv-draw{from{stroke-dashoffset:1;opacity:0}3%{opacity:1}}
+    @keyframes tvv-comet{from{stroke-dashoffset:.05;opacity:1}to{stroke-dashoffset:-.95;opacity:1}}
+    @keyframes tvv-letter{from{opacity:0;transform:translateY(var(--dy))}}
+    @keyframes tvv-leaf{from{opacity:0;transform:scale(0)}}
+    @keyframes tvv-star{from{opacity:0;transform:scale(.35) rotate(-60deg)}}
+    @keyframes tvv-rise{from{opacity:0;transform:translateY(16px)}}
+    @keyframes tvv-sweep{from{transform:translateX(-150%) skewX(-18deg)}}
+    @keyframes tvv-line{from{transform:scaleX(0)}}
+    @keyframes tvv-wait{0%,100%{opacity:.4}50%{opacity:1}}
+    
+    /* ── exit: mark drifts forward and dissolves, curtain lifts on the site ── */
+    .is-exit .tvv-mark{opacity:0;transform:scale(1.05)}
+    .tvv-bloom,.tvv-dust,.tvv-line,.tvv-skip{transition:opacity .6s ease}
+    .is-exit .tvv-bloom,.is-exit .tvv-dust,.is-exit .tvv-line,.is-exit .tvv-skip{opacity:0}
+    
+    @media(prefers-reduced-motion:reduce){
+     #tvv-loader *{animation:none!important}
+     #tvv-loader.is-play .tvv-mark{animation:tvv-fade 1s ease-out backwards!important}
+     .tvv-dust{display:none}
+    }
+    @media print{#tvv-loader{display:none!important}}
     </style>
   </head>
   <body>
-    <div id="boot" aria-hidden="true">
-      <div class="b-disc"><div class="b-ring"></div><div class="b-core"></div></div>
+    <!-- ══ 3/4 · INTRO MARKUP ══════════════════════════════════════════════ -->
+    <div id="tvv-loader" role="dialog" aria-modal="true" aria-label="Loading Tufanganj Vivekanand Vidyalaya">
+     <span class="tvv-sr">Loading Tufanganj Vivekanand Vidyalaya (H.S.). Press Escape to skip the intro.</span>
+     <div class="tvv-stage">
+      <div class="tvv-bloom"></div>
+      <canvas class="tvv-dust" aria-hidden="true"></canvas>
+      <div class="tvv-mark">
+       <div class="tvv-dolly">
+        <div class="tvv-glow"></div>
+        <div class="tvv-back">
+         <div class="tvv-navy"></div>
+         <div class="tvv-med">
+          <div class="tvv-settle">
+           <img class="tvv-img" alt="" width="800" height="774" decoding="async" src="/loader-medallion.webp" fetchpriority="high">
+           <svg class="tvv-rays" viewBox="0 0 1254 1254" aria-hidden="true"><defs><radialGradient id="tvv-rayg" gradientUnits="userSpaceOnUse" cx="624" cy="470" r="560"><stop offset="0" stop-color="#ffd27a" stop-opacity=".6"/><stop offset="1" stop-color="#ff9a2a" stop-opacity="0"/></radialGradient></defs><g id="tvv-raysg"></g></svg>
+           <div class="tvv-flame"></div>
+          </div>
+          <div class="tvv-veil"></div>
+         </div>
+        </div>
+        <svg class="tvv-front" viewBox="0 0 1254 1254" aria-hidden="true" focusable="false">
+         <defs>
+          <linearGradient id="tvv-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c2"/><stop offset=".3" stop-color="#ffd35a"/><stop offset=".6" stop-color="#e8a222"/><stop offset=".85" stop-color="#b26f10"/><stop offset="1" stop-color="#f6cb5c"/></linearGradient>
+          <linearGradient id="tvv-goldH" gradientUnits="userSpaceOnUse" x1="120" y1="60" x2="1140" y2="1180"><stop offset="0" stop-color="#ffefa8"/><stop offset=".25" stop-color="#e5a62a"/><stop offset=".5" stop-color="#fff2b4"/><stop offset=".75" stop-color="#b97b16"/><stop offset="1" stop-color="#ffd970"/></linearGradient>
+          <linearGradient id="tvv-leaf" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#a86a0d"/><stop offset=".6" stop-color="#f0b83a"/><stop offset="1" stop-color="#fff0a8"/></linearGradient>
+          <path id="tvv-leafp" d="M0 0C9 -12 10 -34 0 -56C-10 -34 -9 -12 0 0Z"/>
+         </defs>
+    
+         <!-- rims: closed arcs starting at 12 o'clock, so they draw from the top. Outer runs clockwise, inner counter-clockwise -->
+         <path class="tvv-rg" pathLength="1" d="M621.7 33A574.7 564.5 0 1 1 621.7 1162A574.7 564.5 0 1 1 621.7 33" stroke="url(#tvv-goldH)" stroke-width="13" style="--d:.45s;--t:1.5s"/>
+         <path class="tvv-rg" pathLength="1" d="M621.7 49.5A558 548 0 1 1 621.7 1145.5A558 548 0 1 1 621.7 49.5" stroke="url(#tvv-goldH)" stroke-width="3" style="--d:.6s;--t:1.5s"/>
+         <path class="tvv-rg" pathLength="1" d="M621.7 41.5A566 556 0 1 1 621.7 1153.5A566 556 0 1 1 621.7 41.5" stroke="#fff6cf" stroke-opacity=".4" stroke-width="1.2" style="--d:.55s;--t:1.5s"/>
+         <path class="tvv-rg" pathLength="1" d="M624 189A402 389 0 1 0 624 967A402 389 0 1 0 624 189" stroke="url(#tvv-goldH)" stroke-width="13" style="--d:.7s;--t:1.4s"/>
+         <path class="tvv-rg" pathLength="1" d="M624 196A395 382 0 1 0 624 960A395 382 0 1 0 624 196" stroke="#fff6cf" stroke-opacity=".55" stroke-width="1.5" style="--d:.8s;--t:1.4s"/>
+         <path class="tvv-comet" pathLength="1" d="M621.7 33A574.7 564.5 0 1 1 621.7 1162A574.7 564.5 0 1 1 621.7 33" stroke="#ffd27a" stroke-opacity=".35" stroke-width="20"/>
+         <path class="tvv-comet" pathLength="1" d="M621.7 33A574.7 564.5 0 1 1 621.7 1162A574.7 564.5 0 1 1 621.7 33" stroke="#fff6d0" stroke-width="8"/>
+    
+         <g id="tvv-topTxt"></g>
+         <g id="tvv-botTxt"></g>
+         <text class="tvv-hs" x="622" y="1053" text-anchor="middle" font-size="98">(H.S.)</text>
+    
+         <g transform="translate(161 746)"><g class="tvv-star" style="--d:2.7s"><path d="M0-38L8-8 38 0 8 8 0 38-8 8-38 0-8-8Z" fill="url(#tvv-gold)"/><path transform="rotate(45) scale(.55)" d="M0-38L8-8 38 0 8 8 0 38-8 8-38 0-8-8Z" fill="url(#tvv-gold)"/></g></g>
+         <g transform="translate(1091 750)"><g class="tvv-star" style="--d:2.85s"><path d="M0-38L8-8 38 0 8 8 0 38-8 8-38 0-8-8Z" fill="url(#tvv-gold)"/><path transform="rotate(45) scale(.55)" d="M0-38L8-8 38 0 8 8 0 38-8 8-38 0-8-8Z" fill="url(#tvv-gold)"/></g></g>
+    
+         <g id="tvv-lauL"></g><g id="tvv-lauR" transform="translate(1243 0) scale(-1 1)"></g>
+        </svg>
+        <div class="tvv-sweep"><i></i></div>
+       </div>
+      </div>
+      <div class="tvv-line"><i></i></div>
+      <button class="tvv-skip" type="button" aria-label="Skip intro">SKIP</button>
+     </div>
+    </div>
+
     </div>
     <div id="root"></div>
+    <!-- ══ 4/4 · INTRO SCRIPT ══════════════════════════════════════════════ -->
+    <script>
+    (() => {
+     'use strict';
+     const html = document.documentElement, root = document.getElementById('tvv-loader'), api = window.TVVIntro || (window.TVVIntro = {});
+     if (!root) return;
+     const cfg = api, $ = s => root.querySelector(s), NS = 'http://www.w3.org/2000/svg';
+     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+     const FONT = '"TVV Cinzel","Cinzel","Trajan Pro 3","Trajan Pro",Optima,"Palatino Linotype",Georgia,serif';
+     const CX = 621.7, CY = 597.5;
+     const sleep = ms => new Promise(r => setTimeout(r, ms));
+     const el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+     const fire = n => document.dispatchEvent(new CustomEvent(n));
+    
+     /* ── vector detail, generated from the original geometry ── */
+    
+     /* lettering on the elliptical ring. Letters keep natural proportions (≥ minSx); leftover arc becomes tracking.
+        Each letter reveals outward from the centre of its arc. */
+     function ringText(host, str, o) {
+      const c = document.createElement('canvas').getContext('2d'); c.font = '700 100px ' + FONT;
+      const ch = [...str], w = ch.map(x => c.measureText(x).width * o.fs / 100), sum = w.reduce((a, b) => a + b, 0), n = ch.length;
+      const rb = (o.rx + o.ry) / 2, target = o.span * Math.PI / 180 * rb;
+      const sx = Math.max(o.minSx, Math.min(1, (target - o.ls * (n - 1)) / sum));
+      const ls = Math.max(o.ls * .5, (target - sx * sum) / (n - 1)), total = sx * sum + ls * (n - 1);
+      const count = ch.filter(x => x !== ' ').length, mid = (count - 1) / 2;
+      let cum = 0, k = 0;
+      ch.forEach((x, i) => {
+       const wi = w[i] * sx, m = cum + wi / 2; cum += wi + ls; if (x === ' ') return;
+       const off = (m - total / 2) / rb * 57.29578, th = o.top ? 90 - off : 270 + off, r = th * Math.PI / 180;
+       const px = CX + o.rx * Math.cos(r), py = CY - o.ry * Math.sin(r), rot = o.top ? 90 - th : 270 - th;
+       const g = el('g', { transform: `translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${rot.toFixed(2)}) scale(${sx.toFixed(3)} 1)` });
+       const t = el('text', { class: 'tvv-ch', x: 0, y: 0, 'text-anchor': 'middle', 'font-size': o.fs,
+        style: `--d:${(o.d0 + Math.abs(k - mid) * o.step).toFixed(3)}s;--dy:${o.dy}px` });
+       t.textContent = x; g.appendChild(t); host.appendChild(g); k++;
+      });
+     }
+    
+     /* laurel: leaves along a bezier stem, mirrored for the right side */
+     function laurel(host) {
+      const P = [[470, 1037], [345, 985], [240, 905], [212, 775]];
+      const B = t => { const u = 1 - t, f = i => u*u*u*P[0][i] + 3*u*u*t*P[1][i] + 3*u*t*t*P[2][i] + t*t*t*P[3][i],
+       d = i => 3*u*u*(P[1][i]-P[0][i]) + 6*u*t*(P[2][i]-P[1][i]) + 3*t*t*(P[3][i]-P[2][i]);
+       return { x: f(0), y: f(1), a: Math.atan2(d(1), d(0)) * 57.29578 } };
+      host.appendChild(el('path', { class: 'tvv-stem', pathLength: 1, d: 'M470 1037C345 985 240 905 212 775' }));
+      const add = (t, side, i, s) => { const b = B(t), g = el('g', { transform: `translate(${b.x.toFixed(1)} ${b.y.toFixed(1)}) rotate(${(b.a + 90 + side * 40).toFixed(1)}) scale(${s.toFixed(2)})` });
+       g.appendChild(el('use', { href: '#tvv-leafp', class: 'tvv-lf', style: '--i:' + i })); host.appendChild(g) };
+      for (let k = 0; k < 10; k++) { const t = .1 + k * .088, s = .55 + .7 * t; add(t, -1, k, s); add(t, 1, k, s) }
+      add(1, 0, 10, 1);
+     }
+    
+     let built = false;
+     function build() {
+      if (built) return; built = true;
+      ringText($('#tvv-topTxt'), 'TUFANGANJ VIVEKANAND VIDYALAYA', { rx: 451, ry: 442, fs: 86, ls: 5, span: 200, top: 1, dy: -18, d0: 1.9, step: .045, minSx: .88 });
+      ringText($('#tvv-botTxt'), 'KNOWLEDGE  \u2022  CHARACTER  \u2022  PROGRESS', { rx: 508, ry: 513, fs: 31, ls: 4, span: 72, top: 0, dy: 14, d0: 2.6, step: .035, minSx: .88 });
+      const rg = $('#tvv-raysg');
+      for (let i = 0; i < 24; i++) { const a = i * 15 * Math.PI / 180, b = 3 * Math.PI / 180;
+       rg.appendChild(el('path', { d: `M624 470L${624 + 700 * Math.cos(a - b)} ${470 + 700 * Math.sin(a - b)}L${624 + 700 * Math.cos(a + b)} ${470 + 700 * Math.sin(a + b)}Z`, fill: 'url(#tvv-rayg)' })); }
+      laurel($('#tvv-lauL')); laurel($('#tvv-lauR'));
+     }
+    
+     /* ── gold dust: a few cached sprites, no per-frame gradients, stops with the intro ── */
+     const dust = (() => {
+      const cv = $('.tvv-dust'), cx = cv.getContext('2d'); let W, H, P = [], raf = 0, last = 0, spr = null;
+      const lowPower = (navigator.deviceMemory && navigator.deviceMemory <= 2) || reduce.matches;
+      function sprite() { spr = document.createElement('canvas'); spr.width = spr.height = 48; const g = spr.getContext('2d'), gr = g.createRadialGradient(24, 24, 0, 24, 24, 24);
+       gr.addColorStop(0, 'rgba(255,230,160,1)'); gr.addColorStop(.25, 'rgba(255,196,90,.5)'); gr.addColorStop(1, 'rgba(255,160,40,0)'); g.fillStyle = gr; g.fillRect(0, 0, 48, 48) }
+      function size() { W = cv.width = innerWidth; H = cv.height = innerHeight; const n = lowPower ? 0 : (W < 700 ? 12 : 22);
+       P = Array.from({ length: n }, () => ({ x: Math.random() * W, y: Math.random() * H, r: 2.5 + Math.random() * 4.5, v: 5 + Math.random() * 11, p: Math.random() * 6, a: .12 + Math.random() * .28 })) }
+      function frame(t) {
+       const dt = Math.min(.05, (t - last) / 1000 || 0); last = t; cx.clearRect(0, 0, W, H); cx.globalCompositeOperation = 'lighter';
+       for (const e of P) { e.y -= e.v * dt; e.p += dt * .7; e.x += Math.sin(e.p) * 6 * dt; if (e.y < -20) { e.y = H + 20; e.x = Math.random() * W }
+        cx.globalAlpha = e.a * (.7 + .3 * Math.sin(e.p * 2)); cx.drawImage(spr, e.x - e.r, e.y - e.r, e.r * 2, e.r * 2) }
+       raf = requestAnimationFrame(frame);
+      }
+      return {
+       start() { if (raf || lowPower) return; if (!spr) sprite(); size(); addEventListener('resize', size); last = performance.now(); raf = requestAnimationFrame(frame) },
+       stop() { cancelAnimationFrame(raf); raf = 0; removeEventListener('resize', size); cx.clearRect(0, 0, cv.width, cv.height) }
+      };
+     })();
+    
+     /* ── page-level side effects while the intro is up ── */
+     let inerted = [], saved = null, made = null;
+     function lock() {
+      html.classList.add('tvv-on', 'tvv-lock');
+      inerted = [...document.body.children].filter(e => e !== root && e.tagName !== 'SCRIPT' && !e.inert); inerted.forEach(e => e.inert = true);
+      const m = [...document.querySelectorAll('meta[name="theme-color"]')];
+      if (!m.length) { made = document.createElement('meta'); made.name = 'theme-color'; document.head.appendChild(made); m.push(made) }
+      saved = m.map(x => [x, x.getAttribute('content')]); m.forEach(x => x.setAttribute('content', '#000000'));
+     }
+     function unlock() {
+      html.classList.remove('tvv-lock'); inerted.forEach(e => e.inert = false); inerted = [];
+      if (saved) { saved.forEach(([x, c]) => c === null ? x.remove() : x.setAttribute('content', c)); saved = null } made = null;
+     }
+    
+     /* ── timeline control ── */
+     let st = null; const holds = [];
+     api.hold = p => { holds.push(Promise.resolve(p).catch(() => {})) };
+    
+     const fontsReady = () => document.fonts && document.fonts.load ? document.fonts.load('700 100px "TVV Cinzel"', 'TUFANGANJ').catch(() => {}) : Promise.resolve();
+     const imageReady = () => { const i = $('.tvv-img'); return i.decode ? i.decode().catch(() => {}) : Promise.resolve() };
+     const fastForward = () => { try { (root.getAnimations ? root.getAnimations({ subtree: true }) : document.getAnimations()).forEach(a => { try { a.updatePlaybackRate(6) } catch (e) {} }) } catch (e) {} };
+    
+     async function play() {
+      root.classList.remove('is-play', 'is-exit', 'is-wait', 'is-skip');
+      const my = st = { skipped: false, exiting: false, t: [] };
+      lock();
+      await Promise.race([Promise.all([fontsReady(), imageReady()]), sleep(1400)]);
+      if (my !== st) return;
+      build(); void root.offsetWidth;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+       if (my !== st) return;
+       root.classList.add('is-play'); dust.start();
+       if (my.skipped) { fastForward(); my.t.push(setTimeout(exit, 520)) }
+       else my.t.push(setTimeout(revealed, reduce.matches ? 1200 : cfg.revealMs));
+      }));
+      my.t.push(setTimeout(exit, cfg.failsafeMs));
+     }
+    
+     function revealed() {
+      const my = st; if (!my || my.exiting) return;
+      const load = document.readyState === 'complete' ? null : new Promise(r => addEventListener('load', r, { once: true }));
+      if (!load && !holds.length) return exit();
+      root.classList.add('is-wait');
+      Promise.race([Promise.all([load, ...holds]), sleep(cfg.maxWaitMs)]).then(() => { if (st === my) exit() });
+     }
+    
+     function skip() {
+      const my = st; if (!my || my.exiting || my.skipped) return;
+      my.skipped = true; my.t.forEach(clearTimeout); my.t = []; root.classList.add('is-skip');
+      if (reduce.matches) return exit();
+      if (root.classList.contains('is-play')) { fastForward(); my.t.push(setTimeout(exit, 520)) }
+     }
+    
+     function exit() {
+      const my = st; if (!my || my.exiting) return;
+      my.exiting = true; my.t.forEach(clearTimeout); my.t = [];
+      root.classList.remove('is-wait'); root.classList.add('is-exit');
+      unlock(); html.classList.add('tvv-exit'); fire('tvv:intro-exit');
+      my.t.push(setTimeout(dust.stop, 900), setTimeout(done, 1350));
+     }
+    
+     function done() {
+      dust.stop(); html.classList.remove('tvv-on', 'tvv-exit'); html.classList.add('tvv-done');
+      try { if (cfg.oncePerSession) sessionStorage.setItem('tvv-intro', '1') } catch (e) {}
+      fire('tvv:intro-done');
+     }
+    
+     /* if anything ever goes wrong, get out of the way — the site must never stay blocked */
+     function bail() { try { html.classList.remove('tvv-on', 'tvv-lock', 'tvv-exit'); html.classList.add('tvv-done'); unlock() } catch (e) {} }
+    
+     api.skip = skip;
+     api.replay = () => { if (html.classList.contains('tvv-on')) return; html.classList.remove('tvv-done'); play().catch(bail) };
+    
+     root.querySelector('.tvv-skip').addEventListener('click', skip);
+     addEventListener('keydown', e => { if (st && !st.exiting && html.classList.contains('tvv-on') && (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); skip() } });
+    
+     if (html.classList.contains('tvv-on')) play().catch(bail);
+    })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

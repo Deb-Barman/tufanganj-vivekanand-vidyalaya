@@ -1,14 +1,36 @@
-from rest_framework import generics
+from django.db import transaction
+from rest_framework import generics, serializers as drf_serializers, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny
 
 from accounts.permissions import IsAuthenticatedActiveUser, IsSuperAdmin, IsSuperAdminOrReadOnly, IsSuperAdminOrTeacher
 
-from .models import AcademicSession, Attendance, Marksheet, Result, SchoolClass, StudentProfile, Subject, TeacherProfile
+from .models import (
+    AcademicSession,
+    Attendance,
+    Exam,
+    Homework,
+    HomeworkCompletion,
+    Marksheet,
+    Result,
+    SchoolClass,
+    StudentProfile,
+    Subject,
+    TeacherProfile,
+    TimetableEntry,
+)
 from .serializers import (
     AcademicSessionSerializer,
+    ExamSerializer,
+    HomeworkSerializer,
+    TimetableEntrySerializer,
     AttendanceSerializer,
+    BulkAttendanceSerializer,
+    BulkResultSerializer,
     MarksheetSerializer,
+    PublicTeacherSerializer,
     ResultSerializer,
     SchoolClassSerializer,
     StudentProfileSerializer,
@@ -25,13 +47,39 @@ class AcademicSessionListCreateView(generics.ListCreateAPIView):
     queryset = AcademicSession.objects.all()
 
 
+class AcademicSessionDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsSuperAdminOrReadOnly]
+    serializer_class = AcademicSessionSerializer
+    queryset = AcademicSession.objects.all()
+
+
 class SchoolClassListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsSuperAdminOrReadOnly]
+    serializer_class = SchoolClassSerializer
+
+    def get_queryset(self):
+        qs = SchoolClass.objects.select_related("session")
+        session = self.request.query_params.get("session")
+        return qs.filter(session_id=session) if session else qs
+
+
+class SchoolClassDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdminOrReadOnly]
     serializer_class = SchoolClassSerializer
     queryset = SchoolClass.objects.all()
 
 
 class SubjectListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsSuperAdminOrReadOnly]
+    serializer_class = SubjectSerializer
+
+    def get_queryset(self):
+        qs = Subject.objects.select_related("school_class")
+        school_class = self.request.query_params.get("school_class")
+        return qs.filter(school_class_id=school_class) if school_class else qs
+
+
+class SubjectDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdminOrReadOnly]
     serializer_class = SubjectSerializer
     queryset = Subject.objects.all()
@@ -44,7 +92,7 @@ class SubjectListCreateView(generics.ListCreateAPIView):
 
 class PublicTeacherListView(generics.ListAPIView):
     permission_classes = [AllowAny]
-    serializer_class = TeacherProfileSerializer
+    serializer_class = PublicTeacherSerializer
     queryset = TeacherProfile.objects.select_related("user").all()
 
 
@@ -52,6 +100,14 @@ class TeacherProfileListView(generics.ListAPIView):
     permission_classes = [IsAuthenticatedActiveUser]
     serializer_class = TeacherProfileSerializer
     queryset = TeacherProfile.objects.select_related("user").all()
+
+
+class TeacherProfileDetailView(generics.RetrieveUpdateAPIView):
+    """Super Admin edits any teacher's department / bio / subjects (teachers edit their own via /teachers/me/)."""
+
+    permission_classes = [IsSuperAdmin]
+    serializer_class = TeacherProfileSerializer
+    queryset = TeacherProfile.objects.select_related("user")
 
 
 class MyTeacherProfileView(generics.RetrieveUpdateAPIView):
@@ -65,6 +121,52 @@ class MyTeacherProfileView(generics.RetrieveUpdateAPIView):
             obj, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
             return obj
         raise PermissionDenied("Only teachers have a teacher profile to edit here.")
+
+
+# --- Student profiles: staff can list (needed to pick a student when marking
+# attendance/results); only the Super Admin can edit class/roll/guardian. A
+# student sees only their own. Profiles are created automatically when a
+# Student account is created (academics/signals.py). ---
+
+class StudentProfileListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticatedActiveUser]
+    serializer_class = StudentProfileSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = StudentProfile.objects.select_related("user", "school_class")
+        if user.is_super_admin or user.is_teacher:
+            qs = qs.filter(user__is_active_account=True)
+            school_class = self.request.query_params.get("school_class")
+            if school_class == "none":
+                qs = qs.filter(school_class__isnull=True)
+            elif school_class:
+                qs = qs.filter(school_class_id=school_class)
+            search = (self.request.query_params.get("search") or "").strip()
+            if search:
+                from django.db.models import Q
+                qs = qs.filter(Q(user__full_name__icontains=search) | Q(roll_number__icontains=search) | Q(user__username__icontains=search))
+            return qs
+        return qs.filter(user=user)
+
+
+class StudentProfileDetailView(generics.RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticatedActiveUser]
+    serializer_class = StudentProfileSerializer
+
+    def get_permissions(self):
+        # Reads: any active user (queryset below scopes students to themselves).
+        # Writes: Super Admin only.
+        if self.request.method in ("PUT", "PATCH"):
+            return [IsSuperAdmin()]
+        return [IsAuthenticatedActiveUser()]
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = StudentProfile.objects.select_related("user", "school_class")
+        if user.is_super_admin or user.is_teacher:
+            return qs
+        return qs.filter(user=user)
 
 
 # --- Attendance: THE key security boundary. A student's queryset is
@@ -84,9 +186,20 @@ class AttendanceListCreateView(generics.ListCreateAPIView):
             student_id = self.request.query_params.get("student")
             if student_id:
                 qs = qs.filter(student_id=student_id)
+            date = self.request.query_params.get("date")
+            if date:
+                qs = qs.filter(date=date)
+            school_class = self.request.query_params.get("school_class")
+            if school_class:
+                qs = qs.filter(student__school_class_id=school_class)
             return qs
         # Student: hard-scoped to their own profile, ignoring any query params.
         return Attendance.objects.filter(student__user=user)
+
+    def create(self, request, *args, **kwargs):
+        if request.user.is_student:
+            raise PermissionDenied("Students cannot record attendance.")
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         if self.request.user.is_student:
@@ -113,8 +226,17 @@ class ResultListCreateView(generics.ListCreateAPIView):
             student_id = self.request.query_params.get("student")
             if student_id:
                 qs = qs.filter(student_id=student_id)
+            for param in ("subject", "session"):
+                value = self.request.query_params.get(param)
+                if value:
+                    qs = qs.filter(**{f"{param}_id": value})
             return qs
-        return Result.objects.filter(student__user=user)
+        return Result.objects.filter(student__user=user).select_related("subject")
+
+    def create(self, request, *args, **kwargs):
+        if request.user.is_student:
+            raise PermissionDenied("Students cannot record results.")
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         if self.request.user.is_student:
@@ -168,3 +290,199 @@ class MarksheetDetailView(generics.RetrieveDestroyAPIView):
         if not (self.request.user.is_super_admin or self.request.user.is_teacher):
             raise PermissionDenied("You cannot delete a marksheet.")
         instance.delete()
+
+
+# --- Bulk entry (class-wide attendance / marks in one request) -----------------
+# Staff-only. The students in a payload are checked to exist; marks are checked
+# against full marks. All-or-nothing inside one transaction.
+
+class BulkAttendanceView(APIView):
+    permission_classes = [IsSuperAdminOrTeacher]
+
+    @transaction.atomic
+    def post(self, request):
+        ser = BulkAttendanceSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        date = ser.validated_data["date"]
+        saved = 0
+        for rec in ser.validated_data["records"]:
+            Attendance.objects.update_or_create(
+                student=rec["student"], date=date,
+                defaults={"status": rec["status"], "marked_by": request.user},
+            )
+            saved += 1
+        return Response({"saved": saved, "date": str(date)}, status=status.HTTP_200_OK)
+
+
+class BulkResultView(APIView):
+    permission_classes = [IsSuperAdminOrTeacher]
+
+    @transaction.atomic
+    def post(self, request):
+        ser = BulkResultSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        d = ser.validated_data
+        saved = 0
+        for rec in d["records"]:
+            Result.objects.update_or_create(
+                student=rec["student"], subject=d["subject"], session=d["session"],
+                defaults={"marks_obtained": rec["marks_obtained"], "full_marks": d["full_marks"], "recorded_by": request.user},
+            )
+            saved += 1
+        return Response({"saved": saved}, status=status.HTTP_200_OK)
+
+
+# --- Timetable -------------------------------------------------------------
+# Everyone signed in can READ what concerns them; only the Super Admin edits.
+
+def _own_class_id(user):
+    profile = StudentProfile.objects.filter(user=user).only("school_class_id").first()
+    return profile.school_class_id if profile else None
+
+
+class TimetableListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsSuperAdminOrReadOnly]
+    serializer_class = TimetableEntrySerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = TimetableEntry.objects.select_related("subject", "teacher", "school_class")
+        if user.is_student:  # hard-scoped to the student's own class
+            return qs.filter(school_class_id=_own_class_id(user))
+        q = self.request.query_params
+        if q.get("school_class"):
+            qs = qs.filter(school_class_id=q["school_class"])
+        if q.get("mine") == "1" and user.is_teacher:
+            qs = qs.filter(teacher=user)
+        if q.get("weekday") not in (None, ""):
+            qs = qs.filter(weekday=q["weekday"])
+        return qs
+
+
+class TimetableDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsSuperAdminOrReadOnly]
+    serializer_class = TimetableEntrySerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = TimetableEntry.objects.select_related("subject", "teacher")
+        return qs.filter(school_class_id=_own_class_id(user)) if user.is_student else qs
+
+
+# --- Homework --------------------------------------------------------------
+
+class HomeworkListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticatedActiveUser]
+    serializer_class = HomeworkSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Homework.objects.select_related("subject", "school_class", "created_by")
+        if user.is_student:
+            qs = qs.filter(school_class_id=_own_class_id(user))
+        elif self.request.query_params.get("school_class"):
+            qs = qs.filter(school_class_id=self.request.query_params["school_class"])
+        if self.request.query_params.get("upcoming") == "1":
+            from django.utils import timezone
+
+            qs = qs.filter(due_date__gte=timezone.localdate())
+        return qs
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        user = self.request.user
+        if user.is_authenticated and user.is_student:
+            ctx["done_ids"] = set(HomeworkCompletion.objects.filter(student__user=user).values_list("homework_id", flat=True))
+        return ctx
+
+    def create(self, request, *args, **kwargs):
+        if request.user.is_student:
+            raise PermissionDenied("Students cannot set homework.")
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+class HomeworkDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Staff can change/delete homework they set (Super Admin: any). Students can only read their class's."""
+
+    permission_classes = [IsAuthenticatedActiveUser]
+    serializer_class = HomeworkSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Homework.objects.select_related("subject", "school_class", "created_by")
+        if user.is_student:
+            return qs.filter(school_class_id=_own_class_id(user))
+        if user.is_teacher and self.request.method not in ("GET", "HEAD", "OPTIONS"):
+            return qs.filter(created_by=user)
+        return qs
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        if request.user.is_student and request.method not in ("GET", "HEAD", "OPTIONS"):
+            raise PermissionDenied("Students cannot change homework.")
+
+
+class HomeworkDoneView(APIView):
+    """POST /academics/homework/<id>/done/ {done: true|false} — a student ticks or unticks their own item."""
+
+    permission_classes = [IsAuthenticatedActiveUser]
+
+    def post(self, request, pk):
+        if not request.user.is_student:
+            raise PermissionDenied("Only students tick homework as done.")
+        profile = StudentProfile.objects.filter(user=request.user).first()
+        hw = Homework.objects.filter(pk=pk, school_class_id=profile.school_class_id if profile else None).first()
+        if hw is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        done = bool(request.data.get("done", True))
+        if done:
+            HomeworkCompletion.objects.get_or_create(homework=hw, student=profile)
+        else:
+            HomeworkCompletion.objects.filter(homework=hw, student=profile).delete()
+        return Response({"id": str(hw.id), "done": done})
+
+
+# --- Exams -----------------------------------------------------------------
+
+class ExamListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticatedActiveUser]
+    serializer_class = ExamSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Exam.objects.select_related("subject", "school_class")
+        if user.is_student:
+            qs = qs.filter(school_class_id=_own_class_id(user))
+        elif self.request.query_params.get("school_class"):
+            qs = qs.filter(school_class_id=self.request.query_params["school_class"])
+        if self.request.query_params.get("upcoming") == "1":
+            from django.utils import timezone
+
+            qs = qs.filter(date__gte=timezone.localdate())
+        return qs
+
+    def create(self, request, *args, **kwargs):
+        if request.user.is_student:
+            raise PermissionDenied("Students cannot schedule exams.")
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+class ExamDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticatedActiveUser]
+    serializer_class = ExamSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Exam.objects.select_related("subject", "school_class")
+        return qs.filter(school_class_id=_own_class_id(user)) if user.is_student else qs
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        if request.user.is_student and request.method not in ("GET", "HEAD", "OPTIONS"):
+            raise PermissionDenied("Students cannot change exams.")

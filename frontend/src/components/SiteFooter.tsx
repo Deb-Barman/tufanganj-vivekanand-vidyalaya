@@ -1,25 +1,10 @@
-import { SocialLinks } from "./SocialLinks";
-import type { SocialLink } from "./SocialLinks";
+import { Link } from "react-router-dom";
+import { MORE, NAV, SITE } from "../config/site";
+import { SocialDock } from "./SocialDock";
 import "./SiteFooter.css";
 
-// Only real, published accounts for the school go here — nothing invented.
-// Facebook is the one confirmed in /#contact; add others here once Deb
-// shares a real handle for them.
-const SOCIAL_LINKS: SocialLink[] = [
-  {
-    name: "Facebook",
-    href: "https://facebook.com/TufanganjVivekanandaVidyalaya",
-    brand: "#0866ff",
-    glow: "rgba(8, 102, 255, .5)",
-    icon: (
-      <svg viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M16 8.05A8 8 0 1 0 6.74 16V10.37H4.72V8.05h2.02V6.3c0-2 1.19-3.1 3-3.1.87 0 1.78.16 1.78.16v1.95h-1c-.99 0-1.3.61-1.3 1.24v1.5h2.21l-.35 2.32H9.2V16A8 8 0 0 0 16 8.05" />
-      </svg>
-    ),
-  },
-];
-
 export function SiteFooter() {
+  const year = new Date().getFullYear();
   return (
     <footer className="site-footer">
       <div className="wrap footer-grid">
@@ -29,32 +14,52 @@ export function SiteFooter() {
             <br />
             Vidyalaya (H.S.)
           </p>
-          <p>A Higher Secondary institution in Tufanganj, Cooch Behar, West Bengal — Class V to XII, Science &amp; Arts streams.</p>
+          <p>A Higher Secondary institution in {SITE.town.replace(", India", "")} — Class V to XII, Science &amp; Arts streams.</p>
+          <p className="footer-motto">{SITE.motto}</p>
         </div>
         <div className="footer-col">
           <h5>Explore</h5>
-          <a href="/#about">About</a>
-          <a href="/#academics">Academics</a>
-          <a href="/#teachers">Faculty</a>
-          <a href="/#campus">Campus</a>
+          {NAV.slice(0, 5).map((n) => (
+            <Link key={n.to} to={n.to}>
+              {n.label}
+            </Link>
+          ))}
         </div>
         <div className="footer-col">
-          <h5>Portal</h5>
-          <a href="/#notices">Notice Board</a>
-          <a href="/#admissions">Admissions</a>
-          <a href="/#contact">Contact</a>
+          <h5>School</h5>
+          {NAV.slice(5).map((n) => (
+            <Link key={n.to} to={n.to}>
+              {n.label}
+            </Link>
+          ))}
+          <Link to="/events">Events</Link>
         </div>
         <div className="footer-col">
-          <h5>Contact</h5>
-          <p className="muted">Tufanganj, Cooch Behar, West Bengal, India</p>
-          <p className="muted">Monday–Saturday, during the school term</p>
+          <h5>Help</h5>
+          <Link to="/faq">FAQ</Link>
+          <Link to="/downloads">Downloads</Link>
+          <Link to="/portal">Student &amp; Staff Login</Link>
+          {SITE.phone && <a href={`tel:${SITE.phone}`}>{SITE.phone}</a>}
+          {SITE.email && <a href={`mailto:${SITE.email}`}>{SITE.email}</a>}
+          <p className="footer-hours">{SITE.hours}</p>
         </div>
       </div>
-      <div className="wrap footer-social">
-        <SocialLinks links={SOCIAL_LINKS} />
+
+      <div className="wrap footer-dock">
+        <SocialDock />
       </div>
-      <div className="wrap footer-bottom">
-        <p>&copy; {new Date().getFullYear()} Tufanganj Vivekananda Vidyalaya (H.S.)</p>
+
+      <div className="wrap footer-base">
+        <span>
+          © {year} {SITE.nameFull}
+        </span>
+        <span className="footer-legal">
+          {MORE.filter((m) => m.to === "/privacy" || m.to === "/terms").map((m) => (
+            <Link key={m.to} to={m.to}>
+              {m.label}
+            </Link>
+          ))}
+        </span>
       </div>
     </footer>
   );

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /portal
+Disallow: /errors/
+
+Sitemap: https://tufanganj-vivekanand-vidyalaya.vercel.app/sitemap.xml

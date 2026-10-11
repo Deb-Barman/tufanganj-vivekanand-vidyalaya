@@ -30,7 +30,7 @@ export interface Notice {
   title: string;
   body: string;
   target_class: string;
-  created_by: string | null;
+  created_by?: string | null; // not sent by the public API
   created_by_name: string;
   created_at: string;
   updated_at: string;
@@ -113,9 +113,17 @@ export interface TeacherProfile {
   subjects_taught: string[];
 }
 
+export interface PublicTeacher {
+  full_name: string;
+  department: string;
+  bio: string;
+  years_experience: number | null;
+}
+
 export interface StudentProfile {
   user: string;
   full_name: string;
+  username?: string;
   school_class: string | null;
   roll_number: string;
   guardian_name: string;
@@ -140,4 +148,89 @@ export interface Result {
   full_marks: string;
   recorded_by: string | null;
   created_at: string;
+}
+
+export interface Marksheet {
+  id: string;
+  student: string;
+  session: string;
+  file: string | null;
+  generated_at: string;
+}
+
+export interface AdminStats {
+  people: { students: number; teachers: number; disabled: number; awaiting_first_login: number; students_without_class: number };
+  admissions: { total: number; pending: number; contacted: number; closed: number };
+  content: { notices: number; articles_published: number; articles_drafts: number; events_upcoming: number; gallery: number; forms: number };
+  academics: { sessions: number; classes: number; subjects: number; current_session: string | null };
+  attendance: {
+    today: { present: number; absent: number; marked: number };
+    last7: { date: string; present: number; absent: number }[];
+  };
+  recent_admissions: { id: string; applicant_name: string; applying_for_class: string; status: Admission["status"]; submitted_at: string }[];
+  recent_notices: { id: string; title: string; created_at: string }[];
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  year: number;
+  category: "ACADEMIC" | "SPORTS" | "ARTS" | "OTHER";
+  image: string | null;
+}
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+  status: "NEW" | "READ" | "REPLIED";
+  created_at: string;
+}
+
+export interface TimetableEntry {
+  id: string;
+  school_class: string;
+  weekday: number;
+  period: number;
+  start_time: string;
+  end_time: string;
+  subject: string | null;
+  subject_name: string;
+  label: string;
+  teacher: string | null;
+  teacher_name: string;
+  room: string;
+}
+
+export interface Homework {
+  id: string;
+  school_class: string;
+  class_name: string;
+  subject: string;
+  subject_name: string;
+  title: string;
+  details: string;
+  due_date: string;
+  created_by: string | null;
+  created_by_name: string;
+  created_at: string;
+  done: boolean | null;
+  submitted: number | null;
+  class_size: number | null;
+}
+
+export interface Exam {
+  id: string;
+  school_class: string;
+  class_name: string;
+  subject: string;
+  subject_name: string;
+  name: string;
+  date: string;
+  start_time: string | null;
+  room: string;
 }

@@ -1,0 +1,33 @@
+@property --a { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+.dock {
+  --s: min(52px, 11.4vw); --g: min(10px, 2vw);
+  position: relative; display: inline-flex; gap: var(--g); padding: calc(var(--s) * 0.27); border-radius: 999px; background: var(--surface);
+  box-shadow: var(--raise-lg), inset 1px 1px 2px var(--ihi), inset -1px -1px 2px var(--ilo); --mx: 50%; --my: 50%;
+}
+.dock::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none;
+  background: conic-gradient(from var(--a), transparent 0 72%, var(--fg) 90%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: dock-spin 5s linear infinite; opacity: 0.8;
+}
+.dock::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.4s; background: radial-gradient(160px circle at var(--mx) var(--my), color-mix(in srgb, var(--fg) 9%, transparent), transparent 70%); }
+.dock:hover::after, .dock.open::after { opacity: 1; }
+@keyframes dock-spin { to { --a: 360deg; } }
+
+.dbtn {
+  position: relative; width: var(--s); height: var(--s); border-radius: 50%; display: grid; place-items: center; color: var(--fg); text-decoration: none; outline: 0;
+  background: var(--surface); box-shadow: var(--raise-sm); transition: box-shadow 0.3s, transform 0.3s, color 0.3s; transform-style: preserve-3d;
+}
+.dbtn::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--c); opacity: 0; transform: scale(0.88); transition: 0.3s; pointer-events: none; }
+.dbtn .face { position: absolute; inset: 0; display: grid; place-items: center; backface-visibility: hidden; -webkit-backface-visibility: hidden; transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.2, 1), opacity 0.4s; transition-delay: calc(var(--i) * 55ms); }
+.dbtn .ltr { font: 700 15px/1 var(--mono, ui-monospace, Consolas, monospace); color: var(--fg-faint); }
+.dbtn .ico { transform: rotateY(-180deg); opacity: 0; }
+.dbtn .ico svg { width: 46%; height: 46%; }
+.dock.open .ltr { transform: rotateY(180deg); opacity: 0; }
+.dock.open .ico { transform: none; opacity: 1; }
+.dock.open .dbtn:hover, .dock.open .dbtn:focus-visible { color: var(--c); transform: translateY(-3px); box-shadow: var(--inset-sm), 0 0 22px color-mix(in srgb, var(--c) 55%, transparent); }
+.dock.open .dbtn:hover::after, .dock.open .dbtn:focus-visible::after { opacity: 1; transform: none; box-shadow: 0 0 16px color-mix(in srgb, var(--c) 70%, transparent); }
+.dbtn:active { transform: scale(0.93) !important; }
+.dbtn .tip { position: absolute; left: 50%; bottom: calc(100% + 16px); transform: translate(-50%, 6px); padding: 7px 11px; border-radius: 7px; font: 700 12px/1 var(--sans, system-ui, sans-serif); background: var(--surface); color: var(--fg); border: 1px solid var(--c); white-space: nowrap; opacity: 0; pointer-events: none; transition: 0.25s; box-shadow: var(--raise-sm); z-index: 5; }
+.dock.open .dbtn:hover .tip, .dock.open .dbtn:focus-visible .tip { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .dock::before { animation: none; } .dbtn .face, .dbtn, .dbtn .tip { transition-duration: 0.01s; transition-delay: 0s; } }

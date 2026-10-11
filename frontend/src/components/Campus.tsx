@@ -6,17 +6,19 @@ const FACILITIES = [
   { title: "Library", body: "A quiet reading room with reference texts, journals and set literature." },
 ];
 
-export function Campus() {
+export function Campus({ bare = false }: { bare?: boolean }) {
   return (
-    <section className="section" id="campus">
+    <section className={bare ? "section bare" : "section"} id="campus">
       <div className="wrap">
-        <div className="section-head" data-reveal>
+        {!bare && (
+<div className="section-head" data-reveal>
           <div className="eyebrow">
             <span className="num">05</span>Campus &amp; Facilities
           </div>
           <h2>Beyond the classroom.</h2>
           <p className="lede">A school is more than lessons. Our campus gives students room to run, build, read and compete.</p>
         </div>
+        )}
         <div className="campus-grid">
           <article className="campus-main lift" data-reveal="left">
             <span className="pill">Sports &amp; Athletics</span>

@@ -73,6 +73,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    // Ask the server to blacklist the refresh token so a copied token dies
+    // too. Fire-and-forget: signing out locally must never wait on the network.
+    const refresh = tokenStorage.getRefresh();
+    if (refresh) {
+      api.post("/auth/logout/", { refresh }).catch(() => undefined);
+    }
     tokenStorage.clear();
     setUser(null);
   }, []);

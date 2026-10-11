@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from notices.serializers import sanitize
 
-from .models import Admission, Article, Event, GalleryImage, SchoolForm
+from .models import Achievement, ContactMessage, Admission, Article, Event, GalleryImage, SchoolForm
 
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
 MAX_DOC_SIZE = 10 * 1024 * 1024  # 10 MB
@@ -65,7 +65,9 @@ class ArticleSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        base_slug = slugify(validated_data["title"])[:200]
+        # allow_unicode keeps Bengali titles readable; the fallback stops a
+        # title with no letters/digits from producing an empty slug.
+        base_slug = (slugify(validated_data["title"], allow_unicode=True)[:200]) or "article"
         slug = base_slug
         counter = 1
         while Article.objects.filter(slug=slug).exists():
@@ -153,3 +155,108 @@ class AdmissionAdminSerializer(AdmissionSerializer):
 
     class Meta(AdmissionSerializer.Meta):
         read_only_fields = ["id", "submitted_at"]
+
+
+# --- Public (open-website) versions: no internal user IDs are exposed ----------
+
+class PublicArticleSerializer(ArticleSerializer):
+    class Meta(ArticleSerializer.Meta):
+        fields = ["id", "title", "slug", "excerpt", "body", "cover_image", "created_at", "updated_at"]
+        read_only_fields = fields
+
+
+class PublicEventSerializer(EventSerializer):
+    class Meta(EventSerializer.Meta):
+        fields = ["id", "title", "description", "event_date", "audience", "created_at"]
+        read_only_fields = fields
+
+
+class PublicGalleryImageSerializer(GalleryImageSerializer):
+    class Meta(GalleryImageSerializer.Meta):
+        fields = ["id", "caption", "image", "created_at"]
+        read_only_fields = fields
+
+
+class PublicSchoolFormSerializer(SchoolFormSerializer):
+    class Meta(SchoolFormSerializer.Meta):
+        fields = ["id", "title", "file", "created_at"]
+        read_only_fields = fields
+
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+    """Public submit: nobody can read a message back, and `status` can't be set by the sender."""
+
+    class Meta:
+        model = ContactMessage
+        fields = ["id", "name", "email", "phone", "subject", "message", "status", "created_at"]
+        read_only_fields = ["id", "status", "created_at"]
+
+    def validate_name(self, value):
+        value = sanitize(value.strip())
+        if not value:
+            raise serializers.ValidationError("Please enter your name.")
+        return value
+
+    def validate_subject(self, value):
+        value = sanitize(value.strip())
+        if not value:
+            raise serializers.ValidationError("Please enter a subject.")
+        return value
+
+    def validate_message(self, value):
+        value = sanitize(value.strip())
+        if len(value) < 10:
+            raise serializers.ValidationError("Please write at least a short sentence (10 characters).")
+        return value
+
+    def validate_phone(self, value):
+        value = value.strip()
+        if value and len("".join(ch for ch in value if ch.isdigit())) < 10:
+            raise serializers.ValidationError("Enter a valid phone number or leave it empty.")
+        return value
+
+    def validate(self, attrs):
+        email = attrs.get("email", getattr(self.instance, "email", ""))
+        phone = attrs.get("phone", getattr(self.instance, "phone", ""))
+        if not email and not phone:
+            raise serializers.ValidationError("Please give an email address or a phone number so we can reply.")
+        return attrs
+
+
+class ContactMessageAdminSerializer(ContactMessageSerializer):
+    class Meta(ContactMessageSerializer.Meta):
+        read_only_fields = ["id", "created_at"]
+
+
+class AchievementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Achievement
+        fields = ["id", "title", "description", "year", "category", "image", "created_by", "created_at"]
+        read_only_fields = ["id", "created_by", "created_at"]
+
+    def validate_title(self, value):
+        value = sanitize(value.strip())
+        if not value:
+            raise serializers.ValidationError("Title cannot be empty.")
+        return value
+
+    def validate_description(self, value):
+        return sanitize(value.strip())
+
+    def validate_year(self, value):
+        from django.utils import timezone
+
+        if not 1964 <= value <= timezone.now().year + 1:
+            raise serializers.ValidationError("Enter a realistic year.")
+        return value
+
+    def validate_image(self, file):
+        if file:
+            validate_image_upload(file)
+        return file
+
+
+class PublicAchievementSerializer(AchievementSerializer):
+    class Meta(AchievementSerializer.Meta):
+        fields = ["id", "title", "description", "year", "category", "image"]
+        read_only_fields = fields

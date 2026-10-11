@@ -15,11 +15,12 @@ const STREAMS = [
   },
 ];
 
-export function Academics() {
+export function Academics({ bare = false }: { bare?: boolean }) {
   return (
-    <section className="section" id="academics">
+    <section className={bare ? "section bare" : "section"} id="academics">
       <div className="wrap">
-        <div className="section-head" data-reveal>
+        {!bare && (
+<div className="section-head" data-reveal>
           <div className="eyebrow">
             <span className="num">02</span>Academics
           </div>
@@ -29,6 +30,7 @@ export function Academics() {
             Education. Both streams share the same academic seriousness.
           </p>
         </div>
+        )}
         <div className="stream-grid">
           {STREAMS.map((stream, i) => (
             <article className="stream-card lift" key={stream.title} data-reveal style={{ ["--d" as string]: i }}>

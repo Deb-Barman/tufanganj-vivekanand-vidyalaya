@@ -7,6 +7,7 @@ app_name = "content"
 urlpatterns = [
     # Articles / Blog
     path("articles/public/", views.PublicArticleListView.as_view(), name="public_articles"),
+    path("articles/public/<str:slug>/", views.PublicArticleDetailView.as_view(), name="public_article"),
     path("articles/", views.ArticleListCreateView.as_view(), name="articles"),
     path("articles/<uuid:pk>/", views.ArticleDetailView.as_view(), name="article_detail"),
     # Events
@@ -25,4 +26,12 @@ urlpatterns = [
     path("admissions/submit/", views.AdmissionCreateView.as_view(), name="admission_submit"),
     path("admissions/", views.AdmissionListView.as_view(), name="admissions"),
     path("admissions/<uuid:pk>/", views.AdmissionDetailView.as_view(), name="admission_detail"),
+    # Contact messages
+    path("contact/submit/", views.ContactCreateView.as_view(), name="contact_submit"),
+    path("contact/", views.ContactListView.as_view(), name="contact"),
+    path("contact/<uuid:pk>/", views.ContactDetailView.as_view(), name="contact_detail"),
+    # Achievements
+    path("achievements/public/", views.PublicAchievementListView.as_view(), name="public_achievements"),
+    path("achievements/", views.AchievementListCreateView.as_view(), name="achievements"),
+    path("achievements/<uuid:pk>/", views.AchievementDetailView.as_view(), name="achievement_detail"),
 ]

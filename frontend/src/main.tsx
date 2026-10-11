@@ -6,7 +6,7 @@ import App from "./App.tsx";
 import { AuthProvider } from "./lib/AuthContext";
 import { ThemeProvider } from "./lib/theme";
 import { RevealController } from "./lib/useReveal";
-import { BootLoader } from "./components/BootLoader";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { API_BASE_URL } from "./lib/config";
 
 // Scroll-reveal hides [data-reveal] elements only when this class exists,
@@ -23,9 +23,10 @@ createRoot(document.getElementById("root")!).render(
     <ThemeProvider>
       <BrowserRouter>
         <AuthProvider>
-          <BootLoader />
           <RevealController />
-          <App />
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>

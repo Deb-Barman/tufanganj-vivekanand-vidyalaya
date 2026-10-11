@@ -28,18 +28,20 @@ const FAQS = [
   },
 ];
 
-export function Faq() {
+export function Faq({ bare = false }: { bare?: boolean }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="section" id="faq">
+    <section className={bare ? "section bare" : "section"} id="faq">
       <div className="wrap">
-        <div className="section-head" data-reveal>
+        {!bare && (
+<div className="section-head" data-reveal>
           <div className="eyebrow">
             <span className="num">07</span>Questions Parents Ask
           </div>
           <h2>Answered before you have to call.</h2>
         </div>
+        )}
         <div className="faq-list">
           {FAQS.map((item, i) => (
             <div className={`faq-item${openIndex === i ? " is-open" : ""}`} key={item.q} data-reveal style={{ ["--d" as string]: i % 3 }}>

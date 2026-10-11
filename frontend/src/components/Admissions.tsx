@@ -9,7 +9,7 @@ const STEPS = [
   { n: "03", title: "Interview & confirmation", body: "A short interaction with the admissions panel, followed by seat confirmation and fee deposit." },
 ];
 
-export function Admissions() {
+export function Admissions({ bare = false }: { bare?: boolean }) {
   const [applicantName, setApplicantName] = useState("");
   const [guardianContact, setGuardianContact] = useState("");
   const [applyingForClass, setApplyingForClass] = useState("");
@@ -41,14 +41,16 @@ export function Admissions() {
   }
 
   return (
-    <section className="section" id="admissions">
+    <section className={bare ? "section bare" : "section"} id="admissions">
       <div className="wrap admissions-grid">
         <div data-reveal="left">
-          <div className="eyebrow">
+          {!bare && (
+<div className="eyebrow">
             <span className="num">08</span>Admissions
           </div>
-          <h2 className="admissions-h2">How to join TVV.</h2>
-          <p className="lede" style={{ marginTop: 18 }}>
+          )}
+          {!bare && <h2 className="admissions-h2">How to join TVV.</h2>}
+          <p className="lede" style={{ marginTop: bare ? 0 : 18 }}>
             Admissions run in three straightforward steps. Send an enquiry below, or contact the school office
             directly for live dates and forms.
           </p>

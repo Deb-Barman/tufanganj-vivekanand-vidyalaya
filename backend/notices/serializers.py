@@ -1,17 +1,23 @@
+import html
+
 import bleach
 from rest_framework import serializers
 
 from .models import Notice
 
-# Notices/articles bodies allow minimal safe formatting only. Anything else
-# is stripped server-side — never trust that the frontend won't send raw
-# HTML/script content, since context.md requires XSS protection and the
-# request could come from anywhere, not just our own frontend.
-ALLOWED_TAGS = ["b", "i", "em", "strong", "p", "br", "ul", "ol", "li"]
-
 
 def sanitize(value: str) -> str:
-    return bleach.clean(value, tags=ALLOWED_TAGS, strip=True)
+    """
+    Strip every HTML tag and return PLAIN TEXT.
+
+    The frontend renders all of these fields as text (React escapes them), so
+    allowing <b>/<p> tags only made them show up literally on the page. The
+    old version also left "&" stored as "&amp;", which then displayed as
+    "&amp;" in titles such as "Science & Arts". Tags are removed here and the
+    entities bleach produces are turned back into real characters.
+    """
+    cleaned = bleach.clean(value, tags=[], attributes={}, strip=True)
+    return html.unescape(cleaned)
 
 
 class NoticeSerializer(serializers.ModelSerializer):
@@ -33,3 +39,14 @@ class NoticeSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError("Details cannot be empty.")
         return value
+
+    def validate_target_class(self, value):
+        return sanitize(value.strip())
+
+
+class PublicNoticeSerializer(NoticeSerializer):
+    """What the open website may see: no internal user IDs."""
+
+    class Meta(NoticeSerializer.Meta):
+        fields = ["id", "title", "body", "target_class", "created_by_name", "created_at", "updated_at"]
+        read_only_fields = fields

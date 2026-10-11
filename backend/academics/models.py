@@ -120,3 +120,67 @@ class Marksheet(models.Model):
         db_table = "marksheets"
         unique_together = ["student", "session"]
         ordering = ["-generated_at"]
+
+
+class TimetableEntry(models.Model):
+    """One period in a class's weekly timetable. A row with no subject is a break/assembly (use `label`)."""
+
+    WEEKDAYS = [(0, "Monday"), (1, "Tuesday"), (2, "Wednesday"), (3, "Thursday"), (4, "Friday"), (5, "Saturday")]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, related_name="timetable")
+    weekday = models.PositiveSmallIntegerField(choices=WEEKDAYS)
+    period = models.PositiveSmallIntegerField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True, blank=True, related_name="timetable")
+    label = models.CharField(max_length=60, blank=True)
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="timetable_periods")
+    room = models.CharField(max_length=30, blank=True)
+
+    class Meta:
+        db_table = "timetable_entries"
+        ordering = ["weekday", "period"]
+        unique_together = [("school_class", "weekday", "period")]
+
+
+class Homework(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, related_name="homework")
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="homework")
+    title = models.CharField(max_length=200)
+    details = models.TextField(blank=True, max_length=2000)
+    due_date = models.DateField()
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="homework_set")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "homework"
+        ordering = ["due_date", "-created_at"]
+
+
+class HomeworkCompletion(models.Model):
+    """A student ticking a homework item as done."""
+
+    homework = models.ForeignKey(Homework, on_delete=models.CASCADE, related_name="completions")
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name="homework_done")
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "homework_completions"
+        unique_together = [("homework", "student")]
+
+
+class Exam(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, related_name="exams")
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="exams")
+    name = models.CharField(max_length=100)
+    date = models.DateField()
+    start_time = models.TimeField(null=True, blank=True)
+    room = models.CharField(max_length=30, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="exams_set")
+
+    class Meta:
+        db_table = "exams"
+        ordering = ["date", "start_time"]

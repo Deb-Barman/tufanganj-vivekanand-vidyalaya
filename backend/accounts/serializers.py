@@ -1,14 +1,13 @@
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
-from datetime import timedelta
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.utils import get_md5_hash_password
 
 from .models import Role, User
-
-MAX_FAILED_ATTEMPTS = 5
-LOCKOUT_DURATION = timedelta(minutes=15)
 
 
 class RoleAwareTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -29,36 +28,21 @@ class RoleAwareTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         username = attrs.get(self.username_field)
-        try:
-            candidate = User.objects.get(username=username)
-        except User.DoesNotExist:
-            candidate = None
+        candidate = User.objects.filter(username=username).first()
 
         if candidate and candidate.locked_until and candidate.locked_until > timezone.now():
-            minutes_left = max(1, int((candidate.locked_until - timezone.now()).total_seconds() // 60))
+            minutes_left = max(1, int((candidate.locked_until - timezone.now()).total_seconds() // 60) + 1)
             raise AuthenticationFailed(
                 f"Too many failed attempts. Try again in {minutes_left} minute(s), "
                 "or contact the school office."
             )
 
-        try:
-            data = super().validate(attrs)
-        except AuthenticationFailed:
-            if candidate:
-                candidate.failed_login_attempts += 1
-                if candidate.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
-                    candidate.locked_until = timezone.now() + LOCKOUT_DURATION
-                candidate.save(update_fields=["failed_login_attempts", "locked_until"])
-            raise
+        # Failed-attempt counting and lockout happen in
+        # accounts.backends.LockoutModelBackend (shared with Django admin).
+        data = super().validate(attrs)
 
         if not self.user.is_active_account:
             raise AuthenticationFailed("This account has been disabled. Contact the school office.")
-
-        # Successful login: reset the lockout counter.
-        if self.user.failed_login_attempts or self.user.locked_until:
-            self.user.failed_login_attempts = 0
-            self.user.locked_until = None
-            self.user.save(update_fields=["failed_login_attempts", "locked_until"])
 
         data["user"] = UserSerializer(self.user).data
         return data
@@ -179,3 +163,24 @@ class AdminUpdateUserSerializer(serializers.ModelSerializer):
 
 class AdminResetPasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(write_only=True, validators=[validate_password])
+
+
+class PasswordAwareTokenRefreshSerializer(TokenRefreshSerializer):
+    """
+    simplejwt's CHECK_REVOKE_TOKEN only protects ACCESS tokens. A stolen
+    REFRESH token kept working for 7 days even after the password was changed.
+    Here the password fingerprint stored in the refresh token is compared with
+    the user's current password before a new access token is issued.
+    """
+
+    def validate(self, attrs):
+        try:
+            refresh = RefreshToken(attrs["refresh"])
+        except Exception as exc:  # expired / malformed / blacklisted -> same answer as before
+            raise InvalidToken(str(exc))
+        user = User.objects.filter(pk=refresh.payload.get("user_id")).first()
+        if user is None or not user.is_active or not user.is_active_account:
+            raise InvalidToken("Token is no longer valid.")
+        if refresh.payload.get("hash_password") != get_md5_hash_password(user.password):
+            raise InvalidToken("Password changed — please sign in again.")
+        return super().validate(attrs)

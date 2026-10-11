@@ -1,34 +1,49 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/AuthContext";
 import { RoleBadge } from "../components/RoleBadge";
+import { CommandPalette } from "../ui/CommandPalette";
+import { Icon } from "../ui/icons";
+import { dashPath, groupNav, navFor } from "../ui/nav";
+import { Avatar, UIProvider } from "../ui/kit";
+import { ModuleSkeleton, ProgressBusy } from "../../components/loading/Loading";
 import "./DashboardShell.css";
 
-interface NavItem {
-  to: string;
-  label: string;
-  roles: Array<"SUPER_ADMIN" | "TEACHER" | "STUDENT">;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { to: "/portal/dashboard", label: "Overview", roles: ["SUPER_ADMIN", "TEACHER", "STUDENT"] },
-  { to: "/portal/dashboard/notices", label: "Notices", roles: ["SUPER_ADMIN", "TEACHER", "STUDENT"] },
-  { to: "/portal/dashboard/blog", label: "Blog & Articles", roles: ["SUPER_ADMIN", "TEACHER", "STUDENT"] },
-  { to: "/portal/dashboard/events", label: "Events", roles: ["SUPER_ADMIN", "TEACHER", "STUDENT"] },
-  { to: "/portal/dashboard/gallery", label: "Gallery", roles: ["SUPER_ADMIN", "TEACHER", "STUDENT"] },
-  { to: "/portal/dashboard/downloads", label: "Downloads", roles: ["SUPER_ADMIN", "TEACHER", "STUDENT"] },
-  { to: "/portal/dashboard/teachers", label: "Faculty Directory", roles: ["SUPER_ADMIN", "TEACHER", "STUDENT"] },
-  { to: "/portal/dashboard/attendance", label: "Attendance", roles: ["SUPER_ADMIN", "TEACHER", "STUDENT"] },
-  { to: "/portal/dashboard/results", label: "Results", roles: ["SUPER_ADMIN", "TEACHER", "STUDENT"] },
-  { to: "/portal/dashboard/accounts", label: "Manage Accounts", roles: ["SUPER_ADMIN"] },
-];
+/** Items pinned to the phone tab bar, per role (the 5th tab is always "More"). */
+const TAB_KEYS: Record<string, string[]> = {
+  SUPER_ADMIN: ["", "admissions", "messages", "attendance"],
+  TEACHER: ["", "attendance", "homework", "timetable"],
+  STUDENT: ["", "timetable", "homework", "results"],
+};
 
 export function DashboardShell() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // The drawer is "open for" a specific path, so it closes by itself as soon as the page changes.
+  const [drawerFor, setDrawerFor] = useState<string | null>(null);
+  const drawer = drawerFor === location.pathname;
+  const setDrawer = (open: boolean) => setDrawerFor(open ? location.pathname : null);
+  const [palette, setPalette] = useState(false);
+
+  const items = useMemo(() => (user ? navFor(user.role) : []), [user]);
+  const groups = useMemo(() => groupNav(items), [items]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPalette((p) => !p);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   if (!user) return null;
 
-  const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(user.role));
+  const current = items.find((i) => dashPath(i.to) === location.pathname.replace(/\/$/, "")) ?? items[0];
+  const tabs = (TAB_KEYS[user.role] ?? []).map((k) => items.find((i) => i.to === k)).filter((i): i is NonNullable<typeof i> => Boolean(i));
 
   function handleLogout() {
     logout();
@@ -36,31 +51,89 @@ export function DashboardShell() {
   }
 
   return (
-    <div className="dash-shell">
-      <aside className="dash-sidebar">
-        <div className="dash-sidebar-head">
-          <RoleBadge role={user.role} />
-          <span className="dash-who-name">{user.full_name || "—"}</span>
-        </div>
-        <nav className="dash-nav">
-          {visibleItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/portal/dashboard"}
-              className={({ isActive }) => (isActive ? "dash-nav-link active" : "dash-nav-link")}
+    <UIProvider>
+      <div className="console">
+        {drawer && <div className="console-scrim" onClick={() => setDrawer(false)} />}
+
+        <aside className={`console-side ${drawer ? "open" : ""}`} aria-label="Dashboard navigation">
+          <div className="side-who">
+            <Avatar name={user.full_name || user.username} size={46} />
+            <div className="side-who-text">
+              <span className="side-who-name">{user.full_name || user.username}</span>
+              <RoleBadge role={user.role} />
+            </div>
+          </div>
+
+          <nav aria-label="Sections">
+            {groups.map((g) => (
+              <div className="side-group" key={g.group}>
+                <span className="side-group-label">{g.group}</span>
+                {g.items.map((item) => (
+                  <NavLink key={item.to || "home"} to={dashPath(item.to)} end={item.to === ""} className={({ isActive }) => (isActive ? "side-link active" : "side-link")}>
+                    <Icon name={item.icon} size={19} />
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            ))}
+          </nav>
+
+          <div className="side-foot">
+            <button type="button" className="side-kbd" onClick={() => setPalette(true)}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                <Icon name="search" size={17} /> Quick jump
+              </span>
+              <kbd>Ctrl K</kbd>
+            </button>
+            <Link to="/" className="side-link">
+              <Icon name="external" size={19} /> View website
+            </Link>
+            <button type="button" className="side-link" onClick={handleLogout} style={{ background: "none", border: 0, cursor: "pointer", font: "inherit", textAlign: "left", width: "100%" }}>
+              <Icon name="logout" size={19} /> Log out
+            </button>
+          </div>
+        </aside>
+
+        <div className="console-main">
+          <div className="console-top">
+            <button type="button" className="icon-btn" onClick={() => setDrawer(true)} aria-label="Open menu">
+              <Icon name="menu" size={20} />
+            </button>
+            <span className="console-top-title">{current?.group === "Home" || !current ? "Dashboard" : current.group}</span>
+            <button type="button" className="icon-btn" onClick={() => setPalette(true)} aria-label="Search pages">
+              <Icon name="search" size={19} />
+            </button>
+          </div>
+
+          <main className="console-page" key={location.pathname}>
+            <Suspense
+              fallback={
+                <>
+                  <ProgressBusy />
+                  <ModuleSkeleton />
+                </>
+              }
             >
-              {item.label}
+              <Outlet />
+            </Suspense>
+          </main>
+        </div>
+
+        <nav className="console-tabs" aria-label="Quick navigation">
+          {tabs.map((t) => (
+            <NavLink key={t.to || "home"} to={dashPath(t.to)} end={t.to === ""} className={({ isActive }) => (isActive ? "tab-link active" : "tab-link")}>
+              <Icon name={t.icon} size={21} />
+              {t.label === "Overview" ? "Home" : t.label}
             </NavLink>
           ))}
+          <button type="button" className="tab-link" onClick={() => setDrawer(true)}>
+            <Icon name="menu" size={21} />
+            More
+          </button>
         </nav>
-        <button type="button" className="btn btn-ghost btn-sm dash-logout" onClick={handleLogout}>
-          Log out
-        </button>
-      </aside>
-      <main className="dash-main">
-        <Outlet />
-      </main>
-    </div>
+
+        <CommandPalette items={items} open={palette} onClose={() => setPalette(false)} />
+      </div>
+    </UIProvider>
   );
 }
