@@ -65,12 +65,12 @@ export function Hero() {
             in Science and Arts, on the field and in the lab.
           </p>
           <div className="hero-cta-row" data-reveal style={{ ["--d" as string]: 3 }}>
-            <a href="/#admissions" className="btn btn-primary">
+            <Link to="/admissions" className="btn btn-primary">
               Start Admission Enquiry
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
-            </a>
+            </Link>
             <Link to="/portal" className="btn btn-outline">
               Student &amp; Staff Login
             </Link>

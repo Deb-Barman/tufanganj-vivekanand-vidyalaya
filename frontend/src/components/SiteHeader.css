@@ -44,6 +44,8 @@
 }
 .primary a:hover { color: var(--fg); background: var(--surface); box-shadow: var(--raise-sm); }
 .primary a:active { box-shadow: var(--inset-sm); }
+.primary a.active { color: var(--accent); background: var(--panel); box-shadow: var(--inset-sm); }
+.mobile-menu a.active { color: var(--accent); }
 
 .nav-actions { display: flex; align-items: center; gap: 12px; }
 

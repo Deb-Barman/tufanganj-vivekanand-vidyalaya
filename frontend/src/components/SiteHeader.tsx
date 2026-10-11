@@ -1,22 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { NAV } from "../config/site";
 import { SchoolLogo } from "./SchoolLogo";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "../lib/AuthContext";
 import "./SiteHeader.css";
 
-const NAV_LINKS = [
-  { href: "/#about", label: "About" },
-  { href: "/#academics", label: "Academics" },
-  { href: "/#teachers", label: "Faculty" },
-  { href: "/#achievements", label: "Achievements" },
-  { href: "/#campus", label: "Campus" },
-  { href: "/#notices", label: "Notices" },
-  { href: "/blog", label: "Blog" },
-  { href: "/#faq", label: "FAQ" },
-  { href: "/#admissions", label: "Admissions" },
-  { href: "/#contact", label: "Contact" },
-];
+const NAV_LINKS = NAV.map((n) => ({ href: n.to, label: n.label }));
 
 function isRoutePath(href: string) {
   return !href.includes("#");
@@ -57,9 +47,9 @@ export function SiteHeader() {
         <nav className="primary" aria-label="Main navigation">
           {NAV_LINKS.map((link) =>
             isRoutePath(link.href) ? (
-              <Link key={link.href} to={link.href}>
+              <NavLink key={link.href} to={link.href} className={({ isActive }) => (isActive ? "active" : undefined)}>
                 {link.label}
-              </Link>
+              </NavLink>
             ) : (
               <a key={link.href} href={link.href}>
                 {link.label}
@@ -90,9 +80,9 @@ export function SiteHeader() {
         <div className="wrap mm-inner">
           {NAV_LINKS.map((link, i) =>
             isRoutePath(link.href) ? (
-              <Link key={link.href} to={link.href} onClick={() => setMenuOpen(false)} style={{ ["--i" as string]: i }} tabIndex={menuOpen ? 0 : -1}>
+              <NavLink key={link.href} to={link.href} onClick={() => setMenuOpen(false)} style={{ ["--i" as string]: i }} tabIndex={menuOpen ? 0 : -1}>
                 {link.label}
-              </Link>
+              </NavLink>
             ) : (
               <a key={link.href} href={link.href} onClick={() => setMenuOpen(false)} style={{ ["--i" as string]: i }} tabIndex={menuOpen ? 0 : -1}>
                 {link.label}
