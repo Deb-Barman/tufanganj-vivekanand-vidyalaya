@@ -7,16 +7,40 @@ from rest_framework.throttling import AnonRateThrottle
 
 from accounts.permissions import IsSuperAdmin, IsSuperAdminOrReadOnly
 
-from .models import Admission, Article, Event, GalleryImage, SchoolForm
-from .serializers import AdmissionAdminSerializer, AdmissionSerializer, ArticleSerializer, EventSerializer, GalleryImageSerializer, SchoolFormSerializer
+from .models import Achievement, Admission, Article, ContactMessage, Event, GalleryImage, SchoolForm
+from .serializers import (
+    AchievementSerializer,
+    ContactMessageAdminSerializer,
+    ContactMessageSerializer,
+    PublicAchievementSerializer,
+    AdmissionAdminSerializer,
+    AdmissionSerializer,
+    ArticleSerializer,
+    EventSerializer,
+    GalleryImageSerializer,
+    PublicArticleSerializer,
+    PublicEventSerializer,
+    PublicGalleryImageSerializer,
+    PublicSchoolFormSerializer,
+    SchoolFormSerializer,
+)
 
 
 # --- Articles / Blog -------------------------------------------------------
 
 class PublicArticleListView(generics.ListAPIView):
     permission_classes = [AllowAny]
-    serializer_class = ArticleSerializer
+    serializer_class = PublicArticleSerializer
     queryset = Article.objects.filter(published=True)
+
+
+class PublicArticleDetailView(generics.RetrieveAPIView):
+    """A single published article by slug (slugs may contain Bengali letters)."""
+
+    permission_classes = [AllowAny]
+    serializer_class = PublicArticleSerializer
+    queryset = Article.objects.filter(published=True)
+    lookup_field = "slug"
 
 
 class ArticleListCreateView(generics.ListCreateAPIView):
@@ -51,7 +75,7 @@ class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class PublicEventListView(generics.ListAPIView):
     permission_classes = [AllowAny]
-    serializer_class = EventSerializer
+    serializer_class = PublicEventSerializer
     queryset = Event.objects.all()
 
 
@@ -74,7 +98,7 @@ class EventDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class PublicGalleryListView(generics.ListAPIView):
     permission_classes = [AllowAny]
-    serializer_class = GalleryImageSerializer
+    serializer_class = PublicGalleryImageSerializer
     queryset = GalleryImage.objects.all()
 
 
@@ -97,7 +121,7 @@ class GalleryDetailView(generics.RetrieveDestroyAPIView):
 
 class PublicSchoolFormListView(generics.ListAPIView):
     permission_classes = [AllowAny]
-    serializer_class = SchoolFormSerializer
+    serializer_class = PublicSchoolFormSerializer
     queryset = SchoolForm.objects.all()
 
 
@@ -162,3 +186,63 @@ class AdmissionDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdmin]
     serializer_class = AdmissionAdminSerializer
     queryset = Admission.objects.all()
+
+
+# --- Contact messages ------------------------------------------------------
+
+class ContactRateThrottle(AnonRateThrottle):
+    scope = "contact_submit"
+
+
+class ContactCreateView(generics.CreateAPIView):
+    """Public: anyone can send a message; only the Super Admin can read it."""
+
+    permission_classes = [AllowAny]
+    serializer_class = ContactMessageSerializer
+    throttle_classes = [ContactRateThrottle]
+
+    def perform_create(self, serializer):
+        ip = ContactRateThrottle().get_ident(self.request)
+        # Same idea as admissions: also cap per sender, so rotating IPs doesn't help a spammer.
+        sender = serializer.validated_data.get("email") or serializer.validated_data.get("phone")
+        key = {"email": sender} if serializer.validated_data.get("email") else {"phone": sender}
+        if ContactMessage.objects.filter(created_at__gte=timezone.now() - timedelta(hours=24), **key).count() >= 5:
+            from rest_framework.exceptions import Throttled
+
+            raise Throttled(detail="Too many messages sent from this contact recently. Please try again tomorrow.")
+        serializer.save(submitted_from_ip=ip)
+
+
+class ContactListView(generics.ListAPIView):
+    permission_classes = [IsSuperAdmin]
+    serializer_class = ContactMessageAdminSerializer
+    queryset = ContactMessage.objects.all()
+
+
+class ContactDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsSuperAdmin]
+    serializer_class = ContactMessageAdminSerializer
+    queryset = ContactMessage.objects.all()
+
+
+# --- Achievements ----------------------------------------------------------
+
+class PublicAchievementListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = PublicAchievementSerializer
+    queryset = Achievement.objects.all()
+
+
+class AchievementListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsSuperAdmin]
+    serializer_class = AchievementSerializer
+    queryset = Achievement.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+class AchievementDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsSuperAdmin]
+    serializer_class = AchievementSerializer
+    queryset = Achievement.objects.all()
