@@ -23,7 +23,6 @@ export function AccountsModule() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function load() {
-    setLoading(true);
     try {
       const data = await api.get<Paginated<User>>("/auth/admin/users/");
       setAccounts(data.results);
@@ -36,6 +35,7 @@ export function AccountsModule() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function generateTempPassword() {
