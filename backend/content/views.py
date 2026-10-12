@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 
 from accounts.permissions import IsSuperAdmin, IsSuperAdminOrReadOnly
+from config.clientip import client_ip
 
 from .models import Achievement, Admission, Article, ContactMessage, Event, GalleryImage, SchoolForm
 from .serializers import (
@@ -157,9 +158,9 @@ class AdmissionCreateView(generics.CreateAPIView):
     throttle_classes = [AdmissionRateThrottle]
 
     def perform_create(self, serializer):
-        # Resolved by DRF so it honours NUM_PROXIES (see settings.py); never read
-        # the raw X-Forwarded-For header here, a caller can put anything in it.
-        ip = AdmissionRateThrottle().get_ident(self.request)
+        # Resolved by DRF so it honours NUM_PROXIES (see settings.py), then reduced
+        # to ONE valid address: PostgreSQL rejects a comma-joined X-Forwarded-For.
+        ip = client_ip(self.request)
         # Coarse additional guard beyond DRF throttling: block a contact
         # number that has already submitted 3+ enquiries in the last 24h,
         # even from a different IP (DRF throttling alone is IP-scoped).
@@ -202,7 +203,7 @@ class ContactCreateView(generics.CreateAPIView):
     throttle_classes = [ContactRateThrottle]
 
     def perform_create(self, serializer):
-        ip = ContactRateThrottle().get_ident(self.request)
+        ip = client_ip(self.request)
         # Same idea as admissions: also cap per sender, so rotating IPs doesn't help a spammer.
         sender = serializer.validated_data.get("email") or serializer.validated_data.get("phone")
         key = {"email": sender} if serializer.validated_data.get("email") else {"phone": sender}

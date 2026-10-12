@@ -214,3 +214,34 @@ class SuperAdminEditTests(BaseAPITestCase):
         self.assertEqual(self.admin_c.patch(f, {"title": "new title"}, format="json").status_code, 200)
         img.refresh_from_db(); form.refresh_from_db()
         self.assertEqual((img.caption, form.title), ("new caption", "new title"))
+
+
+class PublicFormsBehindProxyTests(BaseAPITestCase):
+    """Regression: behind Render/Cloudflare X-Forwarded-For holds several IPs, and PostgreSQL's inet
+    column rejected the comma-joined string -> every enquiry/message returned a 500."""
+
+    XFF = "203.0.113.7, 172.70.1.2"
+
+    def test_admission_enquiry_stores_a_single_valid_ip(self):
+        from .models import Admission
+
+        body = {"applicant_name": "Deb Barman", "guardian_contact": "0987654321", "applying_for_class": "8", "message": "hi"}
+        res = APIClient().post("/api/content/admissions/submit/", body, format="json", HTTP_X_FORWARDED_FOR=self.XFF)
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(Admission.objects.get().submitted_from_ip, "203.0.113.7")
+
+    def test_contact_message_stores_a_single_valid_ip(self):
+        from .models import ContactMessage
+
+        body = {"name": "Deb", "phone": "0987654321", "email": "deb@tvv.edu", "subject": "Test", "message": "hello there"}
+        res = APIClient().post("/api/content/contact/submit/", body, format="json", HTTP_X_FORWARDED_FOR=self.XFF)
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(ContactMessage.objects.get().submitted_from_ip, "203.0.113.7")
+
+    def test_garbage_forwarded_header_never_breaks_the_form(self):
+        from .models import Admission
+
+        body = {"applicant_name": "Deb", "guardian_contact": "0987654321", "applying_for_class": "8"}
+        res = APIClient().post("/api/content/admissions/submit/", body, format="json", HTTP_X_FORWARDED_FOR="not-an-ip, ???")
+        self.assertEqual(res.status_code, 201)
+        self.assertIsNone(Admission.objects.get().submitted_from_ip)
