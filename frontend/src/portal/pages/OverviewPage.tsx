@@ -22,10 +22,11 @@ export function OverviewPage() {
 function AdminOverview({ name }: { name: string }) {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     api.get<AdminStats>("/auth/admin/stats/").then(setStats).catch((e) => setError(errText(e, "Could not load the statistics.")));
-  }, []);
+  }, [attempt]);
 
   const attention: { icon: IconName; tone: string; title: string; text: string; to: string }[] = [];
   if (stats) {
@@ -67,7 +68,12 @@ function AdminOverview({ name }: { name: string }) {
         </div>
       </section>
 
-      {error && <p className="alert alert-error" style={{ marginBottom: 18 }}>{error}</p>}
+      {error && (
+        <div className="alert alert-error" style={{ marginBottom: 18, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <span style={{ flex: "1 1 220px" }}>{error}</span>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => { setError(null); setAttempt((n) => n + 1); }}>Try again</button>
+        </div>
+      )}
 
       {!stats && !error && <Skeleton rows={4} />}
 

@@ -7,6 +7,9 @@ import { Icon } from "../ui/icons";
 import { dashPath, groupNav, navFor } from "../ui/nav";
 import { Avatar, UIProvider } from "../ui/kit";
 import { ModuleSkeleton, ProgressBusy } from "../../components/loading/Loading";
+import { SchoolLogo } from "../../components/SchoolLogo";
+import { ThemeToggle } from "../../components/ThemeToggle";
+import { SITE } from "../../config/site";
 import "./DashboardShell.css";
 
 /** Items pinned to the phone tab bar, per role (the 5th tab is always "More"). */
@@ -56,6 +59,14 @@ export function DashboardShell() {
         {drawer && <div className="console-scrim" onClick={() => setDrawer(false)} />}
 
         <aside className={`console-side ${drawer ? "open" : ""}`} aria-label="Dashboard navigation">
+          <Link to="/" className="side-brand" aria-label={`${SITE.short} — public website`}>
+            <SchoolLogo size={34} />
+            <span className="side-brand-text">
+              <strong>{SITE.short}</strong>
+              <small>Dashboard</small>
+            </span>
+          </Link>
+
           <div className="side-who">
             <Avatar name={user.full_name || user.username} size={46} />
             <div className="side-who-text">
@@ -85,6 +96,10 @@ export function DashboardShell() {
               </span>
               <kbd>Ctrl K</kbd>
             </button>
+            <div className="side-theme">
+              <span>Theme</span>
+              <ThemeToggle />
+            </div>
             <Link to="/" className="side-link">
               <Icon name="external" size={19} /> View website
             </Link>
@@ -99,7 +114,7 @@ export function DashboardShell() {
             <button type="button" className="icon-btn" onClick={() => setDrawer(true)} aria-label="Open menu">
               <Icon name="menu" size={20} />
             </button>
-            <span className="console-top-title">{current?.group === "Home" || !current ? "Dashboard" : current.group}</span>
+            <span className="console-top-title">{!current || current.to === "" ? "Dashboard" : current.label}</span>
             <button type="button" className="icon-btn" onClick={() => setPalette(true)} aria-label="Search pages">
               <Icon name="search" size={19} />
             </button>
