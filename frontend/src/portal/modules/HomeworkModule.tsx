@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
-import type { Homework } from "../../types/api";
-import { EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, classLabel, errText, listAll, todayISO, useUI } from "../ui/kitExports";
+import type { Homework, HomeworkCompletions } from "../../types/api";
+import { EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, classLabel, errText, fmtDate, listAll, todayISO, useUI } from "../ui/kitExports";
 import { useRefData } from "../ui/useRefData";
 
 const dueLabel = (iso: string) => {
@@ -92,6 +92,17 @@ function StaffHomework() {
   const [items, setItems] = useState<Homework[] | null>(null);
   const [edit, setEdit] = useState<Partial<Homework> | null>(null);
   const [saving, setSaving] = useState(false);
+  const [who, setWho] = useState<HomeworkCompletions | "loading" | null>(null);
+
+  async function showWho(h: Homework) {
+    setWho("loading");
+    try {
+      setWho(await api.get<HomeworkCompletions>(`/academics/homework/${h.id}/completions/`));
+    } catch (err) {
+      setWho(null);
+      toast("error", errText(err, "Could not load who has finished."));
+    }
+  }
 
   const cid = classId || ref?.classes[0]?.id || "";
   const subjects = ref?.subjects.filter((s) => s.school_class === cid) ?? [];
@@ -146,7 +157,7 @@ function StaffHomework() {
                 <span className="row-main" style={{ whiteSpace: "normal" }}>
                   <strong style={{ whiteSpace: "normal" }}>{h.title}</strong>
                   <span style={{ whiteSpace: "normal" }}>{h.subject_name} · {due.text}{h.created_by_name ? ` · ${h.created_by_name}` : ""}</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}><span className="pct-bar tone-good" style={{ flex: 1, maxWidth: 220 }}><i style={{ width: `${pct}%` }} /></span>{h.submitted ?? 0} of {h.class_size ?? 0} done</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}><span className="pct-bar tone-good" style={{ flex: 1, maxWidth: 220 }}><i style={{ width: `${pct}%` }} /></span>{h.submitted ?? 0} of {h.class_size ?? 0} done{(isAdmin || h.created_by === user?.id) && <button type="button" className="link-btn" onClick={() => showWho(h)}>See who</button>}</span>
                 </span>
                 <button type="button" className="icon-btn" onClick={() => setEdit(h)} aria-label="Edit"><Icon name="edit" size={17} /></button>
                 <button type="button" className="icon-btn danger" onClick={() => remove(h)} aria-label="Delete"><Icon name="trash" size={17} /></button>
@@ -165,6 +176,20 @@ function StaffHomework() {
             <div className="form-field"><label htmlFor="hwTitle">Title</label><input id="hwTitle" value={edit.title ?? ""} maxLength={200} onChange={(e) => setEdit({ ...edit, title: e.target.value })} required /></div>
             <div className="form-field"><label htmlFor="hwDetails">Details (optional)</label><textarea id="hwDetails" rows={4} value={edit.details ?? ""} maxLength={2000} onChange={(e) => setEdit({ ...edit, details: e.target.value })} /></div>
           </form>
+        )}
+      </Modal>
+      <Modal open={who !== null} title={who && who !== "loading" ? `Who has finished — ${who.title}` : "Who has finished"} onClose={() => setWho(null)} footer={<button type="button" className="btn btn-primary btn-sm" onClick={() => setWho(null)}>Close</button>}>
+        {who === "loading" || who === null ? <Skeleton rows={4} /> : who.students.length === 0 ? (
+          <p className="modal-text">No students are assigned to this class yet.</p>
+        ) : (
+          <div className="list">
+            {[...who.students].sort((a, b) => Number(a.done) - Number(b.done) || a.full_name.localeCompare(b.full_name)).map((r) => (
+              <div key={r.student} className="row-link">
+                <span className="row-main"><strong>{r.full_name}</strong><span>{r.roll_number ? `Roll ${r.roll_number}` : "No roll number"}{r.done && r.completed_at ? ` · ticked ${fmtDate(r.completed_at)}` : ""}</span></span>
+                <StatusPill tone={r.done ? "good" : "muted"}>{r.done ? "done" : "not yet"}</StatusPill>
+              </div>
+            ))}
+          </div>
         )}
       </Modal>
     </>

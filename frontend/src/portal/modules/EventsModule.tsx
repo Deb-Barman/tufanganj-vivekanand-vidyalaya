@@ -1,145 +1,110 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { api, ApiError } from "../../lib/api";
+import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
-import type { EventItem, Paginated } from "../../types/api";
+import type { EventItem } from "../../types/api";
+import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, errText, fmtDate, listAll, todayISO, useDebounced, useUI } from "../ui/kitExports";
+
+type Draft = { id?: string; title: string; event_date: string; audience: string; description: string };
+const blank = (): Draft => ({ title: "", event_date: todayISO(), audience: "", description: "" });
 
 export function EventsModule() {
   const { user } = useAuth();
+  const { toast, confirm } = useUI();
   const canManage = user?.role === "SUPER_ADMIN";
 
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [listError, setListError] = useState<string | null>(null);
+  const [items, setItems] = useState<EventItem[] | null>(null);
+  const [tab, setTab] = useState<"up" | "past" | "all">("up");
+  const [query, setQuery] = useState("");
+  const q = useDebounced(query);
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const [title, setTitle] = useState("");
-  const [eventDate, setEventDate] = useState("");
-  const [audience, setAudience] = useState("");
-  const [description, setDescription] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
-
-  async function load() {
-    setLoading(true);
+  const load = useCallback(async () => {
     try {
-      const data = await api.get<Paginated<EventItem>>("/content/events/");
-      setEvents(data.results);
-    } catch (err) {
-      setListError(err instanceof ApiError ? err.message : "Could not load events.");
-    } finally {
-      setLoading(false);
+      setItems(await listAll<EventItem>("/content/events/"));
+    } catch (e) {
+      toast("error", errText(e, "Could not load events."));
+      setItems([]);
     }
-  }
-
+  }, [toast]);
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [load]);
 
-  async function handleCreate(e: FormEvent) {
+  const today = todayISO();
+  const shown = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    return (items ?? [])
+      .filter((e) => (tab === "all" || (tab === "up" ? e.event_date >= today : e.event_date < today)) && (!s || `${e.title} ${e.audience} ${e.description}`.toLowerCase().includes(s)))
+      .sort((a, b) => (tab === "past" ? b.event_date.localeCompare(a.event_date) : a.event_date.localeCompare(b.event_date)));
+  }, [items, tab, q, today]);
+
+  async function save(e: FormEvent) {
     e.preventDefault();
-    setFormError(null);
-    setSubmitting(true);
+    if (!draft) return;
+    setSaving(true);
     try {
-      const created = await api.post<EventItem>("/content/events/", {
-        title,
-        event_date: eventDate,
-        audience,
-        description,
-      });
-      setEvents((prev) => [...prev, created].sort((a, b) => a.event_date.localeCompare(b.event_date)));
-      setTitle("");
-      setEventDate("");
-      setAudience("");
-      setDescription("");
+      const body = { title: draft.title.trim(), event_date: draft.event_date, audience: draft.audience.trim(), description: draft.description };
+      if (draft.id) await api.patch(`/content/events/${draft.id}/`, body);
+      else await api.post("/content/events/", body);
+      toast("success", draft.id ? "Event updated." : "Event added.");
+      setDraft(null);
+      load();
     } catch (err) {
-      setFormError(err instanceof ApiError ? err.message : "Could not add the event.");
+      toast("error", errText(err, "Could not save the event."));
     } finally {
-      setSubmitting(false);
+      setSaving(false);
     }
   }
 
-  async function handleDelete(id: string) {
-    setBusyId(id);
+  async function remove(ev: EventItem) {
+    if (!(await confirm({ title: "Delete this event?", message: `“${ev.title}” will be removed from the calendar.`, confirmLabel: "Delete", danger: true }))) return;
     try {
-      await api.del(`/content/events/${id}/`);
-      setEvents((prev) => prev.filter((e) => e.id !== id));
+      await api.del(`/content/events/${ev.id}/`);
+      setItems((p) => p?.filter((x) => x.id !== ev.id) ?? p);
+      toast("success", "Event deleted.");
     } catch (err) {
-      setListError(err instanceof ApiError ? err.message : "Could not remove the event.");
-    } finally {
-      setBusyId(null);
+      toast("error", errText(err, "Could not delete the event."));
     }
   }
 
   return (
-    <section className="dash-panel">
-      <h2>Events</h2>
-      <p className="dash-panel-sub">{canManage ? "Add or remove upcoming school events." : "Upcoming school events."}</p>
-
-      {canManage && (
-        <form className="dash-form" onSubmit={handleCreate}>
-          <div className="ff-row">
-            <div className="form-field">
-              <label htmlFor="eTitle">Title</label>
-              <input id="eTitle" value={title} onChange={(e) => setTitle(e.target.value)} required />
-            </div>
-            <div className="form-field">
-              <label htmlFor="eDate">Date</label>
-              <input id="eDate" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} required />
-            </div>
-          </div>
-          <div className="form-field">
-            <label htmlFor="eAudience">Audience (optional)</label>
-            <input id="eAudience" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="e.g. All Classes" />
-          </div>
-          <div className="form-field">
-            <label htmlFor="eDesc">Description</label>
-            <textarea id="eDesc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-          </div>
-          {formError && <p className="alert alert-error">{formError}</p>}
-          <button type="submit" className="btn btn-primary btn-sm" disabled={submitting} style={{ alignSelf: "flex-start" }}>
-            {submitting ? "Adding…" : "Add Event"}
-          </button>
-        </form>
-      )}
-
-      {listError && <p className="alert alert-error" style={{ marginTop: 16 }}>{listError}</p>}
-
-      {loading ? (
-        <p className="dash-loading">Loading…</p>
-      ) : events.length === 0 ? (
-        <p className="dash-empty">No upcoming events.</p>
+    <>
+      <PageHeader icon="calendar" title="Events" sub={canManage ? "Add, edit or remove school events." : "School events."} actions={canManage && (<button type="button" className="btn btn-primary btn-sm" onClick={() => setDraft(blank())}><Icon name="plus" size={16} /> Add event</button>)} />
+      <div className="toolbar">
+        <Segmented value={tab} onChange={setTab} options={[{ value: "up", label: "Upcoming" }, { value: "past", label: "Past" }, { value: "all", label: "All" }]} />
+        <div className="search-box grow"><Icon name="search" size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search events" aria-label="Search events" /></div>
+      </div>
+      {items === null ? <Skeleton rows={4} /> : shown.length === 0 ? (
+        <EmptyState icon="calendar" title={items.length === 0 ? "No events yet" : "Nothing here"} text={items.length === 0 && canManage ? "Use “Add event” to put the first one on the calendar." : "Try another tab or search."} />
       ) : (
-        <div className="module-table-wrap">
-          <table className="module-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Date</th>
-                <th>Audience</th>
-                {canManage && <th />}
-              </tr>
-            </thead>
-            <tbody>
-              {events.map((ev) => (
-                <tr key={ev.id}>
-                  <td>{ev.title}</td>
-                  <td>{new Date(ev.event_date).toLocaleDateString("en-IN")}</td>
-                  <td>{ev.audience || "All"}</td>
-                  {canManage && (
-                    <td>
-                      <button type="button" className="btn btn-ghost btn-sm" disabled={busyId === ev.id} onClick={() => handleDelete(ev.id)}>
-                        Remove
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="list">
+          {shown.map((ev) => {
+            const d = new Date(ev.event_date + "T00:00:00");
+            return (
+              <div key={ev.id} className="row-link">
+                <span className="row-icon" style={{ flexDirection: "column", lineHeight: 1, width: 52, height: 52 }}><b style={{ fontSize: 18, color: "var(--fg)" }}>{d.getDate()}</b><small style={{ fontSize: 10, textTransform: "uppercase" }}>{d.toLocaleDateString("en-IN", { month: "short" })}</small></span>
+                <span className="row-main"><strong>{ev.title}</strong><span>{fmtDate(ev.event_date)} · {ev.audience || "Everyone"}{ev.description ? ` · ${ev.description.slice(0, 80)}${ev.description.length > 80 ? "…" : ""}` : ""}</span></span>
+                {canManage && (<><button type="button" className="icon-btn" onClick={() => setDraft({ id: ev.id, title: ev.title, event_date: ev.event_date, audience: ev.audience, description: ev.description })} aria-label={`Edit ${ev.title}`}><Icon name="edit" size={17} /></button><button type="button" className="icon-btn danger" onClick={() => remove(ev)} aria-label={`Delete ${ev.title}`}><Icon name="trash" size={17} /></button></>)}
+              </div>
+            );
+          })}
         </div>
       )}
-    </section>
+      <Modal open={draft !== null} title={draft?.id ? "Edit event" : "Add event"} onClose={() => setDraft(null)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setDraft(null)}>Cancel</button><button type="submit" form="event-form" className="btn btn-primary btn-sm" disabled={saving || !draft?.title.trim()}>{saving ? "Saving…" : "Save"}</button></>}>
+        {draft && (
+          <form id="event-form" onSubmit={save} className="stack" style={{ gap: 14 }}>
+            <div className="form-field"><label htmlFor="eTitle">Title</label><input id="eTitle" value={draft.title} maxLength={200} onChange={(e) => setDraft({ ...draft, title: e.target.value })} required /></div>
+            <div className="form-grid">
+              <div className="form-field"><label htmlFor="eDate">Date</label><input id="eDate" type="date" value={draft.event_date} onChange={(e) => setDraft({ ...draft, event_date: e.target.value })} required /></div>
+              <div className="form-field"><label htmlFor="eAud">Audience (optional)</label><input id="eAud" value={draft.audience} maxLength={100} placeholder="e.g. All classes" onChange={(e) => setDraft({ ...draft, audience: e.target.value })} /></div>
+            </div>
+            <div className="form-field"><label htmlFor="eDesc">Description</label><textarea id="eDesc" rows={4} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} /></div>
+          </form>
+        )}
+      </Modal>
+    </>
   );
 }
