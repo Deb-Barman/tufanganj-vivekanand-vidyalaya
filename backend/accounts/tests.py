@@ -218,3 +218,41 @@ class AdminStatsTests(BaseAPITestCase):
         for role in (Role.TEACHER, Role.STUDENT):
             self.assertEqual(self.login(User.objects.get(role=role)).get("/api/auth/admin/stats/").status_code, 403)
         self.assertEqual(APIClient().get("/api/auth/admin/stats/").status_code, 401)
+
+
+class SuperAdminAccountParityTests(BaseAPITestCase):
+    """Edit username, unlock, delete — everything the Django admin offered for accounts."""
+
+    def setUp(self):
+        super().setUp()
+        self.admin = self.make_admin()
+        self.admin_c = self.login(self.admin)
+        self.student = self.make_user("kid1", Role.STUDENT)
+        self.url = f"/api/auth/admin/users/{self.student.id}/"
+
+    def test_admin_can_rename_username_but_not_to_a_taken_one(self):
+        self.make_user("kid2", Role.STUDENT)
+        self.assertEqual(self.admin_c.patch(self.url, {"username": "kid2"}, format="json").status_code, 400)
+        self.assertEqual(self.admin_c.patch(self.url, {"username": "kid-renamed"}, format="json").status_code, 200)
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.username, "kid-renamed")
+
+    def test_list_shows_lock_state_and_unlock_clears_it(self):
+        from django.utils import timezone
+
+        self.student.failed_login_attempts = 5
+        self.student.locked_until = timezone.now() + timezone.timedelta(minutes=15)
+        self.student.save()
+        row = next(r for r in self.admin_c.get("/api/auth/admin/users/").data["results"] if r["username"] == "kid1")
+        self.assertIsNotNone(row["locked_until"])
+        self.assertEqual(self.admin_c.post(self.url + "unlock/").status_code, 200)
+        self.student.refresh_from_db()
+        self.assertIsNone(self.student.locked_until)
+        self.assertEqual(self.student.failed_login_attempts, 0)
+
+    def test_unlock_is_super_admin_only(self):
+        self.assertEqual(self.login(self.student).post(self.url + "unlock/").status_code, 403)
+
+    def test_admin_can_delete_an_account(self):
+        self.assertEqual(self.admin_c.delete(self.url).status_code, 204)
+        self.assertFalse(User.objects.filter(pk=self.student.pk).exists())

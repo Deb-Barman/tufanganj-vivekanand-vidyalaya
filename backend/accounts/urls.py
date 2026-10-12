@@ -14,4 +14,5 @@ urlpatterns = [
     path("admin/users/", views.AdminUserListCreateView.as_view(), name="admin_user_list_create"),
     path("admin/users/<uuid:pk>/", views.AdminUserDetailView.as_view(), name="admin_user_detail"),
     path("admin/users/<uuid:pk>/reset-password/", views.AdminResetPasswordView.as_view(), name="admin_reset_password"),
+    path("admin/users/<uuid:pk>/unlock/", views.AdminUnlockView.as_view(), name="admin_unlock"),
 ]

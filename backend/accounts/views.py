@@ -10,6 +10,7 @@ from .models import User
 from .permissions import IsSuperAdmin
 from .serializers import (
     AdminCreateUserSerializer,
+    AdminUserSerializer,
     AdminPortalTokenObtainPairSerializer,
     StaffStudentPortalTokenObtainPairSerializer,
     AdminResetPasswordSerializer,
@@ -90,7 +91,7 @@ class AdminUserListCreateView(generics.ListCreateAPIView):
     queryset = User.objects.exclude(role="SUPER_ADMIN").order_by("-created_at")
 
     def get_serializer_class(self):
-        return AdminCreateUserSerializer if self.request.method == "POST" else UserSerializer
+        return AdminCreateUserSerializer if self.request.method == "POST" else AdminUserSerializer
 
 
 class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -100,7 +101,7 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.exclude(role="SUPER_ADMIN")
 
     def get_serializer_class(self):
-        return AdminUpdateUserSerializer if self.request.method in ("PATCH", "PUT") else UserSerializer
+        return AdminUpdateUserSerializer if self.request.method in ("PATCH", "PUT") else AdminUserSerializer
 
 
 class AdminResetPasswordView(APIView):
@@ -122,6 +123,21 @@ class AdminResetPasswordView(APIView):
         user.locked_until = None
         user.save(update_fields=["password", "must_change_password", "failed_login_attempts", "locked_until"])
         return Response({"detail": "Password reset. User must change it on next login."})
+
+
+class AdminUnlockView(APIView):
+    """POST /api/auth/admin/users/<id>/unlock/ — clear a failed-login lockout without changing the password."""
+
+    permission_classes = [IsSuperAdmin]
+
+    def post(self, request, pk):
+        user = User.objects.exclude(role="SUPER_ADMIN").filter(pk=pk).first()
+        if user is None:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        user.save(update_fields=["failed_login_attempts", "locked_until"])
+        return Response({"detail": "Account unlocked."})
 
 
 class AdminStatsView(APIView):
