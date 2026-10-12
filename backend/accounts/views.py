@@ -157,7 +157,16 @@ class AdminStatsView(APIView):
 
         today = timezone.localdate()
 
-        users = User.objects.exclude(role="SUPER_ADMIN")
+        # Every query here is a network round-trip to the hosted database, so this
+        # view is deliberately written with as few of them as possible (one
+        # aggregate per table instead of one query per number).
+        active = Q(is_active_account=True)
+        ppl = User.objects.exclude(role="SUPER_ADMIN").aggregate(
+            students=Count("id", filter=active & Q(role="STUDENT")),
+            teachers=Count("id", filter=active & Q(role="TEACHER")),
+            disabled=Count("id", filter=Q(is_active_account=False)),
+            awaiting=Count("id", filter=active & Q(must_change_password=True)),
+        )
         adm = Admission.objects.aggregate(
             total=Count("id"),
             pending=Count("id", filter=Q(status="PENDING")),
@@ -166,22 +175,29 @@ class AdminStatsView(APIView):
         )
         arts = Article.objects.aggregate(n_pub=Count("id", filter=Q(published=True)), n_draft=Count("id", filter=Q(published=False)))
 
-        att_today = Attendance.objects.filter(date=today).aggregate(
-            present=Count("id", filter=Q(status="PRESENT")), absent=Count("id", filter=Q(status="ABSENT")))
+        # Last 7 days of attendance in ONE grouped query (today is the last day).
+        first_day = today - timedelta(days=6)
+        per_day = {
+            r["date"]: r
+            for r in Attendance.objects.filter(date__gte=first_day, date__lte=today)
+            .values("date")
+            .annotate(present=Count("id", filter=Q(status="PRESENT")), absent=Count("id", filter=Q(status="ABSENT")))
+        }
         series = []
         for i in range(6, -1, -1):
             d = today - timedelta(days=i)
-            row = Attendance.objects.filter(date=d).aggregate(
-                present=Count("id", filter=Q(status="PRESENT")), absent=Count("id", filter=Q(status="ABSENT")))
-            series.append({"date": str(d), **row})
+            row = per_day.get(d, {})
+            series.append({"date": str(d), "present": row.get("present", 0), "absent": row.get("absent", 0)})
+        att_today = {"present": series[-1]["present"], "absent": series[-1]["absent"]}
 
+        msgs = ContactMessage.objects.aggregate(new=Count("id", filter=Q(status="NEW")), total=Count("id"))
         current = AcademicSession.objects.filter(is_current=True).first()
         return Response({
             "people": {
-                "students": users.filter(role="STUDENT", is_active_account=True).count(),
-                "teachers": users.filter(role="TEACHER", is_active_account=True).count(),
-                "disabled": users.filter(is_active_account=False).count(),
-                "awaiting_first_login": users.filter(must_change_password=True, is_active_account=True).count(),
+                "students": ppl["students"],
+                "teachers": ppl["teachers"],
+                "disabled": ppl["disabled"],
+                "awaiting_first_login": ppl["awaiting"],
                 "students_without_class": StudentProfile.objects.filter(school_class__isnull=True, user__is_active_account=True).count(),
             },
             "admissions": adm,
@@ -194,7 +210,7 @@ class AdminStatsView(APIView):
                 "forms": SchoolForm.objects.count(),
                 "achievements": Achievement.objects.count(),
             },
-            "messages": {"new": ContactMessage.objects.filter(status="NEW").count(), "total": ContactMessage.objects.count()},
+            "messages": msgs,
             "academics": {
                 "sessions": AcademicSession.objects.count(),
                 "classes": SchoolClass.objects.count(),
