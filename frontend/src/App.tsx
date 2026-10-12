@@ -5,6 +5,7 @@ import { ErrorScreen } from "./components/ErrorScreen";
 import { SiteLayout } from "./components/site/SiteLayout";
 import { DashboardSkeleton, ScreenLoader } from "./components/loading/Loading";
 import { HomePage } from "./pages/HomePage";
+import { DashboardLayout } from "./portal/DashboardLayout";
 import { RequireAuth } from "./portal/RequireAuth";
 import { RoleOnly } from "./portal/RoleOnly";
 
@@ -37,6 +38,7 @@ const LoginPage = lazyNamed(() => import("./portal/pages/LoginPage"), "LoginPage
 const AdminLoginPage = lazyNamed(() => import("./portal/pages/AdminLoginPage"), "AdminLoginPage");
 const ChangePasswordPage = lazyNamed(() => import("./portal/pages/ChangePasswordPage"), "ChangePasswordPage");
 const DashboardShell = lazyNamed(() => import("./portal/pages/DashboardShell"), "DashboardShell");
+const DashboardNotFound = lazyNamed(() => import("./portal/pages/DashboardNotFound"), "DashboardNotFound");
 const OverviewPage = lazyNamed(() => import("./portal/pages/OverviewPage"), "OverviewPage");
 const NoticesModule = lazyNamed(() => import("./portal/modules/NoticesModule"), "NoticesModule");
 const BlogModule = lazyNamed(() => import("./portal/modules/BlogModule"), "BlogModule");
@@ -83,6 +85,10 @@ export default function App() {
         <Route path="terms" element={<TermsPage />} />
 
         <Route path="portal/change-password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
+      </Route>
+
+      {/* dashboards: NO public header/footer around them */}
+      <Route element={<DashboardLayout />}>
         <Route
           path="portal/dashboard"
           element={
@@ -112,6 +118,7 @@ export default function App() {
           <Route path="achievements" element={<RoleOnly roles={[...ADMIN]}><AchievementsModule /></RoleOnly>} />
           <Route path="academics" element={<RoleOnly roles={[...ADMIN]}><AcademicSetupModule /></RoleOnly>} />
           <Route path="students" element={<RoleOnly roles={[...STAFF]}><StudentsModule /></RoleOnly>} />
+          <Route path="*" element={<DashboardNotFound />} />
         </Route>
       </Route>
 
