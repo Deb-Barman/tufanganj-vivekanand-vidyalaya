@@ -10,6 +10,10 @@ export interface User {
   is_active_account: boolean;
   must_change_password: boolean;
   created_at: string;
+  /** Only sent to the Super Admin when listing accounts. */
+  locked_until?: string | null;
+  failed_login_attempts?: number;
+  last_login?: string | null;
 }
 
 export interface LoginResponse {
@@ -161,7 +165,7 @@ export interface Marksheet {
 export interface AdminStats {
   people: { students: number; teachers: number; disabled: number; awaiting_first_login: number; students_without_class: number };
   admissions: { total: number; pending: number; contacted: number; closed: number };
-  content: { notices: number; articles_published: number; articles_drafts: number; events_upcoming: number; gallery: number; forms: number };
+  content: { notices: number; articles_published: number; articles_drafts: number; events_upcoming: number; gallery: number; forms: number; achievements?: number };
   academics: { sessions: number; classes: number; subjects: number; current_session: string | null };
   attendance: {
     today: { present: number; absent: number; marked: number };
@@ -233,4 +237,19 @@ export interface Exam {
   date: string;
   start_time: string | null;
   room: string;
+}
+
+export interface HomeworkCompletionRow {
+  student: string;
+  full_name: string;
+  roll_number: string;
+  done: boolean;
+  completed_at: string | null;
+}
+
+export interface HomeworkCompletions {
+  homework: string;
+  title: string;
+  class_name: string;
+  students: HomeworkCompletionRow[];
 }
