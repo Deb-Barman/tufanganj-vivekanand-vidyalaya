@@ -169,11 +169,23 @@ export function EmptyState({ icon = "inbox", title, text, action }: { icon?: Ico
 }
 
 export function Skeleton({ rows = 4 }: { rows?: number }) {
+  // The school's free server sleeps when nobody uses it and needs up to a minute to wake.
+  // After a few seconds, say so — a silent skeleton looks like a bug.
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSlow(true), 6000);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <div className="skeleton-wrap" aria-busy="true" aria-label="Loading">
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="skeleton" style={{ width: `${100 - ((i * 13) % 35)}%` }} />
       ))}
+      {slow && (
+        <p className="skeleton-slow" role="status">
+          Still loading… the school server rests when nobody is using it and can take up to a minute to wake up. Thank you for waiting — this page will fill in by itself.
+        </p>
+      )}
     </div>
   );
 }
