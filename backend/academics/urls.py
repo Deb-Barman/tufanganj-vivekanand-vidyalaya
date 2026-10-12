@@ -37,6 +37,7 @@ urlpatterns = [
     path("homework/", views.HomeworkListCreateView.as_view(), name="homework"),
     path("homework/<uuid:pk>/", views.HomeworkDetailView.as_view(), name="homework_detail"),
     path("homework/<uuid:pk>/done/", views.HomeworkDoneView.as_view(), name="homework_done"),
+    path("homework/<uuid:pk>/completions/", views.HomeworkCompletionsView.as_view(), name="homework_completions"),
     path("exams/", views.ExamListCreateView.as_view(), name="exams"),
     path("exams/<uuid:pk>/", views.ExamDetailView.as_view(), name="exam_detail"),
 ]

@@ -336,3 +336,49 @@ class ExamTests(ClassroomBase):
         self.assertEqual(self.alice_c.patch(f"/api/academics/exams/{ex['id']}/", {"name": "x"}, format="json").status_code, 403)
         self.assertEqual(self.alice_c.delete(f"/api/academics/exams/{ex['id']}/").status_code, 403)
         self.assertEqual(self.teacher_c.delete(f"/api/academics/exams/{ex['id']}/").status_code, 204)
+
+
+class SuperAdminParityTests(AcademicsBase):
+    """Things the Django admin could always do, now also available to the Super Admin dashboard."""
+
+    def _homework(self, by=None):
+        from .models import Homework
+
+        return Homework.objects.create(
+            school_class=self.klass, subject=self.subject, title="Chapter 1", details="", due_date=datetime.date(2026, 12, 1), created_by=by or self.admin
+        )
+
+    def test_homework_completions_list_who_is_done(self):
+        from .models import HomeworkCompletion
+
+        self.alice.school_class = self.klass
+        self.alice.save()
+        self.bob.school_class = self.klass
+        self.bob.save()
+        hw = self._homework()
+        HomeworkCompletion.objects.create(homework=hw, student=self.alice)
+        res = self.admin_c.get(f"/api/academics/homework/{hw.id}/completions/")
+        self.assertEqual(res.status_code, 200)
+        done = {r["full_name"]: r["done"] for r in res.data["students"]}
+        self.assertEqual(sum(done.values()), 1)
+        self.assertEqual(len(done), 2)
+
+    def test_homework_completions_are_staff_only_and_teacher_scoped(self):
+        hw = self._homework(by=self.admin)
+        url = f"/api/academics/homework/{hw.id}/completions/"
+        self.assertEqual(self.alice_c.get(url).status_code, 403)
+        self.assertEqual(self.teacher_c.get(url).status_code, 404)  # not the teacher's homework
+        self.assertEqual(self.admin_c.get(url).status_code, 200)
+
+    def test_only_super_admin_can_edit_a_marksheet(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        pdf = SimpleUploadedFile("m.pdf", b"%PDF-1.4 test", content_type="application/pdf")
+        sheet = Marksheet.objects.create(student=self.alice, session=self.session, file=pdf)
+        url = f"/api/academics/marksheets/{sheet.id}/"
+        new_pdf = SimpleUploadedFile("m2.pdf", b"%PDF-1.4 other", content_type="application/pdf")
+        self.assertEqual(self.alice_c.patch(url, {"file": new_pdf}, format="multipart").status_code, 403)
+        new_pdf = SimpleUploadedFile("m2.pdf", b"%PDF-1.4 other", content_type="application/pdf")
+        self.assertEqual(self.teacher_c.patch(url, {"file": new_pdf}, format="multipart").status_code, 403)
+        new_pdf = SimpleUploadedFile("m2.pdf", b"%PDF-1.4 other", content_type="application/pdf")
+        self.assertEqual(self.admin_c.patch(url, {"file": new_pdf}, format="multipart").status_code, 200)
