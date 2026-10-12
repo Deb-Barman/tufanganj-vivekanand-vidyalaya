@@ -5,6 +5,12 @@ from django.http import JsonResponse
 from django.urls import include, path
 
 
+# Clear labels on the Render admin so it is obvious this is the school's backend admin.
+admin.site.site_header = "TVV Portal — Django Admin"
+admin.site.site_title = "TVV Admin"
+admin.site.index_title = "School data (same modules as the Super Admin dashboard)"
+
+
 def health_check(request):
     return JsonResponse({"status": "ok"})
 
