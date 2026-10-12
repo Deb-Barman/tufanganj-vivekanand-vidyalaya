@@ -90,7 +90,7 @@ export function PageSkeleton() {
 /** Dashboard placeholder: sidebar + cards, like a signed-in app shell. */
 export function DashboardSkeleton() {
   return (
-    <div className="wrap" style={{ paddingBlock: 28, display: "grid", gridTemplateColumns: "minmax(0,260px) minmax(0,1fr)", gap: 24 }} aria-busy="true" aria-label="Loading dashboard">
+    <div className="wrap sk-dash" style={{ paddingBlock: 28 }} aria-busy="true" aria-label="Loading dashboard">
       <div className="sk-card" style={{ minHeight: 380 }}>
         <div className="sk-row">
           <Sk w={46} h={46} circle />

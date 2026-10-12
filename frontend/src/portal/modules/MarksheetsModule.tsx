@@ -16,6 +16,7 @@ export function MarksheetsModule() {
   const [sessions, setSessions] = useState<AcademicSession[]>([]);
 
   const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [studentId, setStudentId] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -42,7 +43,16 @@ export function MarksheetsModule() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function openEdit(m: Marksheet) {
+    setEditId(m.id);
+    setStudentId(m.student);
+    setSessionId(m.session);
+    setFile(null);
+    setOpen(true);
+  }
+
   function openUpload() {
+    setEditId(null);
     setStudentId(students[0]?.user ?? "");
     setSessionId((sessions.find((s) => s.is_current) ?? sessions[0])?.id ?? "");
     setFile(null);
@@ -51,15 +61,16 @@ export function MarksheetsModule() {
 
   async function upload(e: FormEvent) {
     e.preventDefault();
-    if (!file) return;
+    if (!file && !editId) return;
     setSaving(true);
     try {
       const fd = new FormData();
       fd.append("student", studentId);
       fd.append("session", sessionId);
-      fd.append("file", file);
-      await api.postForm("/academics/marksheets/create/", fd);
-      toast("success", "Marksheet uploaded.");
+      if (file) fd.append("file", file);
+      if (editId) await api.patch(`/academics/marksheets/${editId}/`, fd, { isMultipart: true });
+      else await api.postForm("/academics/marksheets/create/", fd);
+      toast("success", editId ? "Marksheet updated." : "Marksheet uploaded.");
       setOpen(false);
       load();
     } catch (err) {
@@ -127,6 +138,11 @@ export function MarksheetsModule() {
                     <span className="mini-meta">No file attached</span>
                   )}
                   {isAdmin && (
+                    <button type="button" className="btn btn-outline btn-sm" onClick={() => openEdit(m)}>
+                      <Icon name="edit" size={15} /> Edit
+                    </button>
+                  )}
+                  {isAdmin && (
                     <button type="button" className="icon-btn danger" style={{ marginLeft: "auto" }} onClick={() => remove(m, name)} aria-label={`Delete ${name}'s marksheet`}>
                       <Icon name="trash" size={17} />
                     </button>
@@ -140,15 +156,15 @@ export function MarksheetsModule() {
 
       <Modal
         open={open}
-        title="Upload marksheet"
+        title={editId ? "Edit marksheet" : "Upload marksheet"}
         onClose={() => setOpen(false)}
         footer={
           <>
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>
               Cancel
             </button>
-            <button type="submit" form="marksheet-form" className="btn btn-primary btn-sm" disabled={saving || !file || !studentId || !sessionId}>
-              {saving ? "Uploading…" : "Upload"}
+            <button type="submit" form="marksheet-form" className="btn btn-primary btn-sm" disabled={saving || (!file && !editId) || !studentId || !sessionId}>
+              {saving ? "Saving…" : editId ? "Save changes" : "Upload"}
             </button>
           </>
         }
@@ -176,8 +192,8 @@ export function MarksheetsModule() {
             </select>
           </div>
           <div className="form-field">
-            <label htmlFor="msFile">File (PDF, PNG, JPEG or WebP — up to 10 MB)</label>
-            <input id="msFile" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" onChange={(e) => setFile(e.target.files?.[0] ?? null)} required />
+            <label htmlFor="msFile">{editId ? "Replace file (optional) — " : "File — "}PDF, PNG, JPEG or WebP, up to 10 MB</label>
+            <input id="msFile" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" onChange={(e) => setFile(e.target.files?.[0] ?? null)} required={!editId} />
           </div>
         </form>
       </Modal>

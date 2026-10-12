@@ -3,13 +3,22 @@ import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { AcademicSession, Result, SchoolClass, StudentProfile, Subject } from "../../types/api";
-import { EmptyState, Icon, PageHeader, Ring, Skeleton, classLabel, errText, listAll, useUI } from "../ui/kitExports";
+import { ResultRecords } from "./RecordsManager";
+import { EmptyState, Icon, PageHeader, Ring, Segmented, Skeleton, classLabel, errText, listAll, useUI } from "../ui/kitExports";
 import { dashPath } from "../ui/nav";
 
 export function ResultsModule() {
   const { user } = useAuth();
+  const [tab, setTab] = useState<"enter" | "records">("enter");
   if (!user) return null;
-  return user.role === "STUDENT" ? <StudentResults /> : <StaffResults isAdmin={user.role === "SUPER_ADMIN"} />;
+  if (user.role === "STUDENT") return <StudentResults />;
+  const isAdmin = user.role === "SUPER_ADMIN";
+  return (
+    <>
+      {isAdmin && <div className="toolbar"><Segmented value={tab} onChange={setTab} options={[{ value: "enter", label: "Enter marks" }, { value: "records", label: "Saved results" }]} /></div>}
+      {isAdmin && tab === "records" ? <ResultRecords /> : <StaffResults isAdmin={isAdmin} />}
+    </>
+  );
 }
 
 const pctTone = (p: number) => (p >= 60 ? "good" : p >= 40 ? "warn" : "bad");

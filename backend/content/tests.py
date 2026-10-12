@@ -191,3 +191,57 @@ class PublicDetailTests(BaseAPITestCase):
         self.assertEqual(res.status_code, 200)
         self.assertNotIn("created_by", res.data)
         self.assertEqual(APIClient().get("/api/notices/public/00000000-0000-0000-0000-000000000000/").status_code, 404)
+
+
+class SuperAdminEditTests(BaseAPITestCase):
+    """Gallery captions and form titles can now be edited (not just deleted)."""
+
+    def setUp(self):
+        super().setUp()
+        self.admin_c = self.login(self.make_admin())
+        self.teacher_c = self.login(self.make_user("t9", Role.TEACHER))
+
+    def test_gallery_caption_and_form_title_are_editable_by_super_admin_only(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        from .models import GalleryImage, SchoolForm
+
+        img = GalleryImage.objects.create(caption="old", image=SimpleUploadedFile("a.png", b"\x89PNG\r\n\x1a\n" + b"0" * 20, content_type="image/png"))
+        form = SchoolForm.objects.create(title="old", file=SimpleUploadedFile("f.pdf", b"%PDF-1.4 x", content_type="application/pdf"))
+        g, f = f"/api/content/gallery/{img.id}/", f"/api/content/forms/{form.id}/"
+        self.assertEqual(self.teacher_c.patch(g, {"caption": "x"}, format="json").status_code, 403)
+        self.assertEqual(self.admin_c.patch(g, {"caption": "new caption"}, format="json").status_code, 200)
+        self.assertEqual(self.admin_c.patch(f, {"title": "new title"}, format="json").status_code, 200)
+        img.refresh_from_db(); form.refresh_from_db()
+        self.assertEqual((img.caption, form.title), ("new caption", "new title"))
+
+
+class PublicFormsBehindProxyTests(BaseAPITestCase):
+    """Regression: behind Render/Cloudflare X-Forwarded-For holds several IPs, and PostgreSQL's inet
+    column rejected the comma-joined string -> every enquiry/message returned a 500."""
+
+    XFF = "203.0.113.7, 172.70.1.2"
+
+    def test_admission_enquiry_stores_a_single_valid_ip(self):
+        from .models import Admission
+
+        body = {"applicant_name": "Deb Barman", "guardian_contact": "0987654321", "applying_for_class": "8", "message": "hi"}
+        res = APIClient().post("/api/content/admissions/submit/", body, format="json", HTTP_X_FORWARDED_FOR=self.XFF)
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(Admission.objects.get().submitted_from_ip, "203.0.113.7")
+
+    def test_contact_message_stores_a_single_valid_ip(self):
+        from .models import ContactMessage
+
+        body = {"name": "Deb", "phone": "0987654321", "email": "deb@tvv.edu", "subject": "Test", "message": "hello there"}
+        res = APIClient().post("/api/content/contact/submit/", body, format="json", HTTP_X_FORWARDED_FOR=self.XFF)
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(ContactMessage.objects.get().submitted_from_ip, "203.0.113.7")
+
+    def test_garbage_forwarded_header_never_breaks_the_form(self):
+        from .models import Admission
+
+        body = {"applicant_name": "Deb", "guardian_contact": "0987654321", "applying_for_class": "8"}
+        res = APIClient().post("/api/content/admissions/submit/", body, format="json", HTTP_X_FORWARDED_FOR="not-an-ip, ???")
+        self.assertEqual(res.status_code, 201)
+        self.assertIsNone(Admission.objects.get().submitted_from_ip)

@@ -3,15 +3,24 @@ import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { AcademicSession, Attendance, SchoolClass, StudentProfile } from "../../types/api";
-import { EmptyState, Icon, PageHeader, Ring, Skeleton, classLabel, errText, listAll, todayISO, useUI } from "../ui/kitExports";
+import { AttendanceRecords } from "./RecordsManager";
+import { EmptyState, Icon, PageHeader, Ring, Segmented, Skeleton, classLabel, errText, listAll, todayISO, useUI } from "../ui/kitExports";
 import { dashPath } from "../ui/nav";
 
 type Mark = "PRESENT" | "ABSENT";
 
 export function AttendanceModule() {
   const { user } = useAuth();
+  const [tab, setTab] = useState<"mark" | "records">("mark");
   if (!user) return null;
-  return user.role === "STUDENT" ? <StudentAttendance /> : <StaffAttendance isAdmin={user.role === "SUPER_ADMIN"} />;
+  if (user.role === "STUDENT") return <StudentAttendance />;
+  const isAdmin = user.role === "SUPER_ADMIN";
+  return (
+    <>
+      {isAdmin && <div className="toolbar"><Segmented value={tab} onChange={setTab} options={[{ value: "mark", label: "Mark a class" }, { value: "records", label: "Saved records" }]} /></div>}
+      {isAdmin && tab === "records" ? <AttendanceRecords /> : <StaffAttendance isAdmin={isAdmin} />}
+    </>
+  );
 }
 
 /* ───────────── Staff: mark a whole class in one go ───────────── */

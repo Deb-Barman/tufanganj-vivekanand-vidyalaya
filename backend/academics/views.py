@@ -269,7 +269,7 @@ class MarksheetCreateView(generics.CreateAPIView):
     queryset = Marksheet.objects.all()
 
 
-class MarksheetDetailView(generics.RetrieveDestroyAPIView):
+class MarksheetDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve is scoped the same as list; a student fetching another
     student's marksheet by ID must 404, not 200. DELETE is blocked for
@@ -290,6 +290,12 @@ class MarksheetDetailView(generics.RetrieveDestroyAPIView):
         if not (self.request.user.is_super_admin or self.request.user.is_teacher):
             raise PermissionDenied("You cannot delete a marksheet.")
         instance.delete()
+
+    def perform_update(self, serializer):
+        # Marksheets are official documents: only the Super Admin may replace/re-assign one.
+        if not self.request.user.is_super_admin:
+            raise PermissionDenied("Only the Super Admin can edit a marksheet.")
+        serializer.save()
 
 
 # --- Bulk entry (class-wide attendance / marks in one request) -----------------
@@ -443,6 +449,36 @@ class HomeworkDoneView(APIView):
         else:
             HomeworkCompletion.objects.filter(homework=hw, student=profile).delete()
         return Response({"id": str(hw.id), "done": done})
+
+
+class HomeworkCompletionsView(APIView):
+    """GET /academics/homework/<id>/completions/ — staff see, per student in the class, who ticked it done.
+
+    Super Admin: any homework. Teacher: only homework they set (same rule as editing it).
+    """
+
+    permission_classes = [IsSuperAdminOrTeacher]
+
+    def get(self, request, pk):
+        qs = Homework.objects.select_related("school_class")
+        if request.user.is_teacher:
+            qs = qs.filter(created_by=request.user)
+        hw = qs.filter(pk=pk).first()
+        if hw is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        done = {c.student_id: c.completed_at for c in hw.completions.all()}
+        students = StudentProfile.objects.filter(school_class=hw.school_class).select_related("user")
+        rows = [
+            {
+                "student": str(sp.user_id),
+                "full_name": sp.user.full_name,
+                "roll_number": sp.roll_number,
+                "done": sp.user_id in done,
+                "completed_at": done.get(sp.user_id),
+            }
+            for sp in students
+        ]
+        return Response({"homework": str(hw.id), "title": hw.title, "class_name": hw.school_class.name, "students": rows})
 
 
 # --- Exams -----------------------------------------------------------------

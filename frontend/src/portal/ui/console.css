@@ -175,6 +175,7 @@ a.row-link:hover { transform: translateX(4px); box-shadow: var(--inset-sm), 0 0 
 .empty-state strong { color: var(--fg); font-size: 15px; }
 .empty-state p { font-size: 13.5px; max-width: 44ch; line-height: 1.6; }
 .empty-icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; color: var(--accent); background: var(--surface); box-shadow: var(--raise-sm); margin-bottom: 6px; }
+.skeleton-slow { margin: 6px 2px 0; padding: 12px 14px; border-radius: var(--radius); font-size: 13px; line-height: 1.6; color: var(--fg-soft); background: var(--panel); box-shadow: var(--inset-sm); }
 .skeleton-wrap { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
 .skeleton { height: 54px; border-radius: var(--radius); background: linear-gradient(90deg, var(--panel) 25%, color-mix(in srgb, var(--panel) 60%, var(--surface)) 50%, var(--panel) 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; box-shadow: var(--inset-sm); }
 @keyframes shimmer { to { background-position: -200% 0; } }

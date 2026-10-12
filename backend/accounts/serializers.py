@@ -98,6 +98,14 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
 
 
+class AdminUserSerializer(UserSerializer):
+    """What the Super Admin sees for a Teacher/Student: the normal fields plus sign-in state."""
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ["locked_until", "failed_login_attempts", "last_login"]
+        read_only_fields = UserSerializer.Meta.read_only_fields + ["locked_until", "failed_login_attempts", "last_login"]
+
+
 class AdminCreateUserSerializer(serializers.ModelSerializer):
     """The only path that creates a Teacher/Student account."""
 
@@ -149,11 +157,17 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class AdminUpdateUserSerializer(serializers.ModelSerializer):
-    """Super-Admin-only edits: disable/enable, edit contact fields. Never touches role or password here."""
+    """Super-Admin-only edits: username, name, contact fields, disable/enable. Never touches role or password here."""
 
     class Meta:
         model = User
-        fields = ["full_name", "phone", "email", "is_active_account"]
+        fields = ["username", "full_name", "phone", "email", "is_active_account"]
+
+    def validate_username(self, value):
+        value = value.strip()
+        if len(value) < 3:
+            raise serializers.ValidationError("Username must be at least 3 characters.")
+        return value
 
     def validate(self, attrs):
         if self.instance and self.instance.is_super_admin:

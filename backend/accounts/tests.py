@@ -218,3 +218,72 @@ class AdminStatsTests(BaseAPITestCase):
         for role in (Role.TEACHER, Role.STUDENT):
             self.assertEqual(self.login(User.objects.get(role=role)).get("/api/auth/admin/stats/").status_code, 403)
         self.assertEqual(APIClient().get("/api/auth/admin/stats/").status_code, 401)
+
+
+class SuperAdminAccountParityTests(BaseAPITestCase):
+    """Edit username, unlock, delete — everything the Django admin offered for accounts."""
+
+    def setUp(self):
+        super().setUp()
+        self.admin = self.make_admin()
+        self.admin_c = self.login(self.admin)
+        self.student = self.make_user("kid1", Role.STUDENT)
+        self.url = f"/api/auth/admin/users/{self.student.id}/"
+
+    def test_admin_can_rename_username_but_not_to_a_taken_one(self):
+        self.make_user("kid2", Role.STUDENT)
+        self.assertEqual(self.admin_c.patch(self.url, {"username": "kid2"}, format="json").status_code, 400)
+        self.assertEqual(self.admin_c.patch(self.url, {"username": "kid-renamed"}, format="json").status_code, 200)
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.username, "kid-renamed")
+
+    def test_list_shows_lock_state_and_unlock_clears_it(self):
+        from django.utils import timezone
+
+        self.student.failed_login_attempts = 5
+        self.student.locked_until = timezone.now() + timezone.timedelta(minutes=15)
+        self.student.save()
+        row = next(r for r in self.admin_c.get("/api/auth/admin/users/").data["results"] if r["username"] == "kid1")
+        self.assertIsNotNone(row["locked_until"])
+        self.assertEqual(self.admin_c.post(self.url + "unlock/").status_code, 200)
+        self.student.refresh_from_db()
+        self.assertIsNone(self.student.locked_until)
+        self.assertEqual(self.student.failed_login_attempts, 0)
+
+    def test_unlock_is_super_admin_only(self):
+        self.assertEqual(self.login(self.student).post(self.url + "unlock/").status_code, 403)
+
+    def test_admin_can_delete_an_account(self):
+        self.assertEqual(self.admin_c.delete(self.url).status_code, 204)
+        self.assertFalse(User.objects.filter(pk=self.student.pk).exists())
+
+
+class AdminStatsQueryBudgetTests(BaseAPITestCase):
+    """The overview is loaded on every Super Admin visit and each query is a round-trip to a remote
+    database, so keep it lean (it used to run ~30 queries) and keep the numbers right."""
+
+    def test_overview_is_few_queries_and_numbers_are_right(self):
+        import datetime
+
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        from django.utils import timezone
+
+        from academics.models import Attendance, StudentProfile
+
+        admin_c = self.login(self.make_admin())
+        a, b = self.make_user("s1", Role.STUDENT), self.make_user("s2", Role.STUDENT, must_change_password=True)
+        self.make_user("t1", Role.TEACHER, is_active_account=False)
+        today = timezone.localdate()
+        Attendance.objects.create(student=StudentProfile.objects.get(user=a), date=today, status="PRESENT")
+        Attendance.objects.create(student=StudentProfile.objects.get(user=b), date=today, status="ABSENT")
+        Attendance.objects.create(student=StudentProfile.objects.get(user=a), date=today - datetime.timedelta(days=2), status="PRESENT")
+
+        with CaptureQueriesContext(connection) as ctx:
+            data = admin_c.get("/api/auth/admin/stats/").data
+        self.assertLessEqual(len(ctx), 22)
+        self.assertEqual((data["people"]["students"], data["people"]["teachers"], data["people"]["disabled"], data["people"]["awaiting_first_login"]), (2, 0, 1, 1))
+        self.assertEqual(data["attendance"]["today"], {"present": 1, "absent": 1, "marked": 2})
+        self.assertEqual(len(data["attendance"]["last7"]), 7)
+        self.assertEqual(data["attendance"]["last7"][-3], {"date": str(today - datetime.timedelta(days=2)), "present": 1, "absent": 0})
+        self.assertEqual(data["attendance"]["last7"][-1]["date"], str(today))

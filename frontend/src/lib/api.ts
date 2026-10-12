@@ -60,6 +60,24 @@ async function refreshAccessToken(): Promise<string | null> {
   return refreshInFlight;
 }
 
+// While Render's free server wakes up, requests fail with a network error or a 502/503/504.
+// Reading data is safe to repeat, so GETs quietly retry a few times before giving up.
+const RETRY_DELAYS_MS = [1500, 3500, 7000];
+const RETRYABLE_STATUS = new Set([502, 503, 504]);
+
+async function fetchWithRetry(url: string, init: RequestInit, canRetry: boolean): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const last = !canRetry || attempt >= RETRY_DELAYS_MS.length;
+    try {
+      const res = await fetch(url, init);
+      if (last || !RETRYABLE_STATUS.has(res.status)) return res;
+    } catch (err) {
+      if (last) throw err;
+    }
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
+  }
+}
+
 interface RequestOptions {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
@@ -79,11 +97,15 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
 
   let res: Response;
   try {
-    res = await fetch(`${API_BASE_URL}${path}`, {
-      method,
-      headers,
-      body: body === undefined ? undefined : isMultipart ? (body as FormData) : JSON.stringify(body),
-    });
+    res = await fetchWithRetry(
+      `${API_BASE_URL}${path}`,
+      {
+        method,
+        headers,
+        body: body === undefined ? undefined : isMultipart ? (body as FormData) : JSON.stringify(body),
+      },
+      method === "GET",
+    );
   } catch {
     // fetch() only throws when the server could not be reached at all. On
     // Render's free plan that usually means the service is waking up (~30-60 s).

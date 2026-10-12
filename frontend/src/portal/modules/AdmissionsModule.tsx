@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
 import type { Admission } from "../../types/api";
-import { EmptyState, Icon, PageHeader, Segmented, Skeleton, StatusPill, Avatar, errText, fmtDate, listAll, useUI } from "../ui/kitExports";
+import type { FormEvent } from "react";
+import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, StatusPill, Avatar, errText, fmtDate, listAll, useUI } from "../ui/kitExports";
 
 type Filter = "ALL" | Admission["status"];
 const TONE = { PENDING: "warn", CONTACTED: "info", CLOSED: "good" } as const;
@@ -18,6 +19,8 @@ export function AdmissionsModule() {
   const [filter, setFilter] = useState<Filter>("PENDING");
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [edit, setEdit] = useState<Admission | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     listAll<Admission>("/content/admissions/")
@@ -53,6 +56,28 @@ export function AdmissionsModule() {
       toast("error", errText(e, "Could not update the enquiry."));
     } finally {
       setBusy(null);
+    }
+  }
+
+  async function saveEdit(e: FormEvent) {
+    e.preventDefault();
+    if (!edit) return;
+    setSaving(true);
+    try {
+      const updated = await api.patch<Admission>(`/content/admissions/${edit.id}/`, {
+        applicant_name: edit.applicant_name.trim(),
+        guardian_contact: edit.guardian_contact.trim(),
+        applying_for_class: edit.applying_for_class.trim(),
+        message: edit.message,
+        status: edit.status,
+      });
+      setItems((prev) => prev?.map((x) => (x.id === edit.id ? updated : x)) ?? prev);
+      toast("success", "Enquiry updated.");
+      setEdit(null);
+    } catch (err) {
+      toast("error", errText(err, "Could not update the enquiry."));
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -138,6 +163,9 @@ export function AdmissionsModule() {
                     Reopen
                   </button>
                 )}
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setEdit(a)}>
+                  <Icon name="edit" size={15} /> Edit
+                </button>
                 <button type="button" className="icon-btn danger" style={{ marginLeft: "auto" }} disabled={busy === a.id} onClick={() => remove(a)} aria-label={`Delete ${a.applicant_name}'s enquiry`}>
                   <Icon name="trash" size={17} />
                 </button>
@@ -146,6 +174,19 @@ export function AdmissionsModule() {
           ))}
         </div>
       )}
+      <Modal open={edit !== null} title="Edit enquiry" onClose={() => setEdit(null)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit(null)}>Cancel</button><button type="submit" form="adm-form" className="btn btn-primary btn-sm" disabled={saving || !edit?.applicant_name.trim()}>{saving ? "Saving…" : "Save changes"}</button></>}>
+        {edit && (
+          <form id="adm-form" onSubmit={saveEdit} className="stack" style={{ gap: 14 }}>
+            <div className="form-field"><label htmlFor="adName">Applicant name</label><input id="adName" value={edit.applicant_name} onChange={(e) => setEdit({ ...edit, applicant_name: e.target.value })} required /></div>
+            <div className="form-grid">
+              <div className="form-field"><label htmlFor="adContact">Guardian contact</label><input id="adContact" value={edit.guardian_contact} onChange={(e) => setEdit({ ...edit, guardian_contact: e.target.value })} required /></div>
+              <div className="form-field"><label htmlFor="adClass">Applying for class</label><input id="adClass" value={edit.applying_for_class} onChange={(e) => setEdit({ ...edit, applying_for_class: e.target.value })} required /></div>
+            </div>
+            <div className="form-field"><label htmlFor="adStatus">Status</label><select id="adStatus" value={edit.status} onChange={(e) => setEdit({ ...edit, status: e.target.value as Admission["status"] })}><option value="PENDING">Pending</option><option value="CONTACTED">Contacted</option><option value="CLOSED">Closed</option></select></div>
+            <div className="form-field"><label htmlFor="adMsg">Message</label><textarea id="adMsg" rows={4} value={edit.message} onChange={(e) => setEdit({ ...edit, message: e.target.value })} /></div>
+          </form>
+        )}
+      </Modal>
     </>
   );
 }

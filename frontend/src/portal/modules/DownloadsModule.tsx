@@ -1,145 +1,103 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { api, ApiError } from "../../lib/api";
+import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
-import type { Paginated, SchoolForm } from "../../types/api";
+import type { SchoolForm } from "../../types/api";
+import { EmptyState, Icon, Modal, PageHeader, Skeleton, errText, fmtDate, listAll, useDebounced, useUI } from "../ui/kitExports";
+
+type Draft = { id?: string; title: string };
 
 export function DownloadsModule() {
   const { user } = useAuth();
+  const { toast, confirm } = useUI();
   const canManage = user?.role === "SUPER_ADMIN";
 
-  const [forms, setForms] = useState<SchoolForm[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [listError, setListError] = useState<string | null>(null);
-
+  const [items, setItems] = useState<SchoolForm[] | null>(null);
+  const [query, setQuery] = useState("");
+  const q = useDebounced(query);
+  const [draft, setDraft] = useState<Draft | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [title, setTitle] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  async function load() {
-    setLoading(true);
+  const load = useCallback(async () => {
     try {
-      const data = await api.get<Paginated<SchoolForm>>("/content/forms/");
-      setForms(data.results);
-    } catch (err) {
-      setListError(err instanceof ApiError ? err.message : "Could not load forms.");
-    } finally {
-      setLoading(false);
+      setItems(await listAll<SchoolForm>("/content/forms/"));
+    } catch (e) {
+      toast("error", errText(e, "Could not load downloads."));
+      setItems([]);
     }
-  }
-
+  }, [toast]);
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [load]);
 
-  async function handleUpload(e: FormEvent) {
+  const shown = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    return (items ?? []).filter((i) => !s || i.title.toLowerCase().includes(s));
+  }, [items, q]);
+
+  async function save(e: FormEvent) {
     e.preventDefault();
-    if (!file) {
-      setFormError("Choose a file first.");
-      return;
-    }
-    if (!title.trim()) {
-      setFormError("Give the form a title.");
-      return;
-    }
-    setFormError(null);
-    setUploading(true);
+    if (!draft) return;
+    if (!draft.id && !file) { toast("error", "Choose a file first."); return; }
+    setSaving(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("title", title);
-      const created = await api.postForm<SchoolForm>("/content/forms/", formData);
-      setForms((prev) => [created, ...prev]);
+      const fd = new FormData();
+      fd.append("title", draft.title.trim());
+      if (file) fd.append("file", file);
+      if (draft.id) await api.patch(`/content/forms/${draft.id}/`, fd, { isMultipart: true });
+      else await api.postForm("/content/forms/", fd);
+      toast("success", draft.id ? "Download updated." : "File uploaded.");
+      setDraft(null);
       setFile(null);
-      setTitle("");
+      load();
     } catch (err) {
-      setFormError(err instanceof ApiError ? err.message : "Upload failed.");
+      toast("error", errText(err, "Could not save the file."));
     } finally {
-      setUploading(false);
+      setSaving(false);
     }
   }
 
-  async function handleDelete(form: SchoolForm) {
-    setBusyId(form.id);
+  async function remove(f: SchoolForm) {
+    if (!(await confirm({ title: "Delete this file?", message: `“${f.title}” will be removed from the Downloads page.`, confirmLabel: "Delete", danger: true }))) return;
     try {
-      await api.del(`/content/forms/${form.id}/`);
-      setForms((prev) => prev.filter((f) => f.id !== form.id));
+      await api.del(`/content/forms/${f.id}/`);
+      setItems((p) => p?.filter((x) => x.id !== f.id) ?? p);
+      toast("success", "File deleted.");
     } catch (err) {
-      setListError(err instanceof ApiError ? err.message : "Could not delete file.");
-    } finally {
-      setBusyId(null);
+      toast("error", errText(err, "Could not delete the file."));
     }
   }
 
   return (
-    <section className="dash-panel">
-      <h2>Downloads</h2>
-      <p className="dash-panel-sub">
-        {canManage ? "Upload downloadable forms and documents (max 10 MB, PDF/Word)." : "Downloadable school forms and documents."}
-      </p>
-
-      {canManage && (
-        <form className="dash-form" onSubmit={handleUpload}>
-          <div className="ff-row">
-            <div className="form-field">
-              <label htmlFor="fTitle">Title</label>
-              <input id="fTitle" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} required />
-            </div>
-            <div className="form-field">
-              <label htmlFor="fFile">File</label>
-              <input id="fFile" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-            </div>
-          </div>
-          {formError && <p className="alert alert-error">{formError}</p>}
-          <button type="submit" className="btn btn-primary btn-sm" disabled={uploading} style={{ alignSelf: "flex-start" }}>
-            {uploading ? "Uploading…" : "Upload"}
-          </button>
-        </form>
-      )}
-
-      {listError && <p className="alert alert-error" style={{ marginTop: 16 }}>{listError}</p>}
-
-      {loading ? (
-        <p className="dash-loading">Loading…</p>
-      ) : forms.length === 0 ? (
-        <p className="dash-empty">No forms uploaded yet.</p>
+    <>
+      <PageHeader icon="download" title="Downloads" sub={canManage ? "Upload, rename, replace or remove forms and documents (max 10 MB, PDF/Word)." : "Downloadable school forms and documents."} actions={canManage && (<button type="button" className="btn btn-primary btn-sm" onClick={() => { setFile(null); setDraft({ title: "" }); }}><Icon name="plus" size={16} /> Upload file</button>)} />
+      <div className="toolbar">
+        <div className="search-box grow"><Icon name="search" size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search downloads" aria-label="Search downloads" /></div>
+      </div>
+      {items === null ? <Skeleton rows={3} /> : shown.length === 0 ? (
+        <EmptyState icon="download" title={items.length === 0 ? "No files yet" : "Nothing found"} text={items.length === 0 && canManage ? "Use “Upload file” to add the first one." : undefined} />
       ) : (
-        <div className="module-table-wrap">
-          <table className="module-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Uploaded</th>
-                <th />
-                {canManage && <th />}
-              </tr>
-            </thead>
-            <tbody>
-              {forms.map((f) => (
-                <tr key={f.id}>
-                  <td>{f.title}</td>
-                  <td>{new Date(f.created_at).toLocaleDateString("en-IN")}</td>
-                  <td>
-                    <a href={f.file} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">
-                      Download
-                    </a>
-                  </td>
-                  {canManage && (
-                    <td>
-                      <button type="button" className="btn btn-ghost btn-sm" disabled={busyId === f.id} onClick={() => handleDelete(f)}>
-                        Remove
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="list">
+          {shown.map((f) => (
+            <div key={f.id} className="row-link">
+              <span className="row-icon"><Icon name="file" size={20} /></span>
+              <span className="row-main"><strong>{f.title}</strong><span>Uploaded {fmtDate(f.created_at)}</span></span>
+              <a className="btn btn-outline btn-sm" href={f.file} target="_blank" rel="noopener noreferrer"><Icon name="download" size={15} /> Open</a>
+              {canManage && (<><button type="button" className="icon-btn" onClick={() => { setFile(null); setDraft({ id: f.id, title: f.title }); }} aria-label={`Edit ${f.title}`}><Icon name="edit" size={17} /></button><button type="button" className="icon-btn danger" onClick={() => remove(f)} aria-label={`Delete ${f.title}`}><Icon name="trash" size={17} /></button></>)}
+            </div>
+          ))}
         </div>
       )}
-    </section>
+      <Modal open={draft !== null} title={draft?.id ? "Edit download" : "Upload file"} onClose={() => setDraft(null)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setDraft(null)}>Cancel</button><button type="submit" form="download-form" className="btn btn-primary btn-sm" disabled={saving || !draft?.title.trim() || (!draft?.id && !file)}>{saving ? "Saving…" : draft?.id ? "Save changes" : "Upload"}</button></>}>
+        {draft && (
+          <form id="download-form" onSubmit={save} className="stack" style={{ gap: 14 }}>
+            <div className="form-field"><label htmlFor="fTitle">Title</label><input id="fTitle" value={draft.title} maxLength={200} onChange={(e) => setDraft({ ...draft, title: e.target.value })} required /></div>
+            <div className="form-field"><label htmlFor="fFile">{draft.id ? "Replace file (optional)" : "File"}</label><input id="fFile" type="file" accept=".pdf,.doc,.docx" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
+          </form>
+        )}
+      </Modal>
+    </>
   );
 }
