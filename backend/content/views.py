@@ -111,7 +111,7 @@ class GalleryListCreateView(generics.ListCreateAPIView):
         serializer.save(uploaded_by=self.request.user)
 
 
-class GalleryDetailView(generics.RetrieveDestroyAPIView):
+class GalleryDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdminOrReadOnly]
     serializer_class = GalleryImageSerializer
     queryset = GalleryImage.objects.all()
@@ -134,7 +134,7 @@ class SchoolFormListCreateView(generics.ListCreateAPIView):
         serializer.save(uploaded_by=self.request.user)
 
 
-class SchoolFormDetailView(generics.RetrieveDestroyAPIView):
+class SchoolFormDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdminOrReadOnly]
     serializer_class = SchoolFormSerializer
     queryset = SchoolForm.objects.all()

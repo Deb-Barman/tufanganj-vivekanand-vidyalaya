@@ -191,3 +191,26 @@ class PublicDetailTests(BaseAPITestCase):
         self.assertEqual(res.status_code, 200)
         self.assertNotIn("created_by", res.data)
         self.assertEqual(APIClient().get("/api/notices/public/00000000-0000-0000-0000-000000000000/").status_code, 404)
+
+
+class SuperAdminEditTests(BaseAPITestCase):
+    """Gallery captions and form titles can now be edited (not just deleted)."""
+
+    def setUp(self):
+        super().setUp()
+        self.admin_c = self.login(self.make_admin())
+        self.teacher_c = self.login(self.make_user("t9", Role.TEACHER))
+
+    def test_gallery_caption_and_form_title_are_editable_by_super_admin_only(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        from .models import GalleryImage, SchoolForm
+
+        img = GalleryImage.objects.create(caption="old", image=SimpleUploadedFile("a.png", b"\x89PNG\r\n\x1a\n" + b"0" * 20, content_type="image/png"))
+        form = SchoolForm.objects.create(title="old", file=SimpleUploadedFile("f.pdf", b"%PDF-1.4 x", content_type="application/pdf"))
+        g, f = f"/api/content/gallery/{img.id}/", f"/api/content/forms/{form.id}/"
+        self.assertEqual(self.teacher_c.patch(g, {"caption": "x"}, format="json").status_code, 403)
+        self.assertEqual(self.admin_c.patch(g, {"caption": "new caption"}, format="json").status_code, 200)
+        self.assertEqual(self.admin_c.patch(f, {"title": "new title"}, format="json").status_code, 200)
+        img.refresh_from_db(); form.refresh_from_db()
+        self.assertEqual((img.caption, form.title), ("new caption", "new title"))
