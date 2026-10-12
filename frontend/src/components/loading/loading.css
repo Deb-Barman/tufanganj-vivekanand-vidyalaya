@@ -31,3 +31,7 @@
 .sk-page { padding-block: clamp(40px, 7vw, 90px); display: flex; flex-direction: column; gap: 34px; }
 .sk-hero { display: flex; flex-direction: column; gap: 14px; max-width: 640px; }
 @media (prefers-reduced-motion: reduce) { .sk::after, .route-progress i, .spinner { animation-duration: 3s; } }
+
+/* dashboard loading skeleton: sidebar + content on desktop, content only on phones/tablets */
+.sk-dash { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 24px; }
+@media (max-width: 980px) { .sk-dash { grid-template-columns: minmax(0, 1fr); } .sk-dash > :first-child { display: none; } }
