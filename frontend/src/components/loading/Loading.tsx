@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { ShellSkeleton } from "../../portal/ui/Skeletons";
 import "./loading.css";
 
 /* ── Simple spinner (buttons, tiny areas) ── */
@@ -47,10 +48,11 @@ export function SkList({ count = 5, avatar = true }: { count?: number; avatar?: 
     <div className="sk-list" aria-busy="true" aria-label="Loading content">
       {Array.from({ length: count }, (_, i) => (
         <div className="sk-card sk-row" key={i}>
-          {avatar && <Sk w={48} h={48} circle />}
+          {avatar ? <Sk w={48} h={48} circle /> : <Sk w={58} h={58} className="sk-box" />}
           <div className="sk-col">
-            <Sk h={14} w={`${70 - (i % 3) * 10}%`} className="sk-line" />
+            <Sk h={16} w={`${70 - (i % 3) * 10}%`} className="sk-line" />
             <Sk h={10} w={`${92 - (i % 4) * 8}%`} className="sk-line sm" />
+            {!avatar && <Sk h={10} w="64%" className="sk-line sm" />}
           </div>
         </div>
       ))}
@@ -88,30 +90,9 @@ export function PageSkeleton() {
 }
 
 /** Dashboard placeholder: sidebar + cards, like a signed-in app shell. */
+/** Whole-dashboard placeholder (sidebar / top bar / hero / tiles) — see portal/ui/Skeletons. */
 export function DashboardSkeleton() {
-  return (
-    <div className="wrap sk-dash" style={{ paddingBlock: 28 }} aria-busy="true" aria-label="Loading dashboard">
-      <div className="sk-card" style={{ minHeight: 380 }}>
-        <div className="sk-row">
-          <Sk w={46} h={46} circle />
-          <div className="sk-col">
-            <Sk h={13} className="sk-line" />
-            <Sk h={10} w="60%" className="sk-line sm" />
-          </div>
-        </div>
-        {Array.from({ length: 7 }, (_, i) => (
-          <Sk key={i} h={34} className="sk-box" />
-        ))}
-      </div>
-      <div className="sk-list">
-        <Sk h={120} className="sk-box" />
-        <div className="sk-grid">
-          <SkCards count={3} image={false} />
-        </div>
-        <Sk h={200} className="sk-box" />
-      </div>
-    </div>
-  );
+  return <ShellSkeleton />;
 }
 
 /**
@@ -174,18 +155,5 @@ export function ScreenLoader() {
   );
 }
 
-/** Content-area skeleton for dashboard pages: page title row + cards. */
-export function ModuleSkeleton() {
-  return (
-    <div aria-busy="true" aria-label="Loading page" className="sk-list">
-      <div className="sk-row" style={{ marginBottom: 6 }}>
-        <Sk w={54} h={54} className="sk-box" />
-        <div className="sk-col">
-          <Sk h={26} w="38%" className="sk-line lg" />
-          <Sk h={12} w="62%" className="sk-line sm" />
-        </div>
-      </div>
-      <SkCards count={4} image={false} />
-    </div>
-  );
-}
+/** Content-area skeleton for dashboard pages: header, toolbar and rows (shape of the real page). */
+export { ModuleSkeleton } from "../../portal/ui/Skeletons";
