@@ -50,7 +50,7 @@ export function AchievementsModule() {
   return (
     <>
       <PageHeader icon="award" title="Achievements" sub="Add real, confirmed achievements. They appear on the public Achievements page, grouped by year." actions={<button type="button" className="btn btn-primary btn-sm" onClick={() => { setFile(null); setDraft(blank()); }}><Icon name="plus" size={16} /> Add achievement</button>} />
-      {items === null ? <Skeleton rows={3} /> : items.length === 0 ? (
+      {items === null ? <Skeleton variant="cards" rows={3} /> : items.length === 0 ? (
         <EmptyState icon="award" title="No achievements yet" text="The public page shows a friendly “coming soon” message until you add the first one." action={<button type="button" className="btn btn-primary btn-sm" onClick={() => setDraft(blank())}>Add the first</button>} />
       ) : (
         <div className="cards">

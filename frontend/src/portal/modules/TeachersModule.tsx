@@ -83,7 +83,7 @@ export function TeachersModule() {
       />
 
       {teachers === null ? (
-        <Skeleton rows={3} />
+        <Skeleton variant="cards" rows={3} />
       ) : teachers.length === 0 ? (
         <EmptyState icon="school" title="No teachers yet" text={isAdmin ? "Create Teacher accounts from the Accounts page and they will appear here." : "Teachers will appear here."} />
       ) : (

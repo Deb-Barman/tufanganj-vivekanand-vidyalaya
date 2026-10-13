@@ -68,7 +68,7 @@ export function AcademicSetupModule() {
       </div>
 
       {loading ? (
-        <Skeleton rows={4} />
+        <Skeleton variant="cards" rows={4} />
       ) : tab === "sessions" ? (
         <SessionsTab sessions={sessions} onChanged={reload} onDelete={(s) => remove("sessions", s.id, `session ${s.label}`, "Every class, subject, result and marksheet in this session will be deleted with it. This cannot be undone.")} />
       ) : tab === "classes" ? (

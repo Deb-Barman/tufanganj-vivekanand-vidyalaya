@@ -75,8 +75,8 @@
   .side-link.active::before { left: -14px; }
 }
 
-/* Bottom tab bar: phones only. Hidden on tablets and desktops. */
-@media (max-width: 768px) {
+/* Bottom tab bar + menu sheet: phones only (<=768px, or touch devices <=1024px). Hidden on tablets/desktops. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) and (max-width: 1024px) {
   .console { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
   .console-tabs {
     position: fixed; z-index: 60; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
@@ -109,3 +109,35 @@
 .module-table tbody tr:not(:last-child) td { box-shadow: inset 0 -1px 0 var(--ilo); }
 .module-table tbody tr:hover { background: rgba(var(--accent-glow), 0.05); }
 .portal-loading { padding: 80px 20px; text-align: center; color: var(--fg-faint); }
+
+.side-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.side-close { display: none; }
+
+/* ── phones: the menu is a full-screen sheet of big tiles (like Facebook's / Instagram's menu) ── */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) and (max-width: 1024px) {
+  .console-scrim { display: none; }
+  .console-side {
+    inset: 0; width: 100%; max-width: none; border-radius: 0; background: var(--bg); box-shadow: none; gap: 14px;
+    padding: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(28px + env(safe-area-inset-bottom, 0px));
+    transform: translateY(100%); transition: transform 0.42s var(--ease-out); visibility: hidden;
+  }
+  .console-side.open { transform: none; visibility: visible; }
+  .side-close { display: grid; flex: none; }
+  .side-who { padding: 12px 14px; }
+  .console-side nav .side-group { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 8px; }
+  .console-side nav .side-group-label { grid-column: 1 / -1; padding: 10px 4px 0; }
+  .console-side nav .side-link {
+    flex-direction: column; justify-content: center; text-align: center; gap: 8px; min-height: 88px; padding: 14px 6px;
+    font-size: 12.5px; line-height: 1.25; border-radius: 20px; background: var(--surface); box-shadow: var(--raise-sm);
+  }
+  .console-side nav .side-link svg { width: 24px; height: 24px; }
+  .console-side nav .side-link.active { color: var(--accent); background: var(--panel); box-shadow: var(--inset-sm); }
+  .console-side nav .side-link.active::before { display: none; }
+  .console-side nav .side-link:active { transform: scale(0.96); }
+  .side-kbd { display: none; }
+  .side-foot { margin-top: 6px; gap: 10px; }
+  .side-foot .side-link { flex-direction: row; justify-content: flex-start; text-align: left; min-height: 54px; padding: 12px 16px; font-size: 15px; background: var(--surface); box-shadow: var(--raise-sm); border-radius: 18px; }
+  .side-theme { padding: 8px 6px 8px 16px; font-size: 14px; }
+  .toolbar > .segmented { width: 100%; }
+  .toolbar select, .toolbar input { min-height: 46px; font-size: 16px; }
+}

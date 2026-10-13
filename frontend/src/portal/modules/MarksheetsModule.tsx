@@ -111,7 +111,7 @@ export function MarksheetsModule() {
       />
 
       {sheets === null ? (
-        <Skeleton rows={3} />
+        <Skeleton variant="cards" rows={3} />
       ) : sheets.length === 0 ? (
         <EmptyState icon="file" title="No marksheets yet" text={isAdmin ? (students.length === 0 || sessions.length === 0 ? "Add students and a session first, then upload marksheets here." : "Use “Upload marksheet” to add the first one.") : "A marksheet will appear here once the school uploads it."} />
       ) : (

@@ -59,13 +59,18 @@ export function DashboardShell() {
         {drawer && <div className="console-scrim" onClick={() => setDrawer(false)} />}
 
         <aside className={`console-side ${drawer ? "open" : ""}`} aria-label="Dashboard navigation">
-          <Link to="/" className="side-brand" aria-label={`${SITE.short} — public website`}>
-            <SchoolLogo size={34} />
-            <span className="side-brand-text">
-              <strong>{SITE.short}</strong>
-              <small>Dashboard</small>
-            </span>
-          </Link>
+          <div className="side-head">
+            <Link to="/" className="side-brand" aria-label={`${SITE.short} — public website`}>
+              <SchoolLogo size={34} />
+              <span className="side-brand-text">
+                <strong>{SITE.short}</strong>
+                <small>Dashboard</small>
+              </span>
+            </Link>
+            <button type="button" className="icon-btn side-close" onClick={() => setDrawer(false)} aria-label="Close menu">
+              <Icon name="x" size={20} />
+            </button>
+          </div>
 
           <div className="side-who">
             <Avatar name={user.full_name || user.username} size={46} />

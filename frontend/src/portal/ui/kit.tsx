@@ -7,6 +7,9 @@ import type { IconName } from "./icons";
 import { UIContext, initials, useCountUp } from "./kitHelpers";
 import type { Toast, ConfirmOptions } from "./kitHelpers";
 import "./console.css";
+import { Bone } from "./Skeletons";
+
+export { Skeleton } from "./Skeletons";
 
 /* ───────────── toasts + confirm ───────────── */
 
@@ -168,28 +171,6 @@ export function EmptyState({ icon = "inbox", title, text, action }: { icon?: Ico
   );
 }
 
-export function Skeleton({ rows = 4 }: { rows?: number }) {
-  // The school's free server sleeps when nobody uses it and needs up to a minute to wake.
-  // After a few seconds, say so — a silent skeleton looks like a bug.
-  const [slow, setSlow] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setSlow(true), 6000);
-    return () => clearTimeout(t);
-  }, []);
-  return (
-    <div className="skeleton-wrap" aria-busy="true" aria-label="Loading">
-      {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="skeleton" style={{ width: `${100 - ((i * 13) % 35)}%` }} />
-      ))}
-      {slow && (
-        <p className="skeleton-slow" role="status">
-          Still loading… the school server rests when nobody is using it and can take up to a minute to wake up. Thank you for waiting — this page will fill in by itself.
-        </p>
-      )}
-    </div>
-  );
-}
-
 export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
   return (
     <span className="avatar" style={{ width: size, height: size, fontSize: size * 0.36 }} aria-hidden="true">
@@ -210,7 +191,9 @@ export function StatCard({
   tone = "accent",
   to,
   suffix,
+  loading,
 }: {
+  loading?: boolean;
   icon: IconName;
   label: string;
   value: number;
@@ -220,6 +203,16 @@ export function StatCard({
   suffix?: string;
 }) {
   const shown = useCountUp(value);
+  if (loading) {
+    return (
+      <div className="stat-card" aria-busy="true">
+        <Bone w={44} h={44} r={15} />
+        <Bone w={64} h={30} style={{ marginTop: 8 }} />
+        <Bone w="70%" h={12} />
+        <Bone w="48%" h={10} />
+      </div>
+    );
+  }
   const body = (
     <>
       <span className={`stat-icon tone-${tone}`}>

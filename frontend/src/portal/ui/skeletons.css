@@ -1,0 +1,44 @@
+/* ───────────── Skeletons: placeholders that copy the real layout (YouTube / Facebook style) ─────────────
+   Every skeleton is built from the SAME structural classes as the real content (.list .row-link .rcard
+   .stat-card …) filled with "bones", so nothing jumps when the data arrives. */
+:root {
+  --bone: color-mix(in srgb, var(--fg) 10%, var(--panel));
+  --bone-hi: color-mix(in srgb, var(--fg) 18%, var(--panel));
+}
+.bone { position: relative; display: block; flex: none; overflow: hidden; border-radius: 8px; background: var(--bone); }
+.bone::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(100deg, transparent 15%, var(--bone-hi) 50%, transparent 85%); animation: bone-sweep 1.5s ease-in-out infinite; }
+@keyframes bone-sweep { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .bone::after { animation: none; } }
+
+.sk-wrap { display: flex; flex-direction: column; gap: 14px; }
+.sk-wrap .row-link { box-shadow: var(--inset-sm); }
+.sk-wrap .row-main { gap: 8px; }
+.sk-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.sk-photo { display: flex; flex-direction: column; gap: 8px; }
+.sk-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 190px; }
+.sk-bars .bone { border-radius: 12px; }
+.sk-hero { padding: clamp(22px, 3.2vw, 38px); margin-bottom: 22px; border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--raise); display: flex; flex-direction: column; gap: 14px; }
+.sk-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.sk-quick { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.sk-quick > div { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--raise-sm); }
+.sk-panel-lines { display: flex; flex-direction: column; gap: 12px; }
+
+/* ── whole-dashboard skeleton (shown before the dashboard code has even arrived, so it is self-contained) ── */
+.shs { --pad: clamp(14px, 2vw, 28px); display: grid; grid-template-columns: 276px minmax(0, 1fr); gap: 26px; max-width: 1480px; margin-inline: auto; padding: 24px var(--pad) 48px; min-height: 100dvh; }
+.shs-side { display: flex; flex-direction: column; gap: 12px; align-self: start; padding: 20px 14px; border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--raise); }
+.shs-main { min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.shs-top { display: none; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--raise-sm); }
+.shs-hero { padding: clamp(22px, 3.2vw, 38px); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--raise); display: flex; flex-direction: column; gap: 14px; }
+.shs-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.shs-card { display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--raise); }
+.shs-tabs { display: none; }
+@media (max-width: 1100px) { .shs-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 980px) {
+  .shs { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 12px; padding-bottom: 110px; }
+  .shs-side { display: none; }
+  .shs-top { display: flex; margin-bottom: 14px; }
+}
+@media (max-width: 768px), (hover: none) and (pointer: coarse) and (max-width: 1024px) {
+  .shs-tabs { position: fixed; z-index: 60; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 10px 8px; border-radius: 24px; background: var(--surface); box-shadow: var(--raise-lg); }
+  .shs-tabs > div { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+}

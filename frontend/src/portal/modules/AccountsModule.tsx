@@ -154,7 +154,7 @@ export function AccountsModule() {
         <div className="search-box grow"><Icon name="search" size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, username, phone" aria-label="Search accounts" /></div>
       </div>
 
-      {items === null ? <Skeleton rows={4} /> : shown.length === 0 ? (
+      {items === null ? <Skeleton variant="cards" rows={4} /> : shown.length === 0 ? (
         <EmptyState icon="users" title={items.length === 0 ? "No accounts yet" : "Nothing here"} text={items.length === 0 ? "Create the first Teacher or Student account." : "Try another filter or search."} />
       ) : (
         <div className="cards">

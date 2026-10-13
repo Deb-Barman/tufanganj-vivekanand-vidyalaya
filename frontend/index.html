@@ -59,6 +59,7 @@
      --sz:min(80vw,60vh,600px);
      transition:background-color .9s cubic-bezier(.4,0,.2,1) .35s}
     @supports(height:1svh){#tvv-loader{--sz:min(80vw,60svh,600px)}}
+    @media(max-width:768px),(hover:none) and (pointer:coarse) and (max-width:1024px){#tvv-loader{--sz:min(46vw,30svh,210px)}}
     html.tvv-on #tvv-loader{display:block}
     html.tvv-lock{overflow:hidden;overscroll-behavior:none}
     #tvv-loader *,#tvv-loader *::before,#tvv-loader *::after{box-sizing:border-box}

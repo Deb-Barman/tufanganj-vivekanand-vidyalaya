@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { MORE, NAV, SITE } from "../config/site";
-import { SocialDock } from "./SocialDock";
+import { DeveloperCredit } from "./DeveloperCredit";
 import "./SiteFooter.css";
 
 export function SiteFooter() {
@@ -39,6 +39,11 @@ export function SiteFooter() {
           <Link to="/faq">FAQ</Link>
           <Link to="/downloads">Downloads</Link>
           <Link to="/portal">Student &amp; Staff Login</Link>
+          {SITE.facebook && (
+            <a href={SITE.facebook} target="_blank" rel="noopener noreferrer">
+              Facebook
+            </a>
+          )}
           {SITE.phone && <a href={`tel:${SITE.phone}`}>{SITE.phone}</a>}
           {SITE.email && <a href={`mailto:${SITE.email}`}>{SITE.email}</a>}
           <p className="footer-hours">{SITE.hours}</p>
@@ -46,7 +51,7 @@ export function SiteFooter() {
       </div>
 
       <div className="wrap footer-dock">
-        <SocialDock />
+        <DeveloperCredit />
       </div>
 
       <div className="wrap footer-base">
