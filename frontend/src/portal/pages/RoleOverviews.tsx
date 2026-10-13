@@ -106,10 +106,10 @@ export function TeacherOverview({ name }: { name: string }) {
       </section>
 
       <div className="kpi-grid">
-        <StatCard icon="layers" label="Classes today" value={classIds.length} note={`${today.length} periods`} to={dashPath("timetable")} />
-        <StatCard icon="checkCircle" label="Attendance to mark" value={unmarkedN ?? 0} note={unmarkedN ? "Not yet recorded today" : "All recorded"} tone={unmarkedN ? "warn" : "good"} to={dashPath("attendance")} />
-        <StatCard icon="clipboard" label="Homework active" value={active} note={`${mineHw.length} set by you`} to={dashPath("homework")} />
-        <StatCard icon="cap" label="Students" value={students ?? 0} note="Across the school" tone="good" to={dashPath("students")} />
+        <StatCard loading={mine === null} icon="layers" label="Classes today" value={classIds.length} note={`${today.length} periods`} to={dashPath("timetable")} />
+        <StatCard loading={mine === null || unmarked === null} icon="checkCircle" label="Attendance to mark" value={unmarkedN ?? 0} note={unmarkedN ? "Not yet recorded today" : "All recorded"} tone={unmarkedN ? "warn" : "good"} to={dashPath("attendance")} />
+        <StatCard loading={homework === null} icon="clipboard" label="Homework active" value={active} note={`${mineHw.length} set by you`} to={dashPath("homework")} />
+        <StatCard loading={students === null} icon="cap" label="Students" value={students ?? 0} note="Across the school" tone="good" to={dashPath("students")} />
       </div>
 
       <div className="grid-3">
@@ -214,10 +214,10 @@ export function StudentOverview({ name }: { name: string }) {
       </section>
 
       <div className="kpi-grid">
-        <StatCard icon="checkCircle" label="Attendance" suffix="%" value={attPct} note={att ? `${present} of ${att.length} days` : ""} tone={attPct >= 75 ? "good" : "warn"} to={dashPath("attendance")} />
-        <StatCard icon="clipboard" label="Homework to do" value={pending.length} note="Due soon" tone={pending.length ? "warn" : "good"} to={dashPath("homework")} />
-        <StatCard icon="calendar" label="Upcoming exams" value={exams?.length ?? 0} note={nextExam ? `Next: ${nextExam.subject_name}` : "None scheduled"} to={dashPath("exams")} />
-        <StatCard icon="award" label="Average" suffix="%" value={avg} note={`${bySubject.length} subjects`} tone="good" to={dashPath("results")} />
+        <StatCard loading={att === null} icon="checkCircle" label="Attendance" suffix="%" value={attPct} note={att ? `${present} of ${att.length} days` : ""} tone={attPct >= 75 ? "good" : "warn"} to={dashPath("attendance")} />
+        <StatCard loading={hw === null} icon="clipboard" label="Homework to do" value={pending.length} note="Due soon" tone={pending.length ? "warn" : "good"} to={dashPath("homework")} />
+        <StatCard loading={exams === null} icon="calendar" label="Upcoming exams" value={exams?.length ?? 0} note={nextExam ? `Next: ${nextExam.subject_name}` : "None scheduled"} to={dashPath("exams")} />
+        <StatCard loading={results === null} icon="award" label="Average" suffix="%" value={avg} note={`${bySubject.length} subjects`} tone="good" to={dashPath("results")} />
       </div>
 
       <div className="grid-3">

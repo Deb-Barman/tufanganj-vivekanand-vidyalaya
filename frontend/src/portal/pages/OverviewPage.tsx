@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { AdminStats } from "../../types/api";
-import { AttendanceBars, EmptyState, Icon, Ring, Skeleton, StatCard, StatusPill, errText, firstName, fmtDate, greeting, todayLong } from "../ui/kitExports";
+import { AdminOverviewSkeleton } from "../ui/Skeletons";
+import { AttendanceBars, EmptyState, Icon, Ring, StatCard, StatusPill, errText, firstName, fmtDate, greeting, todayLong } from "../ui/kitExports";
 import { dashPath, navFor } from "../ui/nav";
 import { StudentOverview, TeacherOverview } from "./RoleOverviews";
 import type { IconName } from "../ui/icons";
@@ -75,7 +76,7 @@ function AdminOverview({ name }: { name: string }) {
         </div>
       )}
 
-      {!stats && !error && <Skeleton rows={4} />}
+      {!stats && !error && <AdminOverviewSkeleton />}
 
       {stats && (
         <>
