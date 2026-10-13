@@ -117,6 +117,7 @@ a.row-link:hover { transform: translateX(4px); box-shadow: var(--inset-sm), 0 0 
 .search-box { position: relative; }
 .search-box svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--fg-faint); pointer-events: none; }
 .search-box input { width: 100%; padding-left: 42px; }
+.toolbar .search-box input { padding-left: 42px; } /* .toolbar input's padding shorthand used to push the text under the icon */
 .toolbar input, .toolbar select, .field-inline input, .field-inline select, .mark-input {
   font: inherit; font-size: 14px; color: var(--fg); padding: 12px 16px; border: 0; outline: 0; border-radius: var(--radius); background: var(--panel); box-shadow: var(--inset-sm); min-height: 46px;
 }
