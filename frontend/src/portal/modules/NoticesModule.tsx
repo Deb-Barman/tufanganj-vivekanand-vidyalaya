@@ -78,7 +78,7 @@ export function NoticesModule() {
       <div className="toolbar">
         <div className="search-box grow"><Icon name="search" size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search notices" aria-label="Search notices" /></div>
       </div>
-      {items === null ? <Skeleton rows={4} /> : shown.length === 0 ? (
+      {items === null ? <Skeleton variant="cards" rows={4} /> : shown.length === 0 ? (
         <EmptyState icon="megaphone" title={items.length === 0 ? "No notices yet" : "Nothing found"} text={items.length === 0 && canPublish ? "Use “New notice” to publish the first one." : undefined} />
       ) : (
         <div className="cards">

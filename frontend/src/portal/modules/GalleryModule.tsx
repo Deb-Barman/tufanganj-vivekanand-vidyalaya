@@ -76,7 +76,7 @@ export function GalleryModule() {
       <div className="toolbar">
         <div className="search-box grow"><Icon name="search" size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search captions" aria-label="Search photos" /></div>
       </div>
-      {items === null ? <Skeleton rows={3} /> : shown.length === 0 ? (
+      {items === null ? <Skeleton variant="grid" rows={3} /> : shown.length === 0 ? (
         <EmptyState icon="image" title={items.length === 0 ? "No photos yet" : "Nothing found"} text={items.length === 0 && canManage ? "Use “Upload photo” to add the first one." : undefined} />
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 14 }}>

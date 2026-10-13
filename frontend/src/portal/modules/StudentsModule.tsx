@@ -111,7 +111,7 @@ export function StudentsModule() {
       </div>
 
       {students === null ? (
-        <Skeleton rows={4} />
+        <Skeleton variant="cards" rows={4} />
       ) : students.length === 0 ? (
         <EmptyState icon="cap" title="No students found" text={classFilter || q ? "Try clearing the search or class filter." : "Create Student accounts from the Accounts page and they will appear here."} />
       ) : (

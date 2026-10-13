@@ -43,7 +43,7 @@ export function MessagesModule() {
       <div className="toolbar">
         <Segmented value={filter} onChange={setFilter} options={[{ value: "NEW", label: "New", count: counts.NEW }, { value: "READ", label: "Read", count: counts.READ }, { value: "REPLIED", label: "Replied", count: counts.REPLIED }, { value: "ALL", label: "All", count: counts.ALL }]} />
       </div>
-      {items === null ? <Skeleton rows={3} /> : shown.length === 0 ? (
+      {items === null ? <Skeleton variant="cards" rows={3} /> : shown.length === 0 ? (
         <EmptyState icon="mail" title={items.length === 0 ? "No messages yet" : "Nothing here"} text={items.length === 0 ? "When someone writes through the Contact page, it appears here." : "Try a different filter."} />
       ) : (
         <div className="cards">

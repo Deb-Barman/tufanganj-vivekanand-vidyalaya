@@ -118,7 +118,7 @@ export function AdmissionsModule() {
       </div>
 
       {items === null ? (
-        <Skeleton rows={3} />
+        <Skeleton variant="cards" rows={3} />
       ) : shown.length === 0 ? (
         <EmptyState icon="inbox" title={items.length === 0 ? "No enquiries yet" : "Nothing here"} text={items.length === 0 ? "When someone submits the admission form on the website, it will appear here." : "Try a different filter or search."} />
       ) : (
