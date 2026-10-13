@@ -50,10 +50,13 @@ export function Admissions({ bare = false }: { bare?: boolean }) {
           </div>
           )}
           {!bare && <h2 className="admissions-h2">How to join TVV.</h2>}
-          <p className="lede" style={{ marginTop: bare ? 0 : 18 }}>
-            Admissions run in three straightforward steps. Send an enquiry below, or contact the school office
-            directly for live dates and forms.
-          </p>
+          {/* the standalone Admissions page already says this in its header */}
+          {!bare && (
+            <p className="lede" style={{ marginTop: 18 }}>
+              Admissions run in three straightforward steps. Send an enquiry below, or contact the school office
+              directly for live dates and forms.
+            </p>
+          )}
 
           <form className="admissions-form" onSubmit={handleSubmit}>
             <div className="form-field">
