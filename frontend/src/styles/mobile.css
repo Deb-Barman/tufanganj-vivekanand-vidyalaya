@@ -1,0 +1,158 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHONE EXPERIENCE — app-like layout for phones only.
+   Applies to: screens up to 768 px wide, AND touch devices up to 1024 px (phones using
+   "Desktop site" mode report a ~980 px page width). Desktop and laptop layouts are
+   untouched: nothing outside this one media query is changed by this file.
+   Selectors start with `html body` so they win over each component's own stylesheet.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) and (max-width: 1024px) {
+  html { -webkit-tap-highlight-color: transparent; scroll-padding-top: 70px; }
+  html body { --header-h: 58px; font-size: 16px; line-height: 1.55; overscroll-behavior-y: none; touch-action: manipulation; }
+  html body.has-mtabs { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  html body .wrap { padding-inline: 16px; }
+
+  /* calmer background on phones: no heavy blur blobs (battery + smoothness) */
+  html body .aurora i { filter: blur(56px); animation: none; opacity: 0.8; }
+  html body .js [data-reveal] { transform: translateY(14px); transition-duration: 0.5s; }
+
+  /* ── top app bar ── */
+  html body .site-header { padding-top: env(safe-area-inset-top, 0px); }
+  html body .nav-row { height: var(--header-h); gap: 10px; }
+  html body .brand { gap: 10px; min-width: 0; }
+  html body .brand .logo-wrap, html body .brand img { width: 34px !important; height: 34px !important; }
+  html body .brand .name { font-size: 16px; }
+  html body .brand .name small { font-size: 9px; }
+  html body .nav-actions .nav-login { display: none; }   /* the bottom bar has Login / Dashboard */
+  html body .nav-theme { display: none; }
+  html body .burger { width: 42px; height: 42px; border-radius: 13px; }
+  html body .mobile-menu { top: calc(var(--header-h) + env(safe-area-inset-top, 0px)); height: calc(100dvh - var(--header-h) - env(safe-area-inset-top, 0px)); }
+  html body .mm-inner { padding-block: 12px calc(32px + env(safe-area-inset-bottom, 0px)); }
+  html body .mobile-menu a:not(.btn) { padding: 15px 16px; font-size: 17px; margin-block: 2px; min-height: 52px; display: flex; align-items: center; }
+
+  /* ── bottom tab bar (public pages) ── */
+  html body .m-tabs {
+    position: fixed; z-index: 150; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
+    padding: 7px; border-radius: 24px; background: var(--surface); box-shadow: var(--raise-lg);
+  }
+  html body .m-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 54px; padding: 6px 2px; border-radius: 18px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.01em; color: var(--fg-soft); transition: color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.15s; }
+  html body .m-tab:active { transform: scale(0.94); }
+  html body .m-tab.active { color: var(--accent); background: var(--panel); box-shadow: var(--inset-sm); }
+
+  /* ── typography + rhythm ── */
+  html body .section { padding-block: 34px 0; }
+  html body .section:last-of-type { padding-bottom: 34px; }
+  html body .section-head { margin-bottom: 18px; }
+  html body .section-head h2 { font-size: 26px; line-height: 1.15; }
+  html body .section-head .lede { margin-top: 10px; font-size: 15.5px; line-height: 1.6; }
+  html body .eyebrow { font-size: 11px; margin-bottom: 12px; }
+  html body .pg-section { padding-block: 22px 0; }
+  html body .pg-section:last-of-type { padding-bottom: 36px; }
+  html body .pg-title { font-size: 24px; }
+  html body .pg-sub { margin-bottom: 16px; line-height: 1.6; font-size: 15px; }
+  html body .prose { font-size: 16px; line-height: 1.75; }
+  html body .prose h2 { font-size: 22px; }
+  html body .detail-body { font-size: 16.5px; line-height: 1.8; }
+
+  /* ── buttons: big, thumb-friendly ── */
+  html body .btn { min-height: 48px; padding-inline: 20px; border-radius: 15px; font-size: 15px; }
+  html body .btn-sm { min-height: 42px; padding-inline: 16px; font-size: 14px; }
+  html body .btn:hover { transform: none; }
+
+  /* ── page headers: compact (no breadcrumb bar on phones; the app bar already says where you are) ── */
+  html body .page-hero { padding-block: 22px 8px; }
+  html body .page-hero::before { opacity: 0.6; width: 70vw; }
+  html body .crumbs { display: none; }
+  html body .page-hero h1 { font-size: clamp(28px, 8.2vw, 36px); line-height: 1.08; margin-top: 4px; max-width: 20ch; }
+  html body .page-hero .lede { margin-top: 12px; font-size: 15.5px; line-height: 1.6; }
+  html body .hero-actions { gap: 10px; margin-top: 18px; }
+  html body .hero-actions .btn { flex: 1 1 calc(50% - 5px); padding-inline: 12px; white-space: normal; text-align: center; line-height: 1.2; }
+
+  /* ── home hero ── */
+  html body .hero { padding-top: 18px; }
+  html body .hero-visual { display: none; }               /* decorative emblem: content first on phones */
+  html body .hero-inner { gap: 0; }
+  html body .hero h1 { font-size: clamp(31px, 9vw, 40px); line-height: 1.08; margin-top: 4px; }
+  html body .hero-description { margin-top: 14px; font-size: 16px; line-height: 1.6; }
+  html body .hero-cta-row { margin-top: 22px; gap: 10px; }
+  html body .hero-bottom { margin-top: 26px; }
+  html body .hero-quote-strip { padding-block: 20px; }
+  html body .hero-quote-strip p { font-size: 18px; line-height: 1.45; }
+  html body .hero-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-block: 20px; }
+  html body .hero-stat .n { font-size: 26px; }
+  html body .hero-stat .l { font-size: 11.5px; line-height: 1.35; }
+
+  /* ── "Everything in one place": app-launcher tiles instead of nine tall cards ── */
+  html body .explore-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  html body .explore-grid .feature { align-items: center; text-align: center; gap: 8px; padding: 16px 6px 14px; border-radius: 20px; box-shadow: var(--raise-sm); }
+  html body .explore-grid .feature .f-icon { width: 46px; height: 46px; margin: 0; border-radius: 15px; }
+  html body .explore-grid .feature h3 { font-family: var(--sans); font-size: 13.5px; font-weight: 700; line-height: 1.2; }
+  html body .explore-grid .feature p, html body .explore-grid a.feature .go { display: none; }
+  html body .explore-grid a.feature:hover { transform: none; }
+  html body .explore-grid a.feature:active { transform: scale(0.96); box-shadow: var(--inset-sm); }
+
+  /* ── cards + lists ── */
+  html body .card-grid, html body .post-grid { gap: 14px; }
+  html body .feature { padding: 18px; border-radius: 20px; }
+  html body .feature h3 { font-size: 20px; }
+  html body .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  html body .fact { padding: 16px; border-radius: 18px; }
+  html body .row-list { gap: 12px; }
+  html body .row-card { gap: 14px; padding: 14px; border-radius: 20px; }
+  html body a.row-card:hover { transform: none; }
+  html body a.row-card:active { box-shadow: var(--inset-sm); }
+  html body .date-badge { width: 54px; height: 60px; border-radius: 16px; }
+  html body .row-body h3 { font-size: 17px; }
+  html body .row-body p { font-size: 14.5px; }
+  html body .post-body { padding: 16px 16px 20px; }
+  html body .post-body h3 { font-size: 19px; }
+  html body .info-card { padding: 16px; gap: 14px; border-radius: 18px; }
+  html body .quote-card, html body .seal-card { border-radius: 22px; }
+  html body .cta-band { padding: 22px 18px; border-radius: 24px; gap: 16px; }
+  html body .cta-band h2 { font-size: 24px; }
+  html body .cta-band .btn { width: 100%; }
+  html body .cta-band > div:last-child { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+  html body .empty-panel { border-radius: 22px; padding: 30px 18px; }
+
+  /* filters become one swipeable row of chips */
+  html body .filters { flex-wrap: nowrap; overflow-x: auto; margin-inline: -16px; padding: 4px 16px 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  html body .filters::-webkit-scrollbar { display: none; }
+  html body .chip-btn { flex: none; min-height: 40px; padding-inline: 18px; }
+  html body .search-field { flex: 1 1 100%; max-width: none; }
+  html body .search-field input { min-height: 48px; font-size: 16px; }
+
+  /* ── forms: 16px text (no iOS zoom), tall fields, full-width actions ── */
+  html body .form-card { padding: 20px 16px; border-radius: 24px; }
+  html body .form-card h2 { font-size: 24px; }
+  html body .form-field label { font-size: 13px; }
+  html body .form-field input, html body .form-field textarea, html body .form-field select { font-size: 16px; min-height: 50px; padding: 12px 14px; border-radius: 14px; }
+  html body .form-field textarea { min-height: 120px; }
+  html body .form-field input:hover, html body .form-field textarea:hover, html body .form-field select:hover { transform: none; }
+  html body .form-card .btn { width: 100%; min-height: 52px; }
+  html body .alert { font-size: 14px; }
+
+  /* ── footer ── */
+  html body .site-footer { margin-top: 40px; }
+  html body .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 18px; padding-block: 32px 6px; }
+  html body .footer-brand { grid-column: 1 / -1; }
+  html body .footer-brand .brand-name { font-size: 19px; }
+  html body .footer-col a { padding-block: 9px; font-size: 15px; }
+  html body .footer-col:last-child { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px; }
+  html body .footer-col:last-child h5, html body .footer-col:last-child .footer-hours { grid-column: 1 / -1; }
+  html body .footer-dock { padding-block: 14px 18px; }
+  html body .dev-credit { padding: 18px 16px; border-radius: 22px; }
+  html body .footer-base { flex-direction: column; align-items: flex-start; gap: 8px; padding-block: 16px 24px; }
+
+  /* ── page transitions: gentle, quick ── */
+  html body main { animation: m-page-in 0.35s var(--ease-out); }
+  @keyframes m-page-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+}
+
+/* very small phones */
+@media (max-width: 360px) {
+  html body .brand .name small { display: none; }
+  html body .m-tab { font-size: 10px; }
+  html body .explore-grid .feature h3 { font-size: 12.5px; }
+}
+/* the public tab bar never shows on larger screens */
+.m-tabs { display: none; }
+@media (max-width: 768px), (hover: none) and (pointer: coarse) and (max-width: 1024px) { html body .m-tabs { display: grid; } }
