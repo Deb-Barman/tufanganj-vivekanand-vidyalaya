@@ -4,6 +4,7 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { Attendance, Exam, Homework, Notice, Result, SchoolClass, Subject, TimetableEntry } from "../../types/api";
 import { EmptyState, Icon, Ring, Skeleton, StatCard, fmtTime, firstName, greeting, listAll, todayISO, todayLong, useUI } from "../ui/kitExports";
+import { useLoad } from "../ui/useLoad";
 import { dashPath } from "../ui/nav";
 
 const weekdayIndex = () => (new Date().getDay() === 0 ? -1 : new Date().getDay() - 1); // Sunday: no classes
@@ -35,7 +36,20 @@ function TodayList({ rows, showClass, classes }: { rows: TimetableEntry[]; showC
   );
 }
 
-function NoticeList({ notices }: { notices: Notice[] | null }) {
+/** Shown in a panel whose request failed: honest message + a way to try again (never a fake "nothing here"). */
+function RetryState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <EmptyState
+      icon="alert"
+      title="Could not load this"
+      text="The school server may be waking up, or your connection dropped."
+      action={<button type="button" className="btn btn-outline btn-sm" onClick={onRetry}><Icon name="refresh" size={15} /> Try again</button>}
+    />
+  );
+}
+
+function NoticeList({ notices, failed, onRetry }: { notices: Notice[] | null; failed?: boolean; onRetry?: () => void }) {
+  if (failed && onRetry) return <RetryState onRetry={onRetry} />;
   if (notices === null) return <Skeleton rows={3} />;
   if (notices.length === 0) return <EmptyState icon="megaphone" title="No notices" text="Official announcements appear here." />;
   return (
@@ -55,20 +69,17 @@ function NoticeList({ notices }: { notices: Notice[] | null }) {
 
 export function TeacherOverview({ name }: { name: string }) {
   const { user } = useAuth();
-  const [mine, setMine] = useState<TimetableEntry[] | null>(null);
-  const [classes, setClasses] = useState<SchoolClass[]>([]);
-  const [students, setStudents] = useState<number | null>(null);
-  const [homework, setHomework] = useState<Homework[] | null>(null);
-  const [notices, setNotices] = useState<Notice[] | null>(null);
+  const mineQ = useLoad(() => listAll<TimetableEntry>("/academics/timetable/?mine=1"));
+  const classesQ = useLoad(() => listAll<SchoolClass>("/academics/classes/"));
+  const studentsQ = useLoad(() => api.get<{ count: number }>("/academics/students/?page_size=1").then((r) => r.count));
+  const homeworkQ = useLoad(() => listAll<Homework>("/academics/homework/"));
+  const noticesQ = useLoad(() => listAll<Notice>("/notices/"));
+  const mine = mineQ.data;
+  const classes = classesQ.data ?? [];
+  const students = studentsQ.data;
+  const homework = homeworkQ.data;
+  const notices = noticesQ.data;
   const [unmarked, setUnmarked] = useState<number | null>(null);
-
-  useEffect(() => {
-    listAll<TimetableEntry>("/academics/timetable/?mine=1").then(setMine).catch(() => setMine([]));
-    listAll<SchoolClass>("/academics/classes/").then(setClasses).catch(() => undefined);
-    api.get<{ count: number }>("/academics/students/?page_size=1").then((r) => setStudents(r.count)).catch(() => setStudents(0));
-    listAll<Homework>("/academics/homework/").then(setHomework).catch(() => setHomework([]));
-    listAll<Notice>("/notices/").then(setNotices).catch(() => setNotices([]));
-  }, []);
 
   const today = useMemo(() => (mine ?? []).filter((r) => r.weekday === weekdayIndex()).sort((a, b) => a.period - b.period), [mine]);
   const classIds = useMemo(() => [...new Set(today.map((r) => r.school_class))], [today]);
@@ -94,7 +105,7 @@ export function TeacherOverview({ name }: { name: string }) {
         <div className="split" style={{ justifyContent: "space-between", gap: 24 }}>
           <div style={{ flex: "1 1 320px" }}>
             <h1>{greeting()}, {firstName(name)}.</h1>
-            <p>{todayLong()}.{" "}{mine === null ? "Loading your day…" : today.length > 0 ? `You have ${today.length} ${today.length === 1 ? "period" : "periods"} today across ${classIds.length} ${classIds.length === 1 ? "class" : "classes"}.` : "You have no periods scheduled today."}</p>
+            <p>{todayLong()}.{" "}{mineQ.status === "error" ? "Could not load your timetable." : mine === null ? "Loading your day…" : today.length > 0 ? `You have ${today.length} ${today.length === 1 ? "period" : "periods"} today across ${classIds.length} ${classIds.length === 1 ? "class" : "classes"}.` : "You have no periods scheduled today."}</p>
             <div className="hero-chips">
               <Link className="chip" to={dashPath("attendance")}><Icon name="checkCircle" size={16} /> Take attendance {unmarkedN ? <span className="dot" /> : null}</Link>
               <Link className="chip" to={dashPath("homework")}><Icon name="clipboard" size={16} /> Set homework</Link>
@@ -106,20 +117,20 @@ export function TeacherOverview({ name }: { name: string }) {
       </section>
 
       <div className="kpi-grid">
-        <StatCard loading={mine === null} icon="layers" label="Classes today" value={classIds.length} note={`${today.length} periods`} to={dashPath("timetable")} />
-        <StatCard loading={mine === null || unmarked === null} icon="checkCircle" label="Attendance to mark" value={unmarkedN ?? 0} note={unmarkedN ? "Not yet recorded today" : "All recorded"} tone={unmarkedN ? "warn" : "good"} to={dashPath("attendance")} />
-        <StatCard loading={homework === null} icon="clipboard" label="Homework active" value={active} note={`${mineHw.length} set by you`} to={dashPath("homework")} />
-        <StatCard loading={students === null} icon="cap" label="Students" value={students ?? 0} note="Across the school" tone="good" to={dashPath("students")} />
+        <StatCard loading={mineQ.status === "loading"} error={mineQ.status === "error"} icon="layers" label="Classes today" value={classIds.length} note={`${today.length} periods`} to={dashPath("timetable")} />
+        <StatCard loading={mineQ.status === "loading" || (mineQ.status === "ok" && classIds.length > 0 && unmarked === null)} error={mineQ.status === "error"} icon="checkCircle" label="Attendance to mark" value={unmarkedN ?? 0} note={unmarkedN ? "Not yet recorded today" : "All recorded"} tone={unmarkedN ? "warn" : "good"} to={dashPath("attendance")} />
+        <StatCard loading={homeworkQ.status === "loading"} error={homeworkQ.status === "error"} icon="clipboard" label="Homework active" value={active} note={`${mineHw.length} set by you`} to={dashPath("homework")} />
+        <StatCard loading={studentsQ.status === "loading"} error={studentsQ.status === "error"} icon="cap" label="Students" value={students ?? 0} note="Across the school" tone="good" to={dashPath("students")} />
       </div>
 
       <div className="grid-3">
         <section className="panel">
           <div className="panel-title"><h2><Icon name="clock" size={18} /> Today's schedule</h2><Link className="panel-link" to={dashPath("timetable")}>Week <Icon name="arrowRight" size={14} /></Link></div>
-          {mine === null ? <Skeleton rows={4} /> : today.length === 0 ? <EmptyState icon="clock" title="No periods today" text="Periods assigned to you by the school office appear here." /> : <TodayList rows={today} showClass classes={classes} />}
+          {mineQ.status === "error" ? <RetryState onRetry={mineQ.reload} /> : mine === null ? <Skeleton rows={4} /> : today.length === 0 ? <EmptyState icon="clock" title="No periods today" text="Periods assigned to you by the school office appear here." /> : <TodayList rows={today} showClass classes={classes} />}
         </section>
         <section className="panel">
           <div className="panel-title"><h2><Icon name="megaphone" size={18} /> Notices</h2><Link className="panel-link" to={dashPath("notices")}>All <Icon name="arrowRight" size={14} /></Link></div>
-          <NoticeList notices={notices} />
+          <NoticeList notices={notices} failed={noticesQ.status === "error"} onRetry={noticesQ.reload} />
         </section>
       </div>
     </>
@@ -158,40 +169,40 @@ function MonthCalendar({ records }: { records: Attendance[] }) {
 
 export function StudentOverview({ name }: { name: string }) {
   const { toast } = useUI();
-  const [att, setAtt] = useState<Attendance[] | null>(null);
-  const [results, setResults] = useState<Result[] | null>(null);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [tt, setTt] = useState<TimetableEntry[] | null>(null);
-  const [hw, setHw] = useState<Homework[] | null>(null);
-  const [exams, setExams] = useState<Exam[] | null>(null);
-  const [notices, setNotices] = useState<Notice[] | null>(null);
-
-  useEffect(() => {
-    listAll<Attendance>("/academics/attendance/").then(setAtt).catch(() => setAtt([]));
-    listAll<Result>("/academics/results/").then(setResults).catch(() => setResults([]));
-    listAll<Subject>("/academics/subjects/").then(setSubjects).catch(() => undefined);
-    listAll<TimetableEntry>("/academics/timetable/").then(setTt).catch(() => setTt([]));
-    listAll<Homework>("/academics/homework/?upcoming=1").then(setHw).catch(() => setHw([]));
-    listAll<Exam>("/academics/exams/?upcoming=1").then(setExams).catch(() => setExams([]));
-    listAll<Notice>("/notices/").then(setNotices).catch(() => setNotices([]));
-  }, []);
+  const attQ = useLoad(() => listAll<Attendance>("/academics/attendance/"));
+  const resultsQ = useLoad(() => listAll<Result>("/academics/results/"));
+  const subjectsQ = useLoad(() => listAll<Subject>("/academics/subjects/"));
+  const ttQ = useLoad(() => listAll<TimetableEntry>("/academics/timetable/"));
+  const hwQ = useLoad(() => listAll<Homework>("/academics/homework/?upcoming=1"));
+  const examsQ = useLoad(() => listAll<Exam>("/academics/exams/?upcoming=1"));
+  const noticesQ = useLoad(() => listAll<Notice>("/notices/"));
+  const att = attQ.data;
+  const results = resultsQ.data;
+  const subjectList = subjectsQ.data;
+  const tt = ttQ.data;
+  const hw = hwQ.data;
+  const exams = examsQ.data;
+  const notices = noticesQ.data;
+  // optimistic tick-off keeps its own copy so a toggled checkbox is not overwritten by a reload
+  const [hwLocal, setHwLocal] = useState<Record<string, boolean>>({});
 
   async function tick(h: Homework) {
-    const done = !h.done;
-    setHw((p) => p?.map((x) => (x.id === h.id ? { ...x, done } : x)) ?? p);
-    try { await api.post(`/academics/homework/${h.id}/done/`, { done }); } catch { setHw((p) => p?.map((x) => (x.id === h.id ? { ...x, done: !done } : x)) ?? p); toast("error", "Could not update."); }
+    const done = !(hwLocal[h.id] ?? h.done);
+    setHwLocal((p) => ({ ...p, [h.id]: done }));
+    try { await api.post(`/academics/homework/${h.id}/done/`, { done }); } catch { setHwLocal((p) => ({ ...p, [h.id]: !done })); toast("error", "Could not update."); }
   }
 
   const present = att?.filter((a) => a.status === "PRESENT").length ?? 0;
   const attPct = att && att.length ? Math.round((present / att.length) * 100) : 0;
   const today = (tt ?? []).filter((r) => r.weekday === weekdayIndex()).sort((a, b) => a.period - b.period);
-  const pending = (hw ?? []).filter((h) => !h.done);
+  const hwList = (hw ?? []).map((h) => ({ ...h, done: hwLocal[h.id] ?? h.done }));
+  const pending = hwList.filter((h) => !h.done);
   const nextExam = exams?.[0];
   const bySubject = useMemo(() => {
     const m = new Map<string, { got: number; full: number }>();
     results?.forEach((r) => { const c = m.get(r.subject) ?? { got: 0, full: 0 }; c.got += Number(r.marks_obtained); c.full += Number(r.full_marks); m.set(r.subject, c); });
-    return [...m.entries()].map(([id, v]) => ({ name: subjects.find((s) => s.id === id)?.name ?? "Subject", pct: v.full ? Math.round((v.got / v.full) * 100) : 0 })).sort((a, b) => b.pct - a.pct);
-  }, [results, subjects]);
+    return [...m.entries()].map(([id, v]) => ({ name: subjectList?.find((s) => s.id === id)?.name ?? "Subject", pct: v.full ? Math.round((v.got / v.full) * 100) : 0 })).sort((a, b) => b.pct - a.pct);
+  }, [results, subjectList]);
   const avg = bySubject.length ? Math.round(bySubject.reduce((a, b) => a + b.pct, 0) / bySubject.length) : 0;
   const tone = (p: number) => (p >= 60 ? "good" : p >= 40 ? "warn" : "bad");
 
@@ -214,22 +225,22 @@ export function StudentOverview({ name }: { name: string }) {
       </section>
 
       <div className="kpi-grid">
-        <StatCard loading={att === null} icon="checkCircle" label="Attendance" suffix="%" value={attPct} note={att ? `${present} of ${att.length} days` : ""} tone={attPct >= 75 ? "good" : "warn"} to={dashPath("attendance")} />
-        <StatCard loading={hw === null} icon="clipboard" label="Homework to do" value={pending.length} note="Due soon" tone={pending.length ? "warn" : "good"} to={dashPath("homework")} />
-        <StatCard loading={exams === null} icon="calendar" label="Upcoming exams" value={exams?.length ?? 0} note={nextExam ? `Next: ${nextExam.subject_name}` : "None scheduled"} to={dashPath("exams")} />
-        <StatCard loading={results === null} icon="award" label="Average" suffix="%" value={avg} note={`${bySubject.length} subjects`} tone="good" to={dashPath("results")} />
+        <StatCard loading={attQ.status === "loading"} error={attQ.status === "error"} icon="checkCircle" label="Attendance" suffix="%" value={attPct} note={att ? `${present} of ${att.length} days` : ""} tone={attPct >= 75 ? "good" : "warn"} to={dashPath("attendance")} />
+        <StatCard loading={hwQ.status === "loading"} error={hwQ.status === "error"} icon="clipboard" label="Homework to do" value={pending.length} note="Due soon" tone={pending.length ? "warn" : "good"} to={dashPath("homework")} />
+        <StatCard loading={examsQ.status === "loading"} error={examsQ.status === "error"} icon="calendar" label="Upcoming exams" value={exams?.length ?? 0} note={nextExam ? `Next: ${nextExam.subject_name}` : "None scheduled"} to={dashPath("exams")} />
+        <StatCard loading={resultsQ.status === "loading"} error={resultsQ.status === "error"} icon="award" label="Average" suffix="%" value={avg} note={`${bySubject.length} subjects`} tone="good" to={dashPath("results")} />
       </div>
 
       <div className="grid-3">
         <section className="panel">
           <div className="panel-title"><h2><Icon name="clock" size={18} /> Today's timetable</h2><Link className="panel-link" to={dashPath("timetable")}>Week <Icon name="arrowRight" size={14} /></Link></div>
-          {tt === null ? <Skeleton rows={4} /> : today.length === 0 ? <EmptyState icon="clock" title="No periods today" text={tt.length === 0 ? "Your class timetable has not been published yet." : "Enjoy your day off."} /> : <TodayList rows={today} />}
+          {ttQ.status === "error" ? <RetryState onRetry={ttQ.reload} /> : tt === null ? <Skeleton rows={4} /> : today.length === 0 ? <EmptyState icon="clock" title="No periods today" text={tt.length === 0 ? "Your class timetable has not been published yet." : "Enjoy your day off."} /> : <TodayList rows={today} />}
         </section>
         <section className="panel">
           <div className="panel-title"><h2><Icon name="clipboard" size={18} /> Homework</h2><Link className="panel-link" to={dashPath("homework")}>All <Icon name="arrowRight" size={14} /></Link></div>
-          {hw === null ? <Skeleton rows={3} /> : hw.length === 0 ? <EmptyState icon="checkCircle" title="All caught up" text="No homework due." /> : (
+          {hwQ.status === "error" ? <RetryState onRetry={hwQ.reload} /> : hw === null ? <Skeleton rows={3} /> : hwList.length === 0 ? <EmptyState icon="checkCircle" title="All caught up" text="No homework due." /> : (
             <div className="list">
-              {hw.slice(0, 4).map((h) => (
+              {hwList.slice(0, 4).map((h) => (
                 <div className="row-link" key={h.id}>
                   <button type="button" className="icon-btn" onClick={() => tick(h)} aria-pressed={!!h.done} aria-label={h.done ? "Mark as not done" : "Mark as done"} style={{ borderRadius: "50%", color: h.done ? "#fff" : "var(--fg-faint)", background: h.done ? "var(--good)" : undefined }}><Icon name="check" size={17} /></button>
                   <span className="row-main"><strong style={{ textDecoration: h.done ? "line-through" : "none" }}>{h.title}</strong><span>{h.subject_name} · due {new Date(h.due_date + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span></span>
@@ -243,11 +254,11 @@ export function StudentOverview({ name }: { name: string }) {
       <div className="grid-2" style={{ marginTop: 20 }}>
         <section className="panel">
           <div className="panel-title"><h2><Icon name="calendar" size={18} /> My attendance</h2></div>
-          {att === null ? <Skeleton rows={3} /> : att.length === 0 ? <EmptyState icon="clock" title="No attendance yet" text="It appears once your teacher records it." /> : <MonthCalendar records={att} />}
+          {attQ.status === "error" ? <RetryState onRetry={attQ.reload} /> : att === null ? <Skeleton rows={3} /> : att.length === 0 ? <EmptyState icon="clock" title="No attendance yet" text="It appears once your teacher records it." /> : <MonthCalendar records={att} />}
         </section>
         <section className="panel">
           <div className="panel-title"><h2><Icon name="award" size={18} /> Subject performance</h2><Link className="panel-link" to={dashPath("results")}>Details <Icon name="arrowRight" size={14} /></Link></div>
-          {results === null ? <Skeleton rows={4} /> : bySubject.length === 0 ? <EmptyState icon="award" title="No marks yet" text="Subject results appear after your teachers enter marks." /> : (
+          {resultsQ.status === "error" ? <RetryState onRetry={resultsQ.reload} /> : results === null ? <Skeleton rows={4} /> : bySubject.length === 0 ? <EmptyState icon="award" title="No marks yet" text="Subject results appear after your teachers enter marks." /> : (
             <div className="list">
               {bySubject.map((s) => (
                 <div key={s.name}>
@@ -262,7 +273,7 @@ export function StudentOverview({ name }: { name: string }) {
 
       <section className="panel" style={{ marginTop: 20 }}>
         <div className="panel-title"><h2><Icon name="megaphone" size={18} /> Notices</h2><Link className="panel-link" to={dashPath("notices")}>All <Icon name="arrowRight" size={14} /></Link></div>
-        <NoticeList notices={notices} />
+        <NoticeList notices={notices} failed={noticesQ.status === "error"} onRetry={noticesQ.reload} />
       </section>
     </>
   );
