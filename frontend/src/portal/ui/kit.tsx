@@ -192,8 +192,11 @@ export function StatCard({
   to,
   suffix,
   loading,
+  error,
 }: {
   loading?: boolean;
+  /** The data could not be loaded: show a dash instead of a misleading 0. */
+  error?: boolean;
   icon: IconName;
   label: string;
   value: number;
@@ -215,12 +218,12 @@ export function StatCard({
   }
   const body = (
     <>
-      <span className={`stat-icon tone-${tone}`}>
-        <Icon name={icon} size={22} />
+      <span className={`stat-icon tone-${error ? "warn" : tone}`}>
+        <Icon name={error ? "alert" : icon} size={22} />
       </span>
-      <span className="stat-value">{shown.toLocaleString("en-IN")}{suffix}</span>
+      <span className="stat-value">{error ? "—" : <>{shown.toLocaleString("en-IN")}{suffix}</>}</span>
       <span className="stat-label">{label}</span>
-      {note && <span className="stat-note">{note}</span>}
+      {(error || note) && <span className="stat-note">{error ? "Could not load" : note}</span>}
     </>
   );
   return to ? (
