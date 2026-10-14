@@ -39,3 +39,8 @@ Two different sites, two different dashboards:
 
 ## Auth endpoints
 `auth/admin-login/`, `auth/staff-login/`, `auth/token/refresh/`, `auth/logout/`, `auth/me/`, `auth/me/change-password/`, `auth/admin/users/<id>/reset-password/`.
+
+
+## Added in V8
+- `/gallery` — public photo gallery
+- `/developer` — who built the website
