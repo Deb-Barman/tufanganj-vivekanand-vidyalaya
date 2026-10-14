@@ -2,7 +2,6 @@ import { Suspense, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { SiteFooter } from "../SiteFooter";
 import { SiteHeader } from "../SiteHeader";
-import { MobileTabBar } from "./MobileTabBar";
 import { PageSkeleton, ProgressBusy, RouteProgress } from "../loading/Loading";
 
 /** Header + footer around every public page. Resets scroll on navigation and honours #anchors. */
@@ -35,7 +34,6 @@ export function SiteLayout() {
         </Suspense>
       </main>
       <SiteFooter />
-      <MobileTabBar />
     </>
   );
 }

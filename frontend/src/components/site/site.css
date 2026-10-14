@@ -86,3 +86,12 @@ a.row-card:hover { transform: translateX(6px); box-shadow: var(--raise); }
 .explore-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 20px; }
 .section.bare { padding-top: 0; padding-bottom: clamp(60px, 8vw, 110px); }
 .skip-link { position: fixed; left: 14px; top: -60px; z-index: 10000; padding: 10px 16px; border-radius: 12px; background: var(--accent); color: #fff; font-weight: 700; transition: top 0.2s; } .skip-link:focus { top: 14px; }
+
+/* Teacher cards (Faculty page) */
+.teacher-feature { align-self: start; }
+.teacher-feature .t-exp { font-size: 13px; color: var(--fg-faint); }
+.teacher-feature .t-bio { overflow-wrap: anywhere; }
+.teacher-feature .t-bio.clamped { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.teacher-feature .t-more { align-self: flex-start; background: none; border: 0; padding: 4px 0; font-size: 13px; font-weight: 700; color: var(--accent); cursor: pointer; }
+.teacher-feature .t-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+.sk-teacher { gap: 12px; }
