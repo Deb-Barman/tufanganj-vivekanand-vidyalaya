@@ -20,7 +20,7 @@ export function usePageMeta(title: string, description: string, path?: string) {
     setMeta('meta[property="og:title"]', "property", "og:title", full);
     setMeta('meta[property="og:description"]', "property", "og:description", description);
     setMeta('meta[property="og:type"]', "property", "og:type", "website");
-    setMeta('meta[property="og:image"]', "property", "og:image", `${SITE.url}/swami-dark.jpg`);
+    setMeta('meta[property="og:image"]', "property", "og:image", `${SITE.url}/school_logo.png`);
     let link = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (!link) {
       link = document.createElement("link");

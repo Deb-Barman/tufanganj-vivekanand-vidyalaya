@@ -7,6 +7,17 @@ import { useLocation } from "react-router-dom";
  * mount <RevealController /> once. Re-scans on route change and when the
  * DOM gains new [data-reveal] nodes (async-loaded notices, faculty, etc).
  */
+/**
+ * `.in` is a class, and React rewrites `className` whenever a component's own
+ * classes change (e.g. an FAQ item getting `is-open`). That silently dropped `.in`
+ * and made the element invisible again. A data attribute is never touched by React,
+ * so the revealed state survives re-renders; the class is kept for older CSS.
+ */
+function markIn(el: Element) {
+  el.setAttribute("data-in", "");
+  el.classList.add("in");
+}
+
 export function useRevealScan() {
   const { pathname } = useLocation();
 
@@ -16,7 +27,7 @@ export function useRevealScan() {
       (entries) => {
         for (const e of entries) {
           if (e.isIntersecting) {
-            e.target.classList.add("in");
+            markIn(e.target);
             io.unobserve(e.target);
           }
         }
@@ -26,10 +37,10 @@ export function useRevealScan() {
 
     const seen = new WeakSet<Element>();
     const scan = () => {
-      document.querySelectorAll("[data-reveal]:not(.in)").forEach((el) => {
+      document.querySelectorAll("[data-reveal]:not([data-in])").forEach((el) => {
         if (seen.has(el)) return;
         seen.add(el);
-        if (reduce) el.classList.add("in");
+        if (reduce) markIn(el);
         else io.observe(el);
       });
     };
