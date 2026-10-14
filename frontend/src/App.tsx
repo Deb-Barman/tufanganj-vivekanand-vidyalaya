@@ -32,6 +32,8 @@ const AdmissionsPage = lazyNamed(() => import("./pages/AdmissionsPage"), "Admiss
 const ContactPage = lazyNamed(() => import("./pages/ContactPage"), "ContactPage");
 const PrivacyPage = lazyNamed(() => import("./pages/LegalPages"), "PrivacyPage");
 const TermsPage = lazyNamed(() => import("./pages/LegalPages"), "TermsPage");
+const GalleryPage = lazyNamed(() => import("./pages/GalleryPage"), "GalleryPage");
+const DeveloperPage = lazyNamed(() => import("./pages/DeveloperPage"), "DeveloperPage");
 
 // portal
 const LoginPage = lazyNamed(() => import("./portal/pages/LoginPage"), "LoginPage");
@@ -83,6 +85,8 @@ export default function App() {
         <Route path="contact" element={<ContactPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="terms" element={<TermsPage />} />
+        <Route path="gallery" element={<GalleryPage />} />
+        <Route path="developer" element={<DeveloperPage />} />
 
         <Route path="portal/change-password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
       </Route>
@@ -134,7 +138,6 @@ export default function App() {
       <Route path="contact-us" element={<Navigate to="/contact" replace />} />
       <Route path="admission" element={<Navigate to="/admissions" replace />} />
       <Route path="notice" element={<Navigate to="/notices" replace />} />
-      <Route path="gallery" element={<Navigate to="/campus" replace />} />
       <Route path="facilities" element={<Navigate to="/campus" replace />} />
       <Route path="event" element={<Navigate to="/events" replace />} />
       <Route path="forms" element={<Navigate to="/downloads" replace />} />
