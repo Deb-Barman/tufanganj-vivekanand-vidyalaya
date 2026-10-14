@@ -8,5 +8,5 @@
 .faq-a-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.45s var(--ease-out); }
 .faq-a-wrap.open { grid-template-rows: 1fr; }
 .faq-a { overflow: hidden; padding-inline: 22px; max-width: 68ch; }
-.faq-a p { padding-bottom: 22px; color: var(--fg-soft); font-size: 15px; line-height: 1.75; opacity: 0; transform: translateY(-6px); transition: opacity 0.4s ease 0.05s, transform 0.5s var(--ease-out); }
+.faq-a p { padding-bottom: 22px; color: var(--fg); font-size: 15px; line-height: 1.75; opacity: 0; transform: translateY(-6px); transition: opacity 0.4s ease 0.05s, transform 0.5s var(--ease-out); }
 .faq-a-wrap.open .faq-a p { opacity: 1; transform: none; }
