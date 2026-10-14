@@ -42,6 +42,24 @@ export function SkCards({ count = 6, image = true }: { count?: number; image?: b
   );
 }
 
+/** Same grid and card shape as the real teacher cards, so nothing jumps when data arrives. */
+export function SkTeachers({ count = 6 }: { count?: number }) {
+  return (
+    <div className="card-grid" aria-busy="true" aria-label="Loading teachers">
+      {Array.from({ length: count }, (_, i) => (
+        <div className="feature sk-teacher" key={i}>
+          <Sk w={58} h={58} circle />
+          <Sk h={20} w={`${72 - (i % 3) * 8}%`} className="sk-line lg" />
+          <Sk h={26} w={96} className="sk-line" style={{ borderRadius: 999 }} />
+          <Sk h={11} w="52%" className="sk-line sm" />
+          <Sk h={11} className="sk-line sm" />
+          <Sk h={11} w="78%" className="sk-line sm" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Avatar + lines rows — faculty, notices, people. */
 export function SkList({ count = 5, avatar = true }: { count?: number; avatar?: boolean }) {
   return (

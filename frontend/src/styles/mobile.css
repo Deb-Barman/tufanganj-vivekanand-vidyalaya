@@ -8,7 +8,7 @@
 @media (max-width: 768px), (hover: none) and (pointer: coarse) and (max-width: 1024px) {
   html { -webkit-tap-highlight-color: transparent; scroll-padding-top: 70px; }
   html body { --header-h: 58px; font-size: 16px; line-height: 1.55; overscroll-behavior-y: none; touch-action: manipulation; }
-  html body.has-mtabs { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  html body { padding-bottom: env(safe-area-inset-bottom, 0px); }
   html body .wrap { padding-inline: 16px; }
 
   /* calmer background on phones: no heavy blur blobs (battery + smoothness) */
@@ -22,21 +22,11 @@
   html body .brand .logo-wrap, html body .brand img { width: 34px !important; height: 34px !important; }
   html body .brand .name { font-size: 16px; }
   html body .brand .name small { font-size: 9px; }
-  html body .nav-actions .nav-login { display: none; }   /* the bottom bar has Login / Dashboard */
   html body .nav-theme { display: none; }
   html body .burger { width: 42px; height: 42px; border-radius: 13px; }
   html body .mobile-menu { top: calc(var(--header-h) + env(safe-area-inset-top, 0px)); height: calc(100dvh - var(--header-h) - env(safe-area-inset-top, 0px)); }
   html body .mm-inner { padding-block: 12px calc(32px + env(safe-area-inset-bottom, 0px)); }
   html body .mobile-menu a:not(.btn) { padding: 15px 16px; font-size: 17px; margin-block: 2px; min-height: 52px; display: flex; align-items: center; }
-
-  /* ── bottom tab bar (public pages) ── */
-  html body .m-tabs {
-    position: fixed; z-index: 150; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
-    padding: 7px; border-radius: 24px; background: var(--surface); box-shadow: var(--raise-lg);
-  }
-  html body .m-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 54px; padding: 6px 2px; border-radius: 18px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.01em; color: var(--fg-soft); transition: color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.15s; }
-  html body .m-tab:active { transform: scale(0.94); }
-  html body .m-tab.active { color: var(--accent); background: var(--panel); box-shadow: var(--inset-sm); }
 
   /* ── typography + rhythm ── */
   html body .section { padding-block: 34px 0; }
@@ -150,9 +140,5 @@
 /* very small phones */
 @media (max-width: 360px) {
   html body .brand .name small { display: none; }
-  html body .m-tab { font-size: 10px; }
   html body .explore-grid .feature h3 { font-size: 12.5px; }
 }
-/* the public tab bar never shows on larger screens */
-.m-tabs { display: none; }
-@media (max-width: 768px), (hover: none) and (pointer: coarse) and (max-width: 1024px) { html body .m-tabs { display: grid; } }

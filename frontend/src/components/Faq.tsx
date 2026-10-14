@@ -48,7 +48,9 @@ export function Faq({ bare = false }: { bare?: boolean }) {
               <button
                 type="button"
                 className="faq-q"
+                id={`faq-q-${i}`}
                 aria-expanded={openIndex === i}
+                aria-controls={`faq-a-${i}`}
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
               >
                 <span>{item.q}</span>
@@ -56,7 +58,7 @@ export function Faq({ bare = false }: { bare?: boolean }) {
                   <path d="M6 9l6 6 6-6" />
                 </svg>
               </button>
-              <div className={`faq-a-wrap${openIndex === i ? " open" : ""}`}>
+              <div className={`faq-a-wrap${openIndex === i ? " open" : ""}`} id={`faq-a-${i}`} role="region" aria-labelledby={`faq-q-${i}`}>
                 <div className="faq-a">
                   <p>{item.a}</p>
                 </div>

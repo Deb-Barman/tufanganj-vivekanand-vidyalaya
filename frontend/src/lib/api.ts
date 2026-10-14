@@ -65,14 +65,21 @@ async function refreshAccessToken(): Promise<string | null> {
 const RETRY_DELAYS_MS = [1500, 3500, 7000];
 const RETRYABLE_STATUS = new Set([502, 503, 504]);
 
+// One attempt never waits longer than this, so a panel can show "Try again" instead of a skeleton forever.
+const GET_TIMEOUT_MS = 25_000;
+
 async function fetchWithRetry(url: string, init: RequestInit, canRetry: boolean): Promise<Response> {
   for (let attempt = 0; ; attempt++) {
     const last = !canRetry || attempt >= RETRY_DELAYS_MS.length;
+    const ctrl = canRetry ? new AbortController() : null;
+    const timer = ctrl ? window.setTimeout(() => ctrl.abort(), GET_TIMEOUT_MS) : 0;
     try {
-      const res = await fetch(url, init);
+      const res = await fetch(url, ctrl ? { ...init, signal: ctrl.signal } : init);
       if (last || !RETRYABLE_STATUS.has(res.status)) return res;
     } catch (err) {
       if (last) throw err;
+    } finally {
+      window.clearTimeout(timer);
     }
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
   }

@@ -19,5 +19,6 @@ export const ICONS: Record<string, ReactNode> = {
   "/contact": p("M3 6h18v12H3zM3 7l9 6.5L21 7"),
   "/events": p("M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"),
   "/faq": p("M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"),
+  "/gallery": p("M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M9 9.5h.01"),
   "/downloads": p("M12 4v11m0 0 4-4m-4 4-4-4M5 20h14"),
 };

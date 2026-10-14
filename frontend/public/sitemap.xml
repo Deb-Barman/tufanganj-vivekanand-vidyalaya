@@ -15,4 +15,6 @@
   <url><loc>https://tufanganj-vivekanand-vidyalaya.vercel.app/contact</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://tufanganj-vivekanand-vidyalaya.vercel.app/privacy</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://tufanganj-vivekanand-vidyalaya.vercel.app/terms</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://tufanganj-vivekanand-vidyalaya.vercel.app/gallery</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://tufanganj-vivekanand-vidyalaya.vercel.app/developer</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
 </urlset>
