@@ -46,4 +46,5 @@ export const MORE: NavItem[] = [
   { to: "/faq", label: "FAQ", desc: "Questions parents ask" },
   { to: "/privacy", label: "Privacy", desc: "How we handle your data" },
   { to: "/terms", label: "Terms", desc: "Using this website" },
+  { to: "/gallery", label: "Gallery", desc: "Photos from school life" },
 ];
