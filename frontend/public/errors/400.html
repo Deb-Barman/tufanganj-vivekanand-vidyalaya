@@ -55,7 +55,7 @@ background: radial-gradient(120% 100% at 50% 40%, transparent 55%, rgba(0, 0, 0,
 .tvv-err :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
 .tvv-err .e-frame {
 position: relative; z-index: 2; height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
-padding: max(env(safe-area-inset-top), 0px) clamp(18px, 4.6vw, 76px) max(env(safe-area-inset-bottom), 0px);
+padding: max(env(safe-area-inset-top), 10px) clamp(18px, 4.6vw, 76px) max(env(safe-area-inset-bottom), 0px);
 max-width: 1500px; margin: 0 auto;
 }
 .tvv-err .e-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: max(8px, 2.2 * var(--u)) 0; }
@@ -64,7 +64,7 @@ max-width: 1500px; margin: 0 auto;
 .tvv-err .e-school { font-family: var(--serif); font-weight: 600; font-size: max(0.95rem, min(1.3rem, 2.5 * var(--u))); line-height: 1.12; letter-spacing: 0.01em; overflow: hidden; text-overflow: ellipsis; }
 .tvv-err .e-school small { display: block; margin-top: 3px; font-family: var(--sans); font-weight: 600; font-size: 0.64rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); }
 .tvv-err .e-toggle {
-width: max(38px, min(44px, 5.4 * var(--u))); height: max(38px, min(44px, 5.4 * var(--u))); flex: none; display: grid; place-items: center; cursor: pointer; border-radius: 50%; color: var(--ink);
+width: max(40px, min(46px, 5.4 * var(--u))); height: max(40px, min(46px, 5.4 * var(--u))); flex: none; display: grid; place-items: center; cursor: pointer; border-radius: 50%; color: var(--ink);
 border: 1px solid var(--line); background: var(--card); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 transition: border-color 0.3s, background-color 0.3s, transform 0.3s;
 }
