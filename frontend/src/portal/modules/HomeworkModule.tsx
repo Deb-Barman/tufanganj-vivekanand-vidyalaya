@@ -4,6 +4,7 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { Homework, HomeworkCompletions } from "../../types/api";
 import { EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, classLabel, errText, fmtDate, listAll, todayISO, useUI } from "../ui/kitExports";
+import { PageLoading } from "../ui/PageLoading";
 import { useRefData } from "../ui/useRefData";
 
 const dueLabel = (iso: string) => {
@@ -135,7 +136,7 @@ function StaffHomework() {
     try { await api.del(`/academics/homework/${h.id}/`); load(); toast("success", "Deleted."); } catch (err) { toast("error", errText(err, "Could not delete (you can only delete homework you set).")); }
   }
 
-  if (!ref) return <Skeleton rows={4} />;
+  if (!ref) return <PageLoading icon="clipboard" title="Homework" sub="Set homework for a class. Students tick it off; you see how many have finished." rows={4} />;
   if (ref.classes.length === 0) return (<><PageHeader icon="clipboard" title="Homework" /><EmptyState icon="layers" title="No classes yet" text={isAdmin ? "Create classes and subjects first." : "Ask the Super Admin to set up classes and subjects."} /></>);
 
   return (

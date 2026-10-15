@@ -5,6 +5,7 @@ import { useAuth } from "../../lib/AuthContext";
 import type { AcademicSession, Attendance, SchoolClass, StudentProfile } from "../../types/api";
 import { AttendanceRecords } from "./RecordsManager";
 import { EmptyState, Icon, PageHeader, Ring, Segmented, Skeleton, classLabel, errText, listAll, todayISO, useUI } from "../ui/kitExports";
+import { PageLoading } from "../ui/PageLoading";
 import { dashPath } from "../ui/nav";
 
 type Mark = "PRESENT" | "ABSENT";
@@ -98,7 +99,7 @@ function StaffAttendance({ isAdmin }: { isAdmin: boolean }) {
 
   const setAll = (status: Mark) => students && setMarks(Object.fromEntries(students.map((s) => [s.user, status])));
 
-  if (classes === null) return <Skeleton rows={4} />;
+  if (classes === null) return <PageLoading icon="checkCircle" title="Attendance" sub="Pick a class and a date, tap P or A for each student, then save once." rows={4} />;
 
   if (classes.length === 0)
     return (

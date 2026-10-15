@@ -5,6 +5,7 @@ import { useAuth } from "../../lib/AuthContext";
 import type { AcademicSession, Result, SchoolClass, StudentProfile, Subject } from "../../types/api";
 import { ResultRecords } from "./RecordsManager";
 import { EmptyState, Icon, PageHeader, Ring, Segmented, Skeleton, classLabel, errText, listAll, useUI } from "../ui/kitExports";
+import { PageLoading } from "../ui/PageLoading";
 import { dashPath } from "../ui/nav";
 
 export function ResultsModule() {
@@ -112,7 +113,7 @@ function StaffResults({ isAdmin }: { isAdmin: boolean }) {
     }
   }
 
-  if (sessions === null) return <Skeleton rows={4} />;
+  if (sessions === null) return <PageLoading icon="award" title="Results" sub="Choose session, class and subject, then type each student's marks. Saving again simply updates them." rows={4} />;
 
   if (sessions.length === 0 || classes.length === 0 || subjects.length === 0)
     return (
