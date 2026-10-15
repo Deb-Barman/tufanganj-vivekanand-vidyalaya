@@ -6,9 +6,10 @@ import { CommandPalette } from "../ui/CommandPalette";
 import { Icon } from "../ui/icons";
 import { dashPath, groupNav, navFor } from "../ui/nav";
 import { Avatar, UIProvider } from "../ui/kit";
-import { ModuleSkeleton, ProgressBusy } from "../../components/loading/Loading";
+import { ProgressBusy } from "../../components/loading/Loading";
+import { AdminOverviewSkeleton, HeroSkeleton, MemberOverviewSkeleton, ModuleSkeleton } from "../ui/Skeletons";
+import { skeletonVariantFor } from "../ui/skeletonVariant";
 import { SchoolLogo } from "../../components/SchoolLogo";
-import { ThemeToggle } from "../../components/ThemeToggle";
 import { SITE } from "../../config/site";
 import "./DashboardShell.css";
 
@@ -101,10 +102,6 @@ export function DashboardShell() {
               </span>
               <kbd>Ctrl K</kbd>
             </button>
-            <div className="side-theme">
-              <span>Theme</span>
-              <ThemeToggle />
-            </div>
             <Link to="/" className="side-link">
               <Icon name="external" size={19} /> View website
             </Link>
@@ -130,7 +127,14 @@ export function DashboardShell() {
               fallback={
                 <>
                   <ProgressBusy />
-                  <ModuleSkeleton />
+                  {location.pathname.replace(/\/+$/, "") === "/portal/dashboard" ? (
+                    <>
+                      <HeroSkeleton />
+                      {user.role === "SUPER_ADMIN" ? <AdminOverviewSkeleton /> : <MemberOverviewSkeleton />}
+                    </>
+                  ) : (
+                    <ModuleSkeleton variant={skeletonVariantFor(location.pathname)} />
+                  )}
                 </>
               }
             >
