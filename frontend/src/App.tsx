@@ -8,58 +8,69 @@ import { HomePage } from "./pages/HomePage";
 import { DashboardLayout } from "./portal/DashboardLayout";
 import { RequireAuth } from "./portal/RequireAuth";
 import { RoleOnly } from "./portal/RoleOnly";
+import { L, loadedModules } from "./routeLoaders";
 
-/** React.lazy for a named export: each page becomes its own small download. */
+/** React.lazy for a named export: each page becomes its own small download. If the page was preloaded
+ *  (see lib/routePreload.ts) it renders right away, without a Suspense fallback flash. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function lazyNamed<M extends Record<string, ComponentType<any>>, K extends keyof M>(load: () => Promise<M>, name: K) {
-  return lazy(() => load().then((m) => ({ default: m[name] })));
+  const Lazy = lazy(() => load().then((m) => ({ default: m[name] })));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return function Page(props: any) {
+    const done = loadedModules.get(load) as M | undefined;
+    if (done) {
+      const Ready = done[name];
+      return <Ready {...props} />;
+    }
+    return <Lazy {...props} />;
+  };
 }
 
 // public site
-const AboutPage = lazyNamed(() => import("./pages/AboutPage"), "AboutPage");
-const AcademicsPage = lazyNamed(() => import("./pages/AcademicsPage"), "AcademicsPage");
-const FacultyPage = lazyNamed(() => import("./pages/FacultyPage"), "FacultyPage");
-const AchievementsPage = lazyNamed(() => import("./pages/AchievementsPage"), "AchievementsPage");
-const CampusPage = lazyNamed(() => import("./pages/CampusPage"), "CampusPage");
-const NoticesPage = lazyNamed(() => import("./pages/NoticesPage"), "NoticesPage");
-const NoticeDetailPage = lazyNamed(() => import("./pages/NoticesPage"), "NoticeDetailPage");
-const BlogPage = lazyNamed(() => import("./pages/BlogPage"), "BlogPage");
-const BlogPostPage = lazyNamed(() => import("./pages/BlogPage"), "BlogPostPage");
-const EventsPage = lazyNamed(() => import("./pages/EventsPage"), "EventsPage");
-const DownloadsPage = lazyNamed(() => import("./pages/DownloadsPage"), "DownloadsPage");
-const FaqPage = lazyNamed(() => import("./pages/FaqPage"), "FaqPage");
-const AdmissionsPage = lazyNamed(() => import("./pages/AdmissionsPage"), "AdmissionsPage");
-const ContactPage = lazyNamed(() => import("./pages/ContactPage"), "ContactPage");
-const PrivacyPage = lazyNamed(() => import("./pages/LegalPages"), "PrivacyPage");
-const TermsPage = lazyNamed(() => import("./pages/LegalPages"), "TermsPage");
-const GalleryPage = lazyNamed(() => import("./pages/GalleryPage"), "GalleryPage");
-const DeveloperPage = lazyNamed(() => import("./pages/DeveloperPage"), "DeveloperPage");
+const AboutPage = lazyNamed(L.AboutPage, "AboutPage");
+const AcademicsPage = lazyNamed(L.AcademicsPage, "AcademicsPage");
+const FacultyPage = lazyNamed(L.FacultyPage, "FacultyPage");
+const AchievementsPage = lazyNamed(L.AchievementsPage, "AchievementsPage");
+const CampusPage = lazyNamed(L.CampusPage, "CampusPage");
+const NoticesPage = lazyNamed(L.NoticesPage, "NoticesPage");
+const NoticeDetailPage = lazyNamed(L.NoticeDetailPage, "NoticeDetailPage");
+const BlogPage = lazyNamed(L.BlogPage, "BlogPage");
+const BlogPostPage = lazyNamed(L.BlogPostPage, "BlogPostPage");
+const EventsPage = lazyNamed(L.EventsPage, "EventsPage");
+const DownloadsPage = lazyNamed(L.DownloadsPage, "DownloadsPage");
+const FaqPage = lazyNamed(L.FaqPage, "FaqPage");
+const AdmissionsPage = lazyNamed(L.AdmissionsPage, "AdmissionsPage");
+const ContactPage = lazyNamed(L.ContactPage, "ContactPage");
+const PrivacyPage = lazyNamed(L.PrivacyPage, "PrivacyPage");
+const TermsPage = lazyNamed(L.TermsPage, "TermsPage");
+const GalleryPage = lazyNamed(L.GalleryPage, "GalleryPage");
+const DeveloperPage = lazyNamed(L.DeveloperPage, "DeveloperPage");
 
 // portal
-const LoginPage = lazyNamed(() => import("./portal/pages/LoginPage"), "LoginPage");
-const AdminLoginPage = lazyNamed(() => import("./portal/pages/AdminLoginPage"), "AdminLoginPage");
-const ChangePasswordPage = lazyNamed(() => import("./portal/pages/ChangePasswordPage"), "ChangePasswordPage");
-const DashboardShell = lazyNamed(() => import("./portal/pages/DashboardShell"), "DashboardShell");
-const DashboardNotFound = lazyNamed(() => import("./portal/pages/DashboardNotFound"), "DashboardNotFound");
-const OverviewPage = lazyNamed(() => import("./portal/pages/OverviewPage"), "OverviewPage");
-const NoticesModule = lazyNamed(() => import("./portal/modules/NoticesModule"), "NoticesModule");
-const BlogModule = lazyNamed(() => import("./portal/modules/BlogModule"), "BlogModule");
-const EventsModule = lazyNamed(() => import("./portal/modules/EventsModule"), "EventsModule");
-const GalleryModule = lazyNamed(() => import("./portal/modules/GalleryModule"), "GalleryModule");
-const DownloadsModule = lazyNamed(() => import("./portal/modules/DownloadsModule"), "DownloadsModule");
-const TeachersModule = lazyNamed(() => import("./portal/modules/TeachersModule"), "TeachersModule");
-const AttendanceModule = lazyNamed(() => import("./portal/modules/AttendanceModule"), "AttendanceModule");
-const ResultsModule = lazyNamed(() => import("./portal/modules/ResultsModule"), "ResultsModule");
-const AccountsModule = lazyNamed(() => import("./portal/modules/AccountsModule"), "AccountsModule");
-const AdmissionsModule = lazyNamed(() => import("./portal/modules/AdmissionsModule"), "AdmissionsModule");
-const StudentsModule = lazyNamed(() => import("./portal/modules/StudentsModule"), "StudentsModule");
-const AcademicSetupModule = lazyNamed(() => import("./portal/modules/AcademicSetupModule"), "AcademicSetupModule");
-const MarksheetsModule = lazyNamed(() => import("./portal/modules/MarksheetsModule"), "MarksheetsModule");
-const TimetableModule = lazyNamed(() => import("./portal/modules/TimetableModule"), "TimetableModule");
-const HomeworkModule = lazyNamed(() => import("./portal/modules/HomeworkModule"), "HomeworkModule");
-const ExamsModule = lazyNamed(() => import("./portal/modules/ExamsModule"), "ExamsModule");
-const MessagesModule = lazyNamed(() => import("./portal/modules/MessagesModule"), "MessagesModule");
-const AchievementsModule = lazyNamed(() => import("./portal/modules/AchievementsModule"), "AchievementsModule");
+const LoginPage = lazyNamed(L.LoginPage, "LoginPage");
+const AdminLoginPage = lazyNamed(L.AdminLoginPage, "AdminLoginPage");
+const ChangePasswordPage = lazyNamed(L.ChangePasswordPage, "ChangePasswordPage");
+const DashboardShell = lazyNamed(L.DashboardShell, "DashboardShell");
+const DashboardNotFound = lazyNamed(L.DashboardNotFound, "DashboardNotFound");
+const OverviewPage = lazyNamed(L.OverviewPage, "OverviewPage");
+const NoticesModule = lazyNamed(L.NoticesModule, "NoticesModule");
+const BlogModule = lazyNamed(L.BlogModule, "BlogModule");
+const EventsModule = lazyNamed(L.EventsModule, "EventsModule");
+const GalleryModule = lazyNamed(L.GalleryModule, "GalleryModule");
+const DownloadsModule = lazyNamed(L.DownloadsModule, "DownloadsModule");
+const TeachersModule = lazyNamed(L.TeachersModule, "TeachersModule");
+const AttendanceModule = lazyNamed(L.AttendanceModule, "AttendanceModule");
+const ResultsModule = lazyNamed(L.ResultsModule, "ResultsModule");
+const AccountsModule = lazyNamed(L.AccountsModule, "AccountsModule");
+const AdmissionsModule = lazyNamed(L.AdmissionsModule, "AdmissionsModule");
+const StudentsModule = lazyNamed(L.StudentsModule, "StudentsModule");
+const AcademicSetupModule = lazyNamed(L.AcademicSetupModule, "AcademicSetupModule");
+const MarksheetsModule = lazyNamed(L.MarksheetsModule, "MarksheetsModule");
+const TimetableModule = lazyNamed(L.TimetableModule, "TimetableModule");
+const HomeworkModule = lazyNamed(L.HomeworkModule, "HomeworkModule");
+const ExamsModule = lazyNamed(L.ExamsModule, "ExamsModule");
+const MessagesModule = lazyNamed(L.MessagesModule, "MessagesModule");
+const AchievementsModule = lazyNamed(L.AchievementsModule, "AchievementsModule");
 
 const ADMIN = ["SUPER_ADMIN"] as const;
 const STAFF = ["SUPER_ADMIN", "TEACHER"] as const;
