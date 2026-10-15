@@ -8,9 +8,10 @@ import { dashPath, groupNav, navFor } from "../ui/nav";
 import { Avatar, UIProvider } from "../ui/kit";
 import { ProgressBusy } from "../../components/loading/Loading";
 import { AdminOverviewSkeleton, HeroSkeleton, MemberOverviewSkeleton, ModuleSkeleton } from "../ui/Skeletons";
-import { skeletonVariantFor } from "../ui/skeletonVariant";
+import { skeletonSpecFor } from "../ui/skeletonVariant";
 import { SchoolLogo } from "../../components/SchoolLogo";
 import { SITE } from "../../config/site";
+import { preloadPortalPages } from "../../lib/routePreload";
 import "./DashboardShell.css";
 
 /** Items pinned to the phone tab bar, per role (the 5th tab is always "More"). */
@@ -21,6 +22,7 @@ const TAB_KEYS: Record<string, string[]> = {
 };
 
 export function DashboardShell() {
+  useEffect(() => preloadPortalPages(), []);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -133,7 +135,7 @@ export function DashboardShell() {
                       {user.role === "SUPER_ADMIN" ? <AdminOverviewSkeleton /> : <MemberOverviewSkeleton />}
                     </>
                   ) : (
-                    <ModuleSkeleton variant={skeletonVariantFor(location.pathname)} />
+                    <ModuleSkeleton {...skeletonSpecFor(location.pathname, user.role)} />
                   )}
                 </>
               }
