@@ -1,3 +1,5 @@
+import { useLocation } from "react-router-dom";
+import { skeletonSpecFor } from "./skeletonVariant";
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import "./skeletons.css";
@@ -100,15 +102,22 @@ export function PageHeadSkeleton() {
 }
 
 /** Suspense fallback while a dashboard page's code downloads: header + toolbar + the page's own skeleton shape. */
-export function ModuleSkeleton({ variant = "list" }: { variant?: SkeletonVariant }) {
+export function ModuleSkeleton({ variant = "list", rows, toolbar = true }: { variant?: SkeletonVariant; rows?: number; toolbar?: boolean }) {
   return (
     <div aria-busy="true" aria-label="Loading page">
       <PageHeadSkeleton />
-      <div className="toolbar">
-        <Bone w={190} h={42} r={14} />
-        <Bone h={42} r={14} style={{ flex: "1 1 160px", width: "auto" }} />
-      </div>
-      <Skeleton variant={variant} rows={variant === "list" ? 4 : 3} />
+      {toolbar && <ToolbarSkeleton />}
+      <Skeleton variant={variant} rows={rows ?? (variant === "list" ? 4 : 3)} />
+    </div>
+  );
+}
+
+/** The search / filter row under a page title. */
+export function ToolbarSkeleton() {
+  return (
+    <div className="toolbar" aria-hidden="true">
+      <Bone w={190} h={42} r={14} />
+      <Bone h={42} r={14} style={{ flex: "1 1 160px", width: "auto" }} />
     </div>
   );
 }
@@ -208,6 +217,9 @@ export function AdminOverviewSkeleton() {
 /** Whole-dashboard skeleton: sidebar (desktop) / top bar + tab bar (phone), hero, KPI tiles, panels.
  *  Self-contained on purpose: it must look right before any dashboard code or CSS has loaded. */
 export function ShellSkeleton() {
+  const { pathname } = useLocation();
+  const isOverview = pathname.replace(/\/+$/, "") === "/portal/dashboard";
+  const spec = skeletonSpecFor(pathname);
   return (
     <div className="shs" role="status" aria-busy="true" aria-label="Loading dashboard">
       <aside className="shs-side">
@@ -217,21 +229,44 @@ export function ShellSkeleton() {
       </aside>
       <div className="shs-main">
         <div className="shs-top"><Bone w={38} h={38} r={12} /><Bone w="38%" h={16} style={{ flex: 1 }} /><Bone w={38} h={38} r={12} /></div>
-        <div className="shs-hero">
-          <Bone w={130} h={11} />
-          <Bone w="58%" h={30} />
-          <Bone w="82%" h={12} />
-          <div className="sk-chips"><Bone w={112} h={38} r={999} /><Bone w={132} h={38} r={999} /><Bone w={104} h={38} r={999} /></div>
-        </div>
-        <div className="shs-kpis">
-          {[0, 1, 2, 3].map((i) => (
-            <div className="shs-card" key={i}><Bone w={44} h={44} r={15} /><Bone w={60} h={30} /><Bone w="70%" h={12} /><Bone w="45%" h={10} /></div>
-          ))}
-        </div>
-        <div className="shs-card" style={{ gap: 14 }}>
-          <Bone w={150} h={16} />
-          {[0, 1, 2].map((i) => <Bone key={i} h={58} r={14} />)}
-        </div>
+        {isOverview ? (
+          <>
+            <div className="shs-hero">
+              <Bone w={130} h={11} />
+              <Bone w="58%" h={30} />
+              <Bone w="82%" h={12} />
+              <div className="sk-chips"><Bone w={112} h={38} r={999} /><Bone w={132} h={38} r={999} /><Bone w={104} h={38} r={999} /></div>
+            </div>
+            <div className="shs-kpis">
+              {[0, 1, 2, 3].map((i) => (
+                <div className="shs-card" key={i}><Bone w={44} h={44} r={15} /><Bone w={60} h={30} /><Bone w="70%" h={12} /><Bone w="45%" h={10} /></div>
+              ))}
+            </div>
+            <div className="shs-card" style={{ gap: 14 }}>
+              <Bone w={150} h={16} />
+              {[0, 1, 2].map((i) => <Bone key={i} h={58} r={14} />)}
+            </div>
+          </>
+        ) : (
+          /* any other page: the same shape that page shows while its data loads (inline styles: this must work before any CSS loads) */
+          <>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}><Bone w="34%" h={30} /><Bone w="62%" h={12} /></div>
+            {spec.toolbar && <div style={{ display: "flex", gap: 12 }}><Bone w={190} h={42} r={14} /><Bone h={42} r={14} style={{ flex: 1, width: "auto" }} /></div>}
+            {spec.variant === "grid" ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 14 }}>
+                {Array.from({ length: 8 }, (_, i) => <Bone key={i} h={150} r={16} />)}
+              </div>
+            ) : spec.variant === "cards" ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {Array.from({ length: spec.rows }, (_, i) => <div className="shs-card" key={i}><Bone w="46%" h={16} /><Bone w="80%" h={11} /><Bone w="30%" h={11} /></div>)}
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {Array.from({ length: spec.rows }, (_, i) => <Bone key={i} h={58} r={14} />)}
+              </div>
+            )}
+          </>
+        )}
       </div>
       <div className="shs-tabs">
         {[0, 1, 2, 3, 4].map((i) => <div key={i}><Bone w={24} h={24} r={8} /><Bone w={34} h={8} /></div>)}
