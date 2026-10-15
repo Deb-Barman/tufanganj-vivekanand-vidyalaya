@@ -99,8 +99,8 @@ export function PageHeadSkeleton() {
   );
 }
 
-/** Suspense fallback while a dashboard page's code downloads: header + toolbar + rows. */
-export function ModuleSkeleton() {
+/** Suspense fallback while a dashboard page's code downloads: header + toolbar + the page's own skeleton shape. */
+export function ModuleSkeleton({ variant = "list" }: { variant?: SkeletonVariant }) {
   return (
     <div aria-busy="true" aria-label="Loading page">
       <PageHeadSkeleton />
@@ -108,7 +108,39 @@ export function ModuleSkeleton() {
         <Bone w={190} h={42} r={14} />
         <Bone h={42} r={14} style={{ flex: "1 1 160px", width: "auto" }} />
       </div>
-      <Skeleton rows={4} />
+      <Skeleton variant={variant} rows={variant === "list" ? 4 : 3} />
+    </div>
+  );
+}
+
+/** Hero card placeholder (greeting + chips) for the overview page. */
+export function HeroSkeleton() {
+  return (
+    <section className="hero-card" aria-hidden="true">
+      <Bone w={110} h={12} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 14 }}>
+        <Bone w="52%" h={30} />
+        <Bone w="34%" h={12} />
+        <div style={{ display: "flex", gap: 10, marginTop: 6 }}><Bone w={104} h={36} r={999} /><Bone w={104} h={36} r={999} /><Bone w={104} h={36} r={999} /></div>
+      </div>
+    </section>
+  );
+}
+
+/** Teacher / Student overview while ANY of its data is still loading: one skeleton, then everything appears together. */
+export function MemberOverviewSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading overview">
+      <StatsSkeleton />
+      <div className="grid-3" style={{ marginTop: 0 }}>
+        <PanelSk lines={4} />
+        <PanelSk lines={3} />
+      </div>
+      <div className="grid-2" style={{ marginTop: 20 }}>
+        <PanelSk lines={3} />
+        <PanelSk lines={3} />
+      </div>
+      <PanelSk lines={3} />
     </div>
   );
 }
@@ -145,7 +177,7 @@ function PanelSk({ lines = 3, children }: { lines?: number; children?: React.Rea
   );
 }
 
-/** Everything under the Super Admin hero: KPI tiles, two panels, chart + pipeline, shortcuts. */
+/** Everything under the Super Admin hero: KPI tiles, two panels, chart + pipeline. */
 export function AdminOverviewSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading overview">
@@ -169,14 +201,6 @@ export function AdminOverviewSkeleton() {
           <div className="sk-panel-lines"><Bone h={14} r={999} /><Bone w="60%" h={10} /><RowSk i={1} /></div>
         </PanelSk>
       </div>
-      <section className="panel" style={{ marginTop: 20 }}>
-        <div className="panel-title"><Bone w={110} h={16} /></div>
-        <div className="sk-quick">
-          {Array.from({ length: 8 }, (_, i) => (
-            <div key={i}><Bone w={22} h={22} r={7} /><Bone w="70%" h={13} /><Bone w="90%" h={10} /></div>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
