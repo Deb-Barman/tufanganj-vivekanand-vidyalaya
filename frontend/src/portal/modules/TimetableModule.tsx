@@ -4,6 +4,7 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { TimetableEntry } from "../../types/api";
 import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, classLabel, errText, fmtTime, listAll, useUI } from "../ui/kitExports";
+import { PageLoading } from "../ui/PageLoading";
 import { useRefData } from "../ui/useRefData";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -128,7 +129,7 @@ function TimetableEditor() {
     }
   }
 
-  if (!ref) return <Skeleton rows={4} />;
+  if (!ref) return <PageLoading icon="clock" title="Timetable" sub="Build each class's weekly timetable. Students and teachers see it on their dashboards." rows={4} />;
   if (ref.classes.length === 0) return (<><PageHeader icon="clock" title="Timetable" /><EmptyState icon="layers" title="Create a class first" text="Timetables belong to a class. Add classes and subjects under Classes & Subjects." /></>);
 
   return (

@@ -16,7 +16,7 @@ html[data-theme=dark] .nlp{--bgt:#1d1f2e;--sd:#12131d;--sl:#2a2d41;--dimc:3,4,12
 .nlp .warm{z-index:1;mix-blend-mode:var(--wb);opacity:calc(var(--I)*var(--wa));background:radial-gradient(circle 1100px at var(--lx) var(--ly),rgba(var(--wcr),.46) 0,rgba(var(--wcr),.34) 100px,rgba(var(--wcr),.24) 220px,rgba(var(--wcr),.16) 360px,rgba(var(--wcr),.1) 520px,rgba(var(--wcr),.055) 760px,rgba(var(--wcr),.02) 940px,rgba(var(--wcr),0) 1100px)}
 .nlp .cone{z-index:3;mix-blend-mode:var(--wb);opacity:calc(var(--I)*var(--ca));background:conic-gradient(from var(--cs) at var(--lx) var(--ly),rgba(var(--wcr),0) 0deg,rgba(var(--wcr),.1) 14deg,rgba(var(--wcr),.22) 32deg,rgba(var(--wcr),.36) 52deg,rgba(var(--wcr),.22) 72deg,rgba(var(--wcr),.1) 90deg,rgba(var(--wcr),0) 104deg,rgba(var(--wcr),0) 360deg);-webkit-mask-image:radial-gradient(circle 780px at var(--lx) var(--ly),#000,rgba(0,0,0,.6) 200px,rgba(0,0,0,.22) 460px,transparent);mask-image:radial-gradient(circle 780px at var(--lx) var(--ly),#000,rgba(0,0,0,.6) 200px,rgba(0,0,0,.22) 460px,transparent)}
 .nlp .bloom{z-index:7;mix-blend-mode:var(--wb);opacity:var(--T);background:radial-gradient(circle var(--br) at var(--lx) var(--ly),rgba(255,255,255,.95),rgba(var(--wcr),.3) 40%,transparent 72%)}
-.nlp #fx{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none}
+.nlp #nlp-fx,.nlp .scene>canvas{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none}
 .nlp .content{position:relative;z-index:2;width:min(1080px,92%);min-height:100vh;min-height:100dvh;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:56px}
 .nlp .lamp-side{flex:1 1 50%;display:grid;place-items:center}
 .nlp .lamp-wrap{position:relative;width:360px;height:470px}

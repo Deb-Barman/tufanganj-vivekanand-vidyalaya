@@ -5,7 +5,7 @@ import { useAuth } from "../../lib/AuthContext";
 import type { AdminStats } from "../../types/api";
 import { AdminOverviewSkeleton } from "../ui/Skeletons";
 import { AttendanceBars, EmptyState, Icon, Ring, StatCard, StatusPill, errText, firstName, fmtDate, greeting, todayLong } from "../ui/kitExports";
-import { dashPath, navFor } from "../ui/nav";
+import { dashPath } from "../ui/nav";
 import { StudentOverview, TeacherOverview } from "./RoleOverviews";
 import type { IconName } from "../ui/icons";
 
@@ -213,25 +213,6 @@ function AdminOverview({ name }: { name: string }) {
               )}
             </section>
           </div>
-
-          <section className="panel" style={{ marginTop: 20 }}>
-            <div className="panel-title">
-              <h2>
-                <Icon name="layers" size={18} /> Jump to
-              </h2>
-            </div>
-            <div className="quick-grid">
-              {navFor("SUPER_ADMIN")
-                .filter((n) => n.to !== "")
-                .map((n) => (
-                  <Link key={n.to} to={dashPath(n.to)} className="quick">
-                    <Icon name={n.icon} size={22} />
-                    {n.label}
-                    <span>{n.hint}</span>
-                  </Link>
-                ))}
-            </div>
-          </section>
         </>
       )}
     </>

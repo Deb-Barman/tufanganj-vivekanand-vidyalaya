@@ -43,7 +43,6 @@ function page(code, c, target) {
 <div class="e-frame">
 <header class="e-head">
 <a class="e-brand" href="${home}" aria-label="Tufanganj Vivekananda Vidyalaya — home"><img class="e-seal" src="${asset("school_logo.png")}" alt="" width="56" height="56"><span class="e-school">Tufanganj Vivekananda Vidyalaya<small>Higher Secondary · Cooch Behar</small></span></a>
-<button type="button" class="e-toggle" id="theme" aria-label="Toggle light and dark theme"><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
 </header>
 <main class="e-stage">
 <section class="e-copy">
@@ -66,7 +65,7 @@ function page(code, c, target) {
 
   // Theme must be decided BEFORE first paint (no light/dark flash). Shares the SPA's "tvv-theme" key.
   const themeBoot = `(function(){try{var p=localStorage.getItem("tvv-theme");var d=p==="dark"||((p!=="light")&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.setAttribute("data-theme",d?"dark":"light")}catch(e){document.documentElement.setAttribute("data-theme","dark")}})();`;
-  const script = `(function(){var r=document.documentElement;document.getElementById("theme").addEventListener("click",function(){var n=r.getAttribute("data-theme")==="dark"?"light":"dark";r.setAttribute("data-theme",n);try{localStorage.setItem("tvv-theme",n)}catch(e){}});var yr=document.getElementById("yr");if(yr)yr.textContent=new Date().getFullYear();var re=document.querySelector("[data-retry]");if(re)re.addEventListener("click",function(){re.disabled=true;re.firstChild.nodeValue="Retrying… ";location.reload()});var bk=document.querySelector("[data-back]");if(bk)bk.addEventListener("click",function(){history.length>1?history.back():location.assign("${home}")})})();`;
+  const script = `(function(){var r=document.documentElement;var yr=document.getElementById("yr");if(yr)yr.textContent=new Date().getFullYear();var re=document.querySelector("[data-retry]");if(re)re.addEventListener("click",function(){re.disabled=true;re.firstChild.nodeValue="Retrying… ";location.reload()});var bk=document.querySelector("[data-back]");if(bk)bk.addEventListener("click",function(){history.length>1?history.back():location.assign("${home}")})})();`;
   const wrap = (s) => (dj ? `{% verbatim %}${s}{% endverbatim %}` : s);
 
   return `<!doctype html>

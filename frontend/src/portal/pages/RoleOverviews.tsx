@@ -5,6 +5,7 @@ import { useAuth } from "../../lib/AuthContext";
 import type { Attendance, Exam, Homework, Notice, Result, SchoolClass, Subject, TimetableEntry } from "../../types/api";
 import { EmptyState, Icon, Ring, Skeleton, StatCard, fmtTime, firstName, greeting, listAll, todayISO, todayLong, useUI } from "../ui/kitExports";
 import { useLoad } from "../ui/useLoad";
+import { MemberOverviewSkeleton } from "../ui/Skeletons";
 import { dashPath } from "../ui/nav";
 
 const weekdayIndex = () => (new Date().getDay() === 0 ? -1 : new Date().getDay() - 1); // Sunday: no classes
@@ -92,6 +93,8 @@ export function TeacherOverview({ name }: { name: string }) {
   }, [mine, classIds]);
 
   const unmarkedN = classIds.length === 0 ? 0 : unmarked;
+  // Show the page only once EVERYTHING has settled (loaded or failed) so panels never pop in one by one.
+  const ready = [mineQ, classesQ, studentsQ, homeworkQ, noticesQ].every((q) => q.status !== "loading") && !(classIds.length > 0 && unmarked === null);
   const now = nowMinutes();
   const done = today.filter((r) => now >= minutes(r.end_time)).length;
   const pct = today.length ? Math.round((done / today.length) * 100) : 0;
@@ -112,10 +115,12 @@ export function TeacherOverview({ name }: { name: string }) {
               <Link className="chip" to={dashPath("results")}><Icon name="award" size={16} /> Enter marks</Link>
             </div>
           </div>
-          {today.length > 0 && <Ring percent={pct} label={`${done}/${today.length}`} sub="periods done" tone="good" />}
+          {ready && today.length > 0 && <Ring percent={pct} label={`${done}/${today.length}`} sub="periods done" tone="good" />}
         </div>
       </section>
 
+      {!ready ? <MemberOverviewSkeleton /> : (
+      <div className="ov-in">
       <div className="kpi-grid">
         <StatCard loading={mineQ.status === "loading"} error={mineQ.status === "error"} icon="layers" label="Classes today" value={classIds.length} note={`${today.length} periods`} to={dashPath("timetable")} />
         <StatCard loading={mineQ.status === "loading" || (mineQ.status === "ok" && classIds.length > 0 && unmarked === null)} error={mineQ.status === "error"} icon="checkCircle" label="Attendance to mark" value={unmarkedN ?? 0} note={unmarkedN ? "Not yet recorded today" : "All recorded"} tone={unmarkedN ? "warn" : "good"} to={dashPath("attendance")} />
@@ -133,6 +138,8 @@ export function TeacherOverview({ name }: { name: string }) {
           <NoticeList notices={notices} failed={noticesQ.status === "error"} onRetry={noticesQ.reload} />
         </section>
       </div>
+      </div>
+      )}
     </>
   );
 }
@@ -205,6 +212,8 @@ export function StudentOverview({ name }: { name: string }) {
   }, [results, subjectList]);
   const avg = bySubject.length ? Math.round(bySubject.reduce((a, b) => a + b.pct, 0) / bySubject.length) : 0;
   const tone = (p: number) => (p >= 60 ? "good" : p >= 40 ? "warn" : "bad");
+  // Show the page only once EVERYTHING has settled (loaded or failed) so panels never pop in one by one.
+  const ready = [attQ, resultsQ, subjectsQ, ttQ, hwQ, examsQ, noticesQ].every((q) => q.status !== "loading");
 
   return (
     <>
@@ -220,10 +229,12 @@ export function StudentOverview({ name }: { name: string }) {
               <Link className="chip" to={dashPath("results")}><Icon name="award" size={16} /> My results</Link>
             </div>
           </div>
-          {att && att.length > 0 && <Ring percent={attPct} label={`${attPct}%`} sub="attendance" tone={attPct >= 75 ? "good" : attPct >= 60 ? "warn" : "bad"} />}
+          {ready && att && att.length > 0 && <Ring percent={attPct} label={`${attPct}%`} sub="attendance" tone={attPct >= 75 ? "good" : attPct >= 60 ? "warn" : "bad"} />}
         </div>
       </section>
 
+      {!ready ? <MemberOverviewSkeleton /> : (
+      <div className="ov-in">
       <div className="kpi-grid">
         <StatCard loading={attQ.status === "loading"} error={attQ.status === "error"} icon="checkCircle" label="Attendance" suffix="%" value={attPct} note={att ? `${present} of ${att.length} days` : ""} tone={attPct >= 75 ? "good" : "warn"} to={dashPath("attendance")} />
         <StatCard loading={hwQ.status === "loading"} error={hwQ.status === "error"} icon="clipboard" label="Homework to do" value={pending.length} note="Due soon" tone={pending.length ? "warn" : "good"} to={dashPath("homework")} />
@@ -275,6 +286,8 @@ export function StudentOverview({ name }: { name: string }) {
         <div className="panel-title"><h2><Icon name="megaphone" size={18} /> Notices</h2><Link className="panel-link" to={dashPath("notices")}>All <Icon name="arrowRight" size={14} /></Link></div>
         <NoticeList notices={notices} failed={noticesQ.status === "error"} onRetry={noticesQ.reload} />
       </section>
+      </div>
+      )}
     </>
   );
 }

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useTheme } from "../../lib/theme";
 import { loginCopy, useLoginForm } from "./useLoginForm";
 import type { LoginViewProps } from "./types";
 import "./LampLogin2.css";
@@ -7,25 +6,22 @@ import "./LampLogin2.css";
 /**
  * "Lamp — physics duo" login. Pull the cord (a soft verlet chain), the lamp
  * swings on a lagging spring, the room lights up and the card appears.
- * The cord physics, light, particles and theme reveal are a port of
+ * The cord physics, light, particles and  are a port of
  * lamp_login_physics_duo.html; the form is wired to the real backend through
  * useLoginForm (nothing here decides who may sign in).
  */
 export default function LampLogin2({ portal, initialNotice, onSigningIn, onSuccess }: LoginViewProps) {
-  const { setPreference } = useTheme();
   const rootRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
   const lampRef = useRef<HTMLButtonElement>(null);
   const cardRef = useRef<HTMLElement>(null);
   const cvRef = useRef<HTMLCanvasElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
-  const themeRef = useRef<HTMLButtonElement>(null);
   const offRef = useRef<HTMLButtonElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const idRef = useRef<HTMLInputElement>(null);
   const passRef = useRef<HTMLInputElement>(null);
   const boostRef = useRef<() => void>(() => {});
-  const setPrefRef = useRef(setPreference);
   const [showPass, setShowPass] = useState(false);
   const [caps, setCaps] = useState(false);
   const [note, setNote] = useState("");
@@ -34,16 +30,13 @@ export default function LampLogin2({ portal, initialNotice, onSigningIn, onSucce
   const f = useLoginForm({ portal, initialNotice, onSigningIn, onSuccess, formRef, idRef, passRef });
 
   useEffect(() => {
-    setPrefRef.current = setPreference;
-  }, [setPreference]);
-  useEffect(() => {
     if (f.phase === "ok") boostRef.current();
   }, [f.phase]);
 
-  /* ───────── physics, light, theme reveal (ported) ───────── */
+  /* ───────── physics, light, (ported) ───────── */
   useEffect(() => {
     const root = document.documentElement;
-    const scene = sceneRef.current!, lamp = lampRef.current!, card = cardRef.current!, cv = cvRef.current!, rail = railRef.current!, th = themeRef.current!, offBtn = offRef.current!;
+    const scene = sceneRef.current!, lamp = lampRef.current!, card = cardRef.current!, cv = cvRef.current!, rail = railRef.current!, offBtn = offRef.current!;
     card.inert = true; // hidden until the lamp is on, so keyboard users can't tab into it
     const cx = cv.getContext("2d")!;
     const still = matchMedia("(prefers-reduced-motion:reduce)").matches;
@@ -59,22 +52,6 @@ export default function LampLogin2({ portal, initialNotice, onSigningIn, onSucce
     const mix = (a: number[], b: number[], t: number) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
     const heat = (t: number) => { t = Math.min(1, t); for (let i = 1; i < 5; i++) if (t <= ST[i][0]) return mix(ST[i - 1][1], ST[i][1], (t - ST[i - 1][0]) / (ST[i][0] - ST[i - 1][0])); return ST[4][1]; };
 
-    /* theme: circular reveal from the toggle, instant fallback */
-    const paintTheme = (t: "light" | "dark") => { root.dataset.theme = t; setPrefRef.current(t); wake(); };
-    const onTheme = () => {
-      const t = root.dataset.theme === "dark" ? "light" : "dark";
-      const r = th.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
-      const doc = document as Document & { startViewTransition?: (cb: () => void) => { ready: Promise<void>; finished: Promise<void> } };
-      if (!doc.startViewTransition || still) return paintTheme(t);
-      const rad = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
-      root.classList.add("vt");
-      const vt = doc.startViewTransition(() => paintTheme(t));
-      vt.ready.then(() => root.animate({ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${rad}px at ${x}px ${y}px)`] }, { duration: 1000, easing: "cubic-bezier(.65,0,.2,1)", pseudoElement: "::view-transition-new(root)" })).catch(() => {});
-      vt.finished.finally(() => root.classList.remove("vt"));
-    };
-    th.addEventListener("click", onTheme);
-    const onKeyT = (e: KeyboardEvent) => { if ((e.key === "t" || e.key === "T") && !e.ctrlKey && !e.metaKey && !/input|textarea/i.test(document.activeElement?.tagName ?? "")) th.click(); };
-    addEventListener("keydown", onKeyT);
 
     /* soft verlet chain: elastic links, light wind, lamp swings on a lagging spring */
     function geom() {
@@ -207,7 +184,7 @@ export default function LampLogin2({ portal, initialNotice, onSigningIn, onSucce
 
     return () => {
       cancelAnimationFrame(raf); window.clearInterval(idle); window.clearTimeout(focusTimer); ro.disconnect();
-      th.removeEventListener("click", onTheme); removeEventListener("keydown", onKeyT); removeEventListener("keydown", onEsc);
+      removeEventListener("keydown", onEsc);
       lamp.removeEventListener("pointerdown", onDown); lamp.removeEventListener("pointermove", onMove);
       lamp.removeEventListener("pointerup", onUp); lamp.removeEventListener("pointercancel", onCancel); lamp.removeEventListener("click", onClick);
       offBtn.removeEventListener("click", onOff); ac?.close().catch(() => {}); root.classList.remove("vt");
@@ -226,10 +203,6 @@ export default function LampLogin2({ portal, initialNotice, onSigningIn, onSucce
         <div className="lay dim" /><div className="lay vig" /><div className="lay warm" /><div className="lay cone" />
         <canvas id="fx" ref={cvRef} aria-hidden="true" />
         <div className="rail" ref={railRef} />
-        <button className="th" ref={themeRef} type="button" aria-label="Toggle light and dark theme">
-          <svg className="sn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
-          <svg className="mn" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z" /></svg>
-        </button>
         <button className="lamp" ref={lampRef} type="button" role="switch" aria-checked="false" aria-label="Lamp. Pull down to turn the light on"><i className="bulb" /></button>
         <div className="lay bloom" />
         <main className="stage">

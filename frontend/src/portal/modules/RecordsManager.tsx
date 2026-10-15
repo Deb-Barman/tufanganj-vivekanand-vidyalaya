@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import type { AcademicSession, Attendance, Result, SchoolClass, StudentProfile, Subject } from "../../types/api";
 import { EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, classLabel, errText, fmtDate, listAll, useDebounced, useUI } from "../ui/kitExports";
+import { PageLoading } from "../ui/PageLoading";
 
 /* Super-Admin tools to correct or remove single saved rows — the same power the Django admin gave. */
 
@@ -86,7 +87,7 @@ export function AttendanceRecords() {
     }
   }
 
-  if (!ref) return <Skeleton rows={4} />;
+  if (!ref) return <PageLoading icon="checkCircle" title="Attendance records" sub="Find a saved attendance row, correct it or delete it." rows={5} />;
   return (
     <>
       <PageHeader icon="checkCircle" title="Attendance records" sub="Find a saved attendance row, correct it or delete it." />
@@ -197,7 +198,7 @@ export function ResultRecords() {
     }
   }
 
-  if (!ref) return <Skeleton rows={4} />;
+  if (!ref) return <PageLoading icon="award" title="Result records" sub="Find a saved mark, correct it or delete it." rows={5} />;
   return (
     <>
       <PageHeader icon="award" title="Result records" sub="Find a saved mark, correct it or delete it." />
