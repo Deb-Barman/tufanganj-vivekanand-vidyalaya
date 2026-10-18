@@ -66,15 +66,17 @@ class LoginTests(BaseAPITestCase):
 
 
 class PasswordPolicyTests(BaseAPITestCase):
-    def test_temporary_password_blocks_the_api_until_changed(self):
-        admin = self.make_admin()
+    def test_password_set_by_super_admin_works_straight_away(self):
+        # The old "temporary password" gate is gone: even an account that still carries the legacy
+        # must_change_password flag can use the whole API with the password the Super Admin issued.
         user = self.make_user("newkid", Role.STUDENT, must_change_password=True)
         client = self.login(user)
 
-        self.assertEqual(client.get("/api/notices/").status_code, 403)
-        self.assertEqual(client.get("/api/academics/attendance/").status_code, 403)
-        self.assertEqual(client.get("/api/auth/me/").status_code, 200)  # the app needs this to redirect
+        self.assertEqual(client.get("/api/notices/").status_code, 200)
+        self.assertEqual(client.get("/api/academics/attendance/").status_code, 200)
+        self.assertEqual(client.get("/api/auth/me/").status_code, 200)
 
+        # Changing it yourself is still possible through the API (no screen forces it any more).
         res = client.post("/api/auth/me/change-password/",
                           {"current_password": PASSWORD, "new_password": "Brand-New#Pass42"}, format="json")
         self.assertEqual(res.status_code, 200)
@@ -132,7 +134,7 @@ class AccountAdministrationTests(BaseAPITestCase):
             "username": "ravi", "password": "T3mp!Passw0rd", "full_name": "Ravi Roy", "role": "STUDENT"}, format="json")
         self.assertEqual(res.status_code, 201, res.data)
         user = User.objects.get(username="ravi")
-        self.assertTrue(user.must_change_password)
+        self.assertFalse(user.must_change_password)  # the password the admin typed is the real one
         self.assertTrue(StudentProfile.objects.filter(user=user).exists())
 
     def test_teacher_account_gets_a_teacher_profile(self):
@@ -150,7 +152,7 @@ class AccountAdministrationTests(BaseAPITestCase):
         other = self.make_admin("second@school.test")
         self.assertEqual(self.admin_client.patch(f"/api/auth/admin/users/{other.id}/", {"full_name": "x"}, format="json").status_code, 404)
 
-    def test_reset_password_forces_change_and_clears_lockout(self):
+    def test_reset_password_sets_the_new_password_and_clears_lockout(self):
         student = self.make_user("stud1", Role.STUDENT)
         student.failed_login_attempts = 5
         student.save()
@@ -158,8 +160,9 @@ class AccountAdministrationTests(BaseAPITestCase):
                                      {"new_password": "Res3t!Passw0rd"}, format="json")
         self.assertEqual(res.status_code, 200)
         student.refresh_from_db()
-        self.assertTrue(student.must_change_password)
+        self.assertFalse(student.must_change_password)
         self.assertEqual(student.failed_login_attempts, 0)
+        self.assertTrue(student.check_password("Res3t!Passw0rd"))
 
 
 class EnsureSuperuserCommandTests(BaseAPITestCase):
@@ -210,7 +213,6 @@ class AdminStatsTests(BaseAPITestCase):
         data = admin.get("/api/auth/admin/stats/").data
         self.assertEqual(data["people"]["students"], 1)
         self.assertEqual(data["people"]["teachers"], 1)
-        self.assertEqual(data["people"]["awaiting_first_login"], 1)
         self.assertEqual(data["people"]["students_without_class"], 1)
         self.assertEqual(len(data["attendance"]["last7"]), 7)
         for key in ("admissions", "content", "academics", "messages", "recent_admissions", "recent_notices"):
@@ -282,8 +284,80 @@ class AdminStatsQueryBudgetTests(BaseAPITestCase):
         with CaptureQueriesContext(connection) as ctx:
             data = admin_c.get("/api/auth/admin/stats/").data
         self.assertLessEqual(len(ctx), 22)
-        self.assertEqual((data["people"]["students"], data["people"]["teachers"], data["people"]["disabled"], data["people"]["awaiting_first_login"]), (2, 0, 1, 1))
+        self.assertEqual((data["people"]["students"], data["people"]["teachers"], data["people"]["disabled"]), (2, 0, 1))
         self.assertEqual(data["attendance"]["today"], {"present": 1, "absent": 1, "marked": 2})
         self.assertEqual(len(data["attendance"]["last7"]), 7)
         self.assertEqual(data["attendance"]["last7"][-3], {"date": str(today - datetime.timedelta(days=2)), "present": 1, "absent": 0})
         self.assertEqual(data["attendance"]["last7"][-1]["date"], str(today))
+
+
+class SuperAdminConsoleTests(BaseAPITestCase):
+    """The Database overview and the read-only Data view."""
+
+    def setUp(self):
+        super().setUp()
+        self.admin_c = self.login(self.make_admin())
+        self.kid = self.make_user("kid", Role.STUDENT, full_name="Kid One")
+
+    def test_only_super_admin_can_use_them(self):
+        urls = ["/api/auth/admin/database/", "/api/auth/admin/data/", "/api/auth/admin/data/accounts.user/", "/api/auth/admin/data/accounts.user/export/"]
+        for role in (Role.TEACHER, Role.STUDENT):
+            client = self.login(self.make_user(f"x-{role}", role))
+            for url in urls:
+                self.assertEqual(client.get(url).status_code, 403, url)
+        for url in urls:
+            self.assertEqual(APIClient().get(url).status_code, 401, url)
+
+    def test_database_overview_shape(self):
+        data = self.admin_c.get("/api/auth/admin/database/").data
+        self.assertEqual(set(data), {"database", "storage", "server", "tables", "file_columns", "totals", "dashboard_url", "limits_note"})
+        self.assertEqual(data["database"]["limit_mb"], 500.0)
+        self.assertEqual(data["storage"]["limit_mb"], 1024.0)
+        keys = {t["key"] for t in data["tables"]}
+        self.assertIn("accounts.user", keys)
+        self.assertEqual(data["totals"]["tables"], len(data["tables"]))
+        self.assertGreaterEqual(next(t["rows"] for t in data["tables"] if t["key"] == "accounts.user"), 2)
+
+    def test_table_list_only_has_the_schools_own_tables(self):
+        keys = [t["key"] for t in self.admin_c.get("/api/auth/admin/data/").data["tables"]]
+        self.assertIn("academics.homework", keys)
+        self.assertIn("academics.teacherattendance", keys)
+        self.assertFalse([k for k in keys if k.startswith(("token_blacklist", "sessions", "admin.", "auth.", "contenttypes"))])
+
+    def test_rows_hide_password_hashes_and_search_works(self):
+        res = self.admin_c.get("/api/auth/admin/data/accounts.user/?q=kid")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data["count"], 1)
+        row = res.data["results"][0]
+        self.assertEqual(row["username"], "kid")
+        self.assertEqual(row["password"], "••••••••")  # never the real hash
+        self.assertNotIn("pbkdf2", str(res.data))
+        self.assertNotIn("md5$", str(res.data))
+        self.assertEqual(self.admin_c.get("/api/auth/admin/data/accounts.user/?q=zzzzzz").data["count"], 0)
+
+    def test_paging_and_ordering_are_validated(self):
+        for i in range(5):
+            self.make_user(f"s{i}", Role.STUDENT)
+        res = self.admin_c.get("/api/auth/admin/data/accounts.user/?page_size=2&page=2&ordering=username")
+        self.assertEqual((res.data["page"], res.data["page_size"], len(res.data["results"])), (2, 2, 2))
+        self.assertGreaterEqual(res.data["pages"], 3)
+        # sorting by a secret column or junk falls back to the safe default instead of erroring/leaking
+        self.assertEqual(self.admin_c.get("/api/auth/admin/data/accounts.user/?ordering=password").status_code, 200)
+        self.assertEqual(self.admin_c.get("/api/auth/admin/data/accounts.user/?ordering=nope&page=abc&page_size=99999").data["page_size"], 100)
+
+    def test_internal_or_unknown_tables_are_not_reachable(self):
+        for key in ("token_blacklist.outstandingtoken", "sessions.session", "auth.group", "admin.logentry", "nope", "accounts.nope", "storage.objects"):
+            self.assertEqual(self.admin_c.get(f"/api/auth/admin/data/{key}/").status_code, 404, key)
+            self.assertEqual(self.admin_c.get(f"/api/auth/admin/data/{key}/export/").status_code, 404, key)
+
+    def test_csv_export_masks_secrets_and_defuses_formulas(self):
+        self.make_user("=cmd", Role.STUDENT, full_name="=HYPERLINK(1)")
+        res = self.admin_c.get("/api/auth/admin/data/accounts.user/export/")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("text/csv", res["Content-Type"])
+        self.assertIn("attachment", res["Content-Disposition"])
+        text = res.content.decode()
+        self.assertNotIn("md5$", text)
+        self.assertIn("'=cmd", text)
+        self.assertIn("'=HYPERLINK(1)", text)
+        self.assertNotIn(",=cmd", text)
