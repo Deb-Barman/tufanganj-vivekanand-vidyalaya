@@ -143,6 +143,25 @@ export interface Attendance {
   created_at: string;
 }
 
+/** One teacher's attendance for one day (taken by the Super Admin). */
+export interface TeacherAttendance {
+  id: string;
+  teacher: string;
+  teacher_name: string;
+  date: string;
+  status: "PRESENT" | "ABSENT";
+  marked_by: string | null;
+  created_at: string;
+}
+
+/** One line of the teacher attendance sheet; status is null until it has been marked for that day. */
+export interface TeacherSheetRow {
+  teacher: string;
+  full_name: string;
+  department: string;
+  status: "PRESENT" | "ABSENT" | null;
+}
+
 export interface Result {
   id: string;
   student: string;
@@ -163,7 +182,7 @@ export interface Marksheet {
 }
 
 export interface AdminStats {
-  people: { students: number; teachers: number; disabled: number; awaiting_first_login: number; students_without_class: number };
+  people: { students: number; teachers: number; disabled: number; students_without_class: number };
   admissions: { total: number; pending: number; contacted: number; closed: number };
   content: { notices: number; articles_published: number; articles_drafts: number; events_upcoming: number; gallery: number; forms: number; achievements?: number };
   academics: { sessions: number; classes: number; subjects: number; current_session: string | null };
@@ -218,7 +237,14 @@ export interface Homework {
   subject_name: string;
   title: string;
   details: string;
+  /** First day students can tick it off. */
+  start_date: string | null;
+  /** End date: the last day students can finish it. */
   due_date: string;
+  /** upcoming = not started, open = students can tick, closed = end date passed */
+  phase: "upcoming" | "open" | "closed";
+  /** Student only: true while it is inside its start–end window. */
+  can_tick: boolean;
   created_by: string | null;
   created_by_name: string;
   created_at: string;
@@ -252,4 +278,29 @@ export interface HomeworkCompletions {
   title: string;
   class_name: string;
   students: HomeworkCompletionRow[];
+}
+
+
+/* ───────── Super Admin: Database overview + Data view ───────── */
+
+export interface DbUsage { bytes: number | null; mb: number | null; limit_mb: number; percent: number | null }
+export interface StorageBucket { name: string; files: number; bytes: number; mb: number }
+export interface DatabaseOverview {
+  database: DbUsage;
+  storage: { source: "supabase" | "s3" | "disk" | "unavailable"; truncated: boolean; bytes: number; mb: number; files: number; limit_mb: number; percent: number | null; buckets: StorageBucket[] };
+  server: { engine: string; version: string | null; connections: number | null; max_connections: number | null; started_at: string | null };
+  tables: { key: string; name: string; db_table: string; rows: number; bytes: number | null }[];
+  file_columns: { table: string; field: string; uploaded: number }[];
+  totals: { tables: number; rows: number };
+  dashboard_url: string;
+  limits_note: string;
+}
+
+export interface DataTableInfo { key: string; app: string; name: string; db_table: string; rows: number; columns: number }
+export interface DataTables { tables: DataTableInfo[]; storage_files: number | null; storage_key: string | null }
+export interface DataColumn { name: string; label: string; type: string; redacted: boolean; pk: boolean }
+export type DataCell = string | number | boolean | null;
+export interface DataRows {
+  key: string; name: string; db_table: string; columns: DataColumn[]; count: number; page: number; page_size: number; pages: number; ordering: string;
+  results: Record<string, DataCell>[];
 }
