@@ -49,7 +49,6 @@ const DeveloperPage = lazyNamed(L.DeveloperPage, "DeveloperPage");
 // portal
 const LoginPage = lazyNamed(L.LoginPage, "LoginPage");
 const AdminLoginPage = lazyNamed(L.AdminLoginPage, "AdminLoginPage");
-const ChangePasswordPage = lazyNamed(L.ChangePasswordPage, "ChangePasswordPage");
 const DashboardShell = lazyNamed(L.DashboardShell, "DashboardShell");
 const DashboardNotFound = lazyNamed(L.DashboardNotFound, "DashboardNotFound");
 const OverviewPage = lazyNamed(L.OverviewPage, "OverviewPage");
@@ -69,6 +68,8 @@ const MarksheetsModule = lazyNamed(L.MarksheetsModule, "MarksheetsModule");
 const TimetableModule = lazyNamed(L.TimetableModule, "TimetableModule");
 const HomeworkModule = lazyNamed(L.HomeworkModule, "HomeworkModule");
 const ExamsModule = lazyNamed(L.ExamsModule, "ExamsModule");
+const DatabaseModule = lazyNamed(L.DatabaseModule, "DatabaseModule");
+const DataViewModule = lazyNamed(L.DataViewModule, "DataViewModule");
 const MessagesModule = lazyNamed(L.MessagesModule, "MessagesModule");
 const AchievementsModule = lazyNamed(L.AchievementsModule, "AchievementsModule");
 
@@ -99,7 +100,6 @@ export default function App() {
         <Route path="gallery" element={<GalleryPage />} />
         <Route path="developer" element={<DeveloperPage />} />
 
-        <Route path="portal/change-password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
       </Route>
 
       {/* dashboards: NO public header/footer around them */}
@@ -127,6 +127,8 @@ export default function App() {
           <Route path="timetable" element={<TimetableModule />} />
           <Route path="homework" element={<HomeworkModule />} />
           <Route path="exams" element={<ExamsModule />} />
+          <Route path="database" element={<RoleOnly roles={[...ADMIN]}><DatabaseModule /></RoleOnly>} />
+          <Route path="data" element={<RoleOnly roles={[...ADMIN]}><DataViewModule /></RoleOnly>} />
           <Route path="accounts" element={<RoleOnly roles={[...ADMIN]}><AccountsModule /></RoleOnly>} />
           <Route path="admissions" element={<RoleOnly roles={[...ADMIN]}><AdmissionsModule /></RoleOnly>} />
           <Route path="messages" element={<RoleOnly roles={[...ADMIN]}><MessagesModule /></RoleOnly>} />
