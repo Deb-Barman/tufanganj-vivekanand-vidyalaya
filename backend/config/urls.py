@@ -22,6 +22,7 @@ urlpatterns = [
     path("api/notices/", include("notices.urls")),
     path("api/academics/", include("academics.urls")),
     path("api/content/", include("content.urls")),
+    path("api/imports/", include("bulkimport.urls")),
 ]
 
 if settings.DEBUG:

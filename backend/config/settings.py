@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     "notices",
     "academics",
     "content",
+    "bulkimport",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -233,6 +234,7 @@ REST_FRAMEWORK = {
         "admission_submit": "3/hour",
         "contact_submit": "5/hour",
         "login": "10/minute",
+        "profile_view": "60/minute",
     },
     "DEFAULT_PAGINATION_CLASS": "config.pagination.StandardPagination",
     "PAGE_SIZE": 25,

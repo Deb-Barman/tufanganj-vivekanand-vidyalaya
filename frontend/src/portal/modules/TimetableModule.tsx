@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { TimetableEntry } from "../../types/api";
+import { ImportButton } from "../ui/ImportButton";
 import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, classLabel, errText, fmtTime, listAll, useUI, Select, TimeField } from "../ui/kitExports";
 import { PageLoading } from "../ui/PageLoading";
 import { useRefData } from "../ui/useRefData";
@@ -134,7 +135,7 @@ function TimetableEditor() {
 
   return (
     <>
-      <PageHeader icon="clock" title="Timetable" sub="Build each class's weekly timetable. Students and teachers see it on their dashboards." actions={<button type="button" className="btn btn-primary btn-sm" onClick={openNew}><Icon name="plus" size={16} /> Add period</button>} />
+      <PageHeader icon="clock" title="Timetable" sub="Build each class's weekly timetable. Students and teachers see it on their dashboards." actions={<><ImportButton kind="timetable" label="Import timetable" onDone={load} /><button type="button" className="btn btn-primary btn-sm" onClick={openNew}><Icon name="plus" size={16} /> Add period</button></>} />
       <div className="toolbar">
         <div className="field-inline" style={{ flex: "1 1 240px" }}>
           <label htmlFor="ttClass">Class</label>

@@ -19,6 +19,7 @@ Security invariants for this model:
 """
 import uuid
 
+from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -102,3 +103,37 @@ class User(AbstractUser):
     @property
     def is_student(self):
         return self.role == Role.STUDENT
+
+
+def profile_photo_path(instance, filename):
+    # A random name per upload: the old photo URL stops working the moment a new one is saved.
+    return f"profiles/{instance.user_id}/{uuid.uuid4().hex}.jpg"
+
+
+class PublicProfile(models.Model):
+    """
+    The "About me" page a student or teacher writes for themselves (shown at /profile/<role>/<username>).
+
+    Kept in its own table ON PURPOSE: everything in here is allowed to be public, and nothing private
+    (phone, e-mail, guardian, roll number, marks, attendance) is ever stored here. The public API
+    serialises only this table plus the class / department name, so private data cannot leak by accident.
+    It is hidden until the owner switches `is_public` on (opt-in), and the Super Admin can switch it off.
+    """
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True, related_name="public_profile")
+    headline = models.CharField(max_length=120, blank=True)
+    about = models.TextField(max_length=1200, blank=True)
+    background = models.TextField(max_length=1500, blank=True)
+    talents = models.JSONField(default=list, blank=True)
+    interests = models.JSONField(default=list, blank=True)
+    achievements = models.TextField(max_length=1500, blank=True)
+    website = models.URLField(max_length=200, blank=True)
+    photo = models.ImageField(upload_to=profile_photo_path, blank=True, null=True)
+    is_public = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "public_profiles"
+
+    def __str__(self):
+        return f"Profile of {self.user.username}"

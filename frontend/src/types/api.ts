@@ -93,6 +93,12 @@ export interface AcademicSession {
   id: string;
   label: string;
   is_current: boolean;
+  /** First school day of the session (attendance before it is ignored in the report). */
+  start_date?: string | null;
+  /** Total working days in the session, e.g. 200. Attendance % is worked out against it. */
+  working_days?: number | null;
+  /** Minimum attendance % a person should keep; below it they are flagged. */
+  attendance_min_percent?: number;
 }
 
 export interface SchoolClass {
@@ -303,4 +309,134 @@ export type DataCell = string | number | boolean | null;
 export interface DataRows {
   key: string; name: string; db_table: string; columns: DataColumn[]; count: number; page: number; page_size: number; pages: number; ordering: string;
   results: Record<string, DataCell>[];
+}
+
+
+/* ───────────── profiles ───────────── */
+
+/** The signed-in user's own profile (what they edit). */
+export interface MyProfile {
+  headline: string;
+  about: string;
+  background: string;
+  talents: string[];
+  interests: string[];
+  achievements: string;
+  website: string;
+  photo: string | null;
+  is_public: boolean;
+  updated_at: string;
+  username: string;
+  full_name: string;
+  role: Role;
+  /** e.g. "/profile/student/asha" — null for the Super Admin (no public page). */
+  public_path: string | null;
+  class_label: string | null;
+  department: string | null;
+  years_experience: number | null;
+}
+
+/** What anyone on the internet can read at /profile/<role>/<username>. */
+export interface PublicProfile {
+  role: "student" | "teacher";
+  username: string;
+  full_name: string;
+  headline: string;
+  about: string;
+  background: string;
+  talents: string[];
+  interests: string[];
+  achievements: string;
+  website: string;
+  photo: string | null;
+  updated_at: string;
+  class_label: string | null;
+  department: string | null;
+  years_experience: number | null;
+}
+
+/* ───────────── bulk import (Excel / CSV) ───────────── */
+
+export interface ImportColumn {
+  key: string;
+  label: string;
+  required: boolean;
+  help: string;
+}
+export interface ImportKind {
+  key: string;
+  title: string;
+  description: string;
+  notes: string[];
+  chunk_size: number;
+  columns: ImportColumn[];
+  example: Record<string, string>[];
+}
+export interface ImportCatalog {
+  max_rows: number;
+  max_mb: number;
+  imports: ImportKind[];
+}
+export interface ImportRow {
+  row: number;
+  ok: boolean;
+  action: "create" | "update" | "skip" | null;
+  display: Record<string, string>;
+  errors: string[];
+  warnings: string[];
+}
+export interface ImportPreview {
+  key: string;
+  file_name: string;
+  file_errors: string[];
+  unknown_columns: string[];
+  total: number;
+  counts: { valid: number; invalid: number; create: number; update: number; skip: number };
+  chunk_size: number;
+  columns: { key: string; label: string }[];
+  rows: ImportRow[];
+}
+export interface ImportCommitResult {
+  imported: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  rejected: { row: number; errors: string[] }[];
+  credentials: { username: string; full_name: string; password: string }[];
+}
+
+/* ───────────── attendance report ───────────── */
+
+export type AttendanceStatus = "ok" | "low" | "critical" | "no_data";
+export interface AttendanceReportRow {
+  id: string;
+  name: string;
+  username: string;
+  group: string;
+  roll_number: string;
+  present: number;
+  absent: number;
+  marked: number;
+  percent: number | null;
+  percent_of_total: number | null;
+  days_left: number | null;
+  best_possible_percent: number | null;
+  status: AttendanceStatus;
+}
+export interface AttendanceReport {
+  kind: "students" | "teachers";
+  session: { id: string; label: string; working_days: number | null; min_percent: number; start_date: string | null } | null;
+  summary: {
+    people: number;
+    average_percent: number | null;
+    ok: number;
+    low: number;
+    critical: number;
+    no_data: number;
+    days_held: number;
+    working_days: number | null;
+    days_left: number | null;
+    percent_of_session_done: number | null;
+  };
+  rows: AttendanceReportRow[];
 }

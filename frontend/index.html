@@ -6,6 +6,22 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" as="image" href="/loader-medallion.webp" type="image/webp" fetchpriority="high" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!--
+      PHONE SCALE. Chrome at 100% looked too big, while Chrome's own page zoom of 67–80% looked right.
+      On phones (short side <= 600 CSS px, touch) the page now opens at 75% of normal size — the same
+      as that zoom — with no change to Chrome's settings. Tablets, laptops and desktops are untouched.
+      To make everything bigger/smaller, change PHONE_SCALE (0.80 = 80%, 0.67 = 67%). Pinch-zoom still works.
+    -->
+    <script>
+      (function () {
+        try {
+          var PHONE_SCALE = 0.75;
+          if (Math.min(screen.width, screen.height) <= 600 && window.matchMedia("(pointer: coarse)").matches) {
+            document.querySelector('meta[name="viewport"]').setAttribute("content", "width=device-width, initial-scale=" + PHONE_SCALE + ", viewport-fit=cover");
+          }
+        } catch (e) {}
+      })();
+    </script>
     <meta name="theme-color" content="#181b27" />
     <meta name="color-scheme" content="dark light" />
     <meta name="description" content="Tufanganj Vivekananda Vidyalaya (H.S.) — Cooch Behar, West Bengal. Official school website and secure student/staff portal." />

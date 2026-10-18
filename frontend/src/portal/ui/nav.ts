@@ -16,6 +16,7 @@ const ADMIN: Role[] = ["SUPER_ADMIN"];
 
 export const NAV: NavItem[] = [
   { to: "", label: "Overview", icon: "home", roles: ALL, group: "Home", hint: "Your dashboard" },
+  { to: "profile", label: "My profile", icon: "user", roles: ALL, group: "Home", hint: "Your details and public profile page" },
 
   { to: "notices", label: "Notices", icon: "megaphone", roles: ALL, group: "Communicate", hint: "Publish and read notices" },
   { to: "events", label: "Events", icon: "calendar", roles: ALL, group: "Communicate", hint: "School calendar" },
@@ -33,12 +34,14 @@ export const NAV: NavItem[] = [
   { to: "attendance", label: "Attendance", icon: "checkCircle", roles: ALL, group: "Academics", hint: "Mark or view attendance" },
   { to: "results", label: "Results", icon: "award", roles: ALL, group: "Academics", hint: "Enter or view marks" },
   { to: "marksheets", label: "Marksheets", icon: "file", roles: ALL, group: "Academics", hint: "Upload or download marksheets" },
+  { to: "attendance-report", label: "Attendance report", icon: "trend", roles: ADMIN, group: "Academics", hint: "Attendance % and who needs attention" },
   { to: "academics", label: "Classes & Subjects", icon: "layers", roles: ADMIN, group: "Academics", hint: "Sessions, classes, subjects" },
 
   { to: "students", label: "Students", icon: "cap", roles: STAFF, group: "People", hint: "Student profiles and classes" },
   { to: "teachers", label: "Faculty", icon: "school", roles: ALL, group: "People", hint: "Teacher directory" },
   { to: "accounts", label: "Accounts", icon: "users", roles: ADMIN, group: "People", hint: "Create logins and set passwords" },
 
+  { to: "import", label: "Bulk import", icon: "file", roles: ADMIN, group: "System", hint: "Upload Excel or CSV instead of typing" },
   { to: "database", label: "Database", icon: "database", roles: ADMIN, group: "System", hint: "Supabase storage and database usage" },
   { to: "data", label: "Data view", icon: "table", roles: ADMIN, group: "System", hint: "Browse every table, read-only" },
 ];

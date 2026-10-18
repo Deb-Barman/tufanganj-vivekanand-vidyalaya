@@ -20,3 +20,23 @@ class UserAdmin(DjangoUserAdmin):
     add_fieldsets = (
         (None, {"classes": ("wide",), "fields": ("username", "full_name", "role", "password1", "password2")}),
     )
+
+
+from .models import PublicProfile  # noqa: E402
+
+
+@admin.register(PublicProfile)
+class PublicProfileAdmin(admin.ModelAdmin):
+    """The Super Admin can see every profile and hide any of them from the public with one click."""
+
+    list_display = ("user", "headline", "is_public", "updated_at")
+    list_filter = ("is_public", "user__role")
+    search_fields = ("user__username", "user__full_name", "headline")
+    list_select_related = ("user",)
+    raw_id_fields = ("user",)
+    actions = ["hide_from_public"]
+
+    @admin.action(description="Hide selected profiles from the public website")
+    def hide_from_public(self, request, queryset):
+        n = queryset.update(is_public=False)
+        self.message_user(request, f"{n} profile(s) are now private.")

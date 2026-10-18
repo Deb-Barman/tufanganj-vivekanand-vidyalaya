@@ -26,6 +26,7 @@ const MODULES: Record<string, Loader> = {
   admissions: L.AdmissionsModule, messages: L.MessagesModule, achievements: L.AchievementsModule,
   academics: L.AcademicSetupModule, students: L.StudentsModule,
   database: L.DatabaseModule, data: L.DataViewModule,
+  profile: L.ProfileModule, import: L.ImportModule, "attendance-report": L.AttendanceReportModule,
 };
 
 const DASH = "/portal/dashboard";
@@ -41,6 +42,7 @@ function loadersFor(pathname: string): Loader[] {
   if (p === "/portal/admin") return [L.AdminLoginPage];
   if (p.startsWith("/notices/")) return [L.NoticeDetailPage];
   if (p.startsWith("/blog/")) return [L.BlogPostPage];
+  if (p.startsWith("/profile/")) return [L.PublicProfilePage];
   return PUBLIC[p] ?? [];
 }
 
