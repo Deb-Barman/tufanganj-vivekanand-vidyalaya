@@ -141,5 +141,6 @@
   .side-foot .side-link { flex-direction: row; justify-content: flex-start; text-align: left; min-height: 54px; padding: 12px 16px; font-size: 15px; background: var(--surface); box-shadow: var(--raise-sm); border-radius: 18px; }
   .side-theme { padding: 8px 6px 8px 16px; font-size: 14px; }
   .toolbar > .segmented { width: 100%; }
-  .toolbar select, .toolbar input { min-height: 46px; font-size: 16px; }
+  .toolbar select, .toolbar input, .toolbar .neo-select, .field-inline .neo-select { min-height: 48px; font-size: 16px; }
+  .toolbar .field-inline { flex: 1 1 150px; min-width: 0; }
 }
