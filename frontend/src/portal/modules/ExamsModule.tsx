@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { Exam } from "../../types/api";
-import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, classLabel, errText, fmtTime, listAll, todayISO, useUI } from "../ui/kitExports";
+import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, classLabel, errText, fmtTime, listAll, todayISO, useUI, Select, DateField, TimeField } from "../ui/kitExports";
 import { useRefData } from "../ui/useRefData";
 
 export function ExamsModule() {
@@ -71,12 +71,12 @@ export function ExamsModule() {
       <Modal open={edit !== null} title={edit?.id ? "Edit exam" : "Schedule exam"} onClose={() => setEdit(null)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit(null)}>Cancel</button><button type="submit" form="exam-form" className="btn btn-primary btn-sm" disabled={saving || !edit?.name?.trim()}>{saving ? "Saving…" : "Save"}</button></>}>
         {edit && ref && (
           <form id="exam-form" onSubmit={save} className="stack" style={{ gap: 14 }}>
-            <div className="form-field"><label htmlFor="exClass">Class</label><select id="exClass" value={edit.school_class} onChange={(e) => setEdit({ ...edit, school_class: e.target.value, subject: subjectsOf(e.target.value)[0]?.id })}>{ref.classes.map((c) => <option key={c.id} value={c.id}>{classLabel(c, ref.sessions)}</option>)}</select></div>
+            <div className="form-field"><label htmlFor="exClass">Class</label><Select id="exClass" value={edit.school_class} onChange={(e) => setEdit({ ...edit, school_class: e.target.value, subject: subjectsOf(e.target.value)[0]?.id })}>{ref.classes.map((c) => <option key={c.id} value={c.id}>{classLabel(c, ref.sessions)}</option>)}</Select></div>
             <div className="form-grid">
-              <div className="form-field"><label htmlFor="exSub">Subject</label><select id="exSub" value={edit.subject} onChange={(e) => setEdit({ ...edit, subject: e.target.value })}>{subjectsOf(edit.school_class).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
+              <div className="form-field"><label htmlFor="exSub">Subject</label><Select id="exSub" value={edit.subject} onChange={(e) => setEdit({ ...edit, subject: e.target.value })}>{subjectsOf(edit.school_class).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></div>
               <div className="form-field"><label htmlFor="exName">Exam name</label><input id="exName" value={edit.name ?? ""} maxLength={100} placeholder="Unit Test II" onChange={(e) => setEdit({ ...edit, name: e.target.value })} required /></div>
-              <div className="form-field"><label htmlFor="exDate">Date</label><input id="exDate" type="date" value={edit.date ?? ""} onChange={(e) => setEdit({ ...edit, date: e.target.value })} required /></div>
-              <div className="form-field"><label htmlFor="exTime">Start time</label><input id="exTime" type="time" value={edit.start_time?.slice(0, 5) ?? ""} onChange={(e) => setEdit({ ...edit, start_time: e.target.value })} /></div>
+              <div className="form-field"><label htmlFor="exDate">Date</label><DateField id="exDate" value={edit.date ?? ""} onChange={(v) => setEdit({ ...edit, date: v })} required /></div>
+              <div className="form-field"><label htmlFor="exTime">Start time</label><TimeField id="exTime" value={edit.start_time?.slice(0, 5) ?? ""} onChange={(v) => setEdit({ ...edit, start_time: v })} /></div>
             </div>
             <div className="form-field"><label htmlFor="exRoom">Room (optional)</label><input id="exRoom" value={edit.room ?? ""} maxLength={30} onChange={(e) => setEdit({ ...edit, room: e.target.value })} /></div>
           </form>

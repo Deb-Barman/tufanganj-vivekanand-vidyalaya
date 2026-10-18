@@ -4,7 +4,7 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { AcademicSession, Result, SchoolClass, StudentProfile, Subject } from "../../types/api";
 import { ResultRecords } from "./RecordsManager";
-import { EmptyState, Icon, PageHeader, Ring, Segmented, Skeleton, classLabel, errText, listAll, useUI } from "../ui/kitExports";
+import { EmptyState, Icon, PageHeader, Ring, Segmented, Skeleton, classLabel, errText, listAll, useUI, Select } from "../ui/kitExports";
 import { PageLoading } from "../ui/PageLoading";
 import { dashPath } from "../ui/nav";
 
@@ -135,36 +135,36 @@ function StaffResults({ isAdmin }: { isAdmin: boolean }) {
       <div className="toolbar">
         <div className="field-inline" style={{ flex: "1 1 130px" }}>
           <label htmlFor="rSession">Session</label>
-          <select id="rSession" value={sessionId} onChange={(e) => setSessionId(e.target.value)}>
+          <Select id="rSession" value={sessionId} onChange={(e) => setSessionId(e.target.value)}>
             {sessions.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.label}
                 {s.is_current ? " (current)" : ""}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="field-inline" style={{ flex: "2 1 180px" }}>
           <label htmlFor="rClass">Class</label>
-          <select id="rClass" value={classId} onChange={(e) => setClassPick(e.target.value)} disabled={sessionClasses.length === 0}>
+          <Select id="rClass" value={classId} onChange={(e) => setClassPick(e.target.value)} disabled={sessionClasses.length === 0}>
             {sessionClasses.length === 0 && <option value="">No classes in this session</option>}
             {sessionClasses.map((c) => (
               <option key={c.id} value={c.id}>
                 {classLabel(c, sessions)}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="field-inline" style={{ flex: "2 1 160px" }}>
           <label htmlFor="rSubject">Subject</label>
-          <select id="rSubject" value={subjectId} onChange={(e) => setSubjectPick(e.target.value)} disabled={classSubjects.length === 0}>
+          <Select id="rSubject" value={subjectId} onChange={(e) => setSubjectPick(e.target.value)} disabled={classSubjects.length === 0}>
             {classSubjects.length === 0 && <option value="">No subjects in this class</option>}
             {classSubjects.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="field-inline" style={{ flex: "0 1 110px" }}>
           <label htmlFor="rFull">Full marks</label>

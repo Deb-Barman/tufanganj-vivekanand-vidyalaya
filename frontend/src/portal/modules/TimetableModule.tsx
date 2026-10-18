@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { TimetableEntry } from "../../types/api";
-import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, classLabel, errText, fmtTime, listAll, useUI } from "../ui/kitExports";
+import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, classLabel, errText, fmtTime, listAll, useUI, Select, TimeField } from "../ui/kitExports";
 import { PageLoading } from "../ui/PageLoading";
 import { useRefData } from "../ui/useRefData";
 
@@ -138,9 +138,9 @@ function TimetableEditor() {
       <div className="toolbar">
         <div className="field-inline" style={{ flex: "1 1 240px" }}>
           <label htmlFor="ttClass">Class</label>
-          <select id="ttClass" value={cid} onChange={(e) => setClassId(e.target.value)}>
+          <Select id="ttClass" value={cid} onChange={(e) => setClassId(e.target.value)}>
             {ref.classes.map((c) => <option key={c.id} value={c.id}>{classLabel(c, ref.sessions)}</option>)}
-          </select>
+          </Select>
         </div>
         <Segmented value={String(day)} onChange={(v) => setDay(Number(v))} options={DAYS.map((d, i) => ({ value: String(i), label: d, count: (rows ?? []).filter((r) => r.weekday === i).length || undefined }))} />
       </div>
@@ -165,19 +165,19 @@ function TimetableEditor() {
           <form id="tt-form" onSubmit={save} className="stack" style={{ gap: 14 }}>
             <div className="form-grid">
               <div className="form-field"><label htmlFor="tPeriod">Period no.</label><input id="tPeriod" type="number" min={1} max={12} value={edit.period ?? ""} onChange={(e) => setEdit({ ...edit, period: Number(e.target.value) })} required /></div>
-              <div className="form-field"><label htmlFor="tDay">Day</label><select id="tDay" value={edit.weekday} onChange={(e) => setEdit({ ...edit, weekday: Number(e.target.value) })}>{DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}</select></div>
-              <div className="form-field"><label htmlFor="tStart">Starts</label><input id="tStart" type="time" value={edit.start_time?.slice(0, 5) ?? ""} onChange={(e) => setEdit({ ...edit, start_time: e.target.value })} required /></div>
-              <div className="form-field"><label htmlFor="tEnd">Ends</label><input id="tEnd" type="time" value={edit.end_time?.slice(0, 5) ?? ""} onChange={(e) => setEdit({ ...edit, end_time: e.target.value })} required /></div>
+              <div className="form-field"><label htmlFor="tDay">Day</label><Select id="tDay" value={edit.weekday} onChange={(e) => setEdit({ ...edit, weekday: Number(e.target.value) })}>{DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}</Select></div>
+              <div className="form-field"><label htmlFor="tStart">Starts</label><TimeField id="tStart" value={edit.start_time?.slice(0, 5) ?? ""} onChange={(v) => setEdit({ ...edit, start_time: v })} required /></div>
+              <div className="form-field"><label htmlFor="tEnd">Ends</label><TimeField id="tEnd" value={edit.end_time?.slice(0, 5) ?? ""} onChange={(v) => setEdit({ ...edit, end_time: v })} required /></div>
             </div>
             <div className="form-field"><label htmlFor="tSub">Subject</label>
-              <select id="tSub" value={edit.subject ?? ""} onChange={(e) => setEdit({ ...edit, subject: e.target.value || null })}>
+              <Select id="tSub" value={edit.subject ?? ""} onChange={(e) => setEdit({ ...edit, subject: e.target.value || null })}>
                 <option value="">— none (break / assembly) —</option>
                 {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select></div>
+              </Select></div>
             {!edit.subject && <div className="form-field"><label htmlFor="tLabel">Label</label><input id="tLabel" value={edit.label ?? ""} maxLength={60} placeholder="Break" onChange={(e) => setEdit({ ...edit, label: e.target.value })} required /></div>}
             {edit.subject && (
               <div className="form-grid">
-                <div className="form-field"><label htmlFor="tTeacher">Teacher</label><select id="tTeacher" value={edit.teacher ?? ""} onChange={(e) => setEdit({ ...edit, teacher: e.target.value || null })}><option value="">— not set —</option>{ref.teachers.map((t) => <option key={t.user} value={t.user}>{t.full_name}</option>)}</select></div>
+                <div className="form-field"><label htmlFor="tTeacher">Teacher</label><Select id="tTeacher" value={edit.teacher ?? ""} onChange={(e) => setEdit({ ...edit, teacher: e.target.value || null })}><option value="">— not set —</option>{ref.teachers.map((t) => <option key={t.user} value={t.user}>{t.full_name}</option>)}</Select></div>
                 <div className="form-field"><label htmlFor="tRoom">Room</label><input id="tRoom" value={edit.room ?? ""} maxLength={30} onChange={(e) => setEdit({ ...edit, room: e.target.value })} /></div>
               </div>
             )}

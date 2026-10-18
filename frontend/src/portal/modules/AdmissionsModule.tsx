@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
 import type { Admission } from "../../types/api";
 import type { FormEvent } from "react";
-import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, StatusPill, Avatar, errText, fmtDate, listAll, useUI } from "../ui/kitExports";
+import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, StatusPill, Avatar, errText, fmtDate, listAll, useUI, Select } from "../ui/kitExports";
 
 type Filter = "ALL" | Admission["status"];
 const TONE = { PENDING: "warn", CONTACTED: "info", CLOSED: "good" } as const;
@@ -182,7 +182,7 @@ export function AdmissionsModule() {
               <div className="form-field"><label htmlFor="adContact">Guardian contact</label><input id="adContact" value={edit.guardian_contact} onChange={(e) => setEdit({ ...edit, guardian_contact: e.target.value })} required /></div>
               <div className="form-field"><label htmlFor="adClass">Applying for class</label><input id="adClass" value={edit.applying_for_class} onChange={(e) => setEdit({ ...edit, applying_for_class: e.target.value })} required /></div>
             </div>
-            <div className="form-field"><label htmlFor="adStatus">Status</label><select id="adStatus" value={edit.status} onChange={(e) => setEdit({ ...edit, status: e.target.value as Admission["status"] })}><option value="PENDING">Pending</option><option value="CONTACTED">Contacted</option><option value="CLOSED">Closed</option></select></div>
+            <div className="form-field"><label htmlFor="adStatus">Status</label><Select id="adStatus" value={edit.status} onChange={(e) => setEdit({ ...edit, status: e.target.value as Admission["status"] })}><option value="PENDING">Pending</option><option value="CONTACTED">Contacted</option><option value="CLOSED">Closed</option></Select></div>
             <div className="form-field"><label htmlFor="adMsg">Message</label><textarea id="adMsg" rows={4} value={edit.message} onChange={(e) => setEdit({ ...edit, message: e.target.value })} /></div>
           </form>
         )}
