@@ -37,8 +37,9 @@ Authorization: Bearer <super admin access token>
 }
 ```
 
-The account is created with `must_change_password=True` — the frontend
-prompts for a change on first login via `POST /api/auth/me/change-password/`.
+The Super Admin types (or generates) each Teacher/Student password; they sign in with exactly
+that password — there is no forced "set a new password" step (the `must_change_password` column is a
+leftover and is always `False`).
 
 ## Apps
 
