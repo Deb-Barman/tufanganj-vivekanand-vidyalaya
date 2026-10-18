@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { EventItem } from "../../types/api";
+import { ImportButton } from "../ui/ImportButton";
 import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, errText, fmtDate, listAll, todayISO, useDebounced, useUI, DateField } from "../ui/kitExports";
 
 type Draft = { id?: string; title: string; event_date: string; audience: string; description: string };
@@ -72,7 +73,7 @@ export function EventsModule() {
 
   return (
     <>
-      <PageHeader icon="calendar" title="Events" sub={canManage ? "Add, edit or remove school events." : "School events."} actions={canManage && (<button type="button" className="btn btn-primary btn-sm" onClick={() => setDraft(blank())}><Icon name="plus" size={16} /> Add event</button>)} />
+      <PageHeader icon="calendar" title="Events" sub={canManage ? "Add, edit or remove school events." : "School events."} actions={canManage && (<><ImportButton kind="events" label="Import events" onDone={load} /><button type="button" className="btn btn-primary btn-sm" onClick={() => setDraft(blank())}><Icon name="plus" size={16} /> Add event</button></>)} />
       <div className="toolbar">
         <Segmented value={tab} onChange={setTab} options={[{ value: "up", label: "Upcoming" }, { value: "past", label: "Past" }, { value: "all", label: "All" }]} />
         <div className="search-box grow"><Icon name="search" size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search events" aria-label="Search events" /></div>

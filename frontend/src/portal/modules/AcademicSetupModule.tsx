@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import type { AcademicSession, SchoolClass, Subject } from "../../types/api";
-import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, StatusPill, errText, listAll, useUI, Select } from "../ui/kitExports";
+import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, StatusPill, errText, listAll, useUI, Select, DateField } from "../ui/kitExports";
+import { ImportButton } from "../ui/ImportButton";
 
 type Tab = "sessions" | "classes" | "subjects";
 
@@ -54,7 +55,7 @@ export function AcademicSetupModule() {
 
   return (
     <>
-      <PageHeader icon="layers" title="Classes & Subjects" sub="Set up academic sessions, the classes inside them, and each class's subjects. Attendance and results are built on these." />
+      <PageHeader icon="layers" title="Classes & Subjects" sub="Set up academic sessions, the classes inside them, and each class's subjects. Attendance and results are built on these." actions={tab !== "sessions" && <ImportButton kind={tab} onDone={reload} />} />
       <div className="toolbar">
         <Segmented
           value={tab}
@@ -87,20 +88,27 @@ function SessionsTab({ sessions, onChanged, onDelete }: { sessions: AcademicSess
   const [editing, setEditing] = useState<AcademicSession | "new" | null>(null);
   const [label, setLabel] = useState("");
   const [current, setCurrent] = useState(false);
+  const [workingDays, setWorkingDays] = useState("");
+  const [minPct, setMinPct] = useState("75");
+  const [startDate, setStartDate] = useState("");
   const [saving, setSaving] = useState(false);
 
   function open(s: AcademicSession | "new") {
     setEditing(s);
     setLabel(s === "new" ? "" : s.label);
     setCurrent(s === "new" ? sessions.length === 0 : s.is_current);
+    setWorkingDays(s === "new" || !s.working_days ? "" : String(s.working_days));
+    setMinPct(s === "new" ? "75" : String(s.attendance_min_percent ?? 75));
+    setStartDate(s === "new" ? "" : s.start_date ?? "");
   }
 
   async function save(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
     try {
-      if (editing === "new") await api.post("/academics/sessions/", { label: label.trim(), is_current: current });
-      else if (editing) await api.patch(`/academics/sessions/${editing.id}/`, { label: label.trim(), is_current: current });
+      const body = { label: label.trim(), is_current: current, working_days: workingDays ? Number(workingDays) : null, attendance_min_percent: Number(minPct) || 75, start_date: startDate || null };
+      if (editing === "new") await api.post("/academics/sessions/", body);
+      else if (editing) await api.patch(`/academics/sessions/${editing.id}/`, body);
       toast("success", "Session saved.");
       setEditing(null);
       onChanged();
@@ -130,7 +138,7 @@ function SessionsTab({ sessions, onChanged, onDelete }: { sessions: AcademicSess
                 </span>
                 <div className="row-main">
                   <strong>{s.label}</strong>
-                  <span>Academic session</span>
+                  <span>{s.working_days ? `${s.working_days} working days · min ${s.attendance_min_percent ?? 75}% attendance` : "Total working days not set"}</span>
                 </div>
                 {s.is_current && <StatusPill tone="good">current</StatusPill>}
               </div>
@@ -170,6 +178,21 @@ function SessionsTab({ sessions, onChanged, onDelete }: { sessions: AcademicSess
             <input type="checkbox" checked={current} onChange={(e) => setCurrent(e.target.checked)} />
             Make this the current session
           </label>
+          <div className="form-grid">
+            <div className="form-field">
+              <label htmlFor="sDays">Total working days (e.g. 200)</label>
+              <input id="sDays" type="number" inputMode="numeric" min={1} max={366} value={workingDays} onChange={(e) => setWorkingDays(e.target.value)} placeholder="200" />
+            </div>
+            <div className="form-field">
+              <label htmlFor="sMin">Minimum attendance %</label>
+              <input id="sMin" type="number" inputMode="numeric" min={1} max={100} value={minPct} onChange={(e) => setMinPct(e.target.value)} />
+            </div>
+          </div>
+          <div className="form-field">
+            <label htmlFor="sStart">First school day (optional)</label>
+            <DateField id="sStart" value={startDate} onChange={setStartDate} />
+          </div>
+          <p className="modal-text">Used by the Attendance report: attendance % is worked out against the total working days, and anyone below the minimum is flagged.</p>
         </form>
       </Modal>
     </>

@@ -5,6 +5,7 @@ import { useAuth } from "../../lib/AuthContext";
 import type { AcademicSession, Attendance, SchoolClass, StudentProfile } from "../../types/api";
 import { AttendanceRecords } from "./RecordsManager";
 import { TeacherAttendanceAdmin } from "./TeacherAttendanceAdmin";
+import { ImportButton } from "../ui/ImportButton";
 import { EmptyState, Icon, PageHeader, Ring, Segmented, Skeleton, classLabel, errText, listAll, todayISO, useUI, Select, DateField } from "../ui/kitExports";
 import { PageLoading } from "../ui/PageLoading";
 import { dashPath } from "../ui/nav";
@@ -14,6 +15,7 @@ type Mark = "PRESENT" | "ABSENT";
 export function AttendanceModule() {
   const { user } = useAuth();
   const [tab, setTab] = useState<"mark" | "records" | "teachers" | "mine">("mark");
+  const [rev, setRev] = useState(0); // bumped after an import so the lists reload
   if (!user) return null;
   if (user.role === "STUDENT") return <OwnAttendance url="/academics/attendance/" sub="Days recorded by your teachers." emptyText="It will appear here once your teacher marks it." />;
   const isAdmin = user.role === "SUPER_ADMIN";
@@ -21,15 +23,18 @@ export function AttendanceModule() {
     <>
       <div className="toolbar">
         {isAdmin ? (
-          <Segmented value={tab} onChange={setTab} options={[{ value: "mark", label: "Mark a class" }, { value: "records", label: "Saved records" }, { value: "teachers", label: "Teachers" }]} />
+          <>
+            <Segmented value={tab} onChange={setTab} options={[{ value: "mark", label: "Mark a class" }, { value: "records", label: "Saved records" }, { value: "teachers", label: "Teachers" }]} />
+            <ImportButton kind={tab === "teachers" ? "teacher_attendance" : "attendance"} label={tab === "teachers" ? "Import teacher attendance" : "Import attendance"} onDone={() => setRev((n) => n + 1)} />
+          </>
         ) : (
           <Segmented value={tab} onChange={setTab} options={[{ value: "mark", label: "Mark a class" }, { value: "mine", label: "My attendance" }]} />
         )}
       </div>
-      {tab === "teachers" && isAdmin ? <TeacherAttendanceAdmin /> : tab === "records" && isAdmin ? <AttendanceRecords /> : tab === "mine" && !isAdmin ? (
+      {tab === "teachers" && isAdmin ? <TeacherAttendanceAdmin key={rev} /> : tab === "records" && isAdmin ? <AttendanceRecords key={rev} /> : tab === "mine" && !isAdmin ? (
         <OwnAttendance url="/academics/teacher-attendance/" sub="Days recorded by the Super Admin." emptyText="It will appear here once the Super Admin takes your attendance." />
       ) : (
-        <StaffAttendance isAdmin={isAdmin} />
+        <StaffAttendance key={rev} isAdmin={isAdmin} />
       )}
     </>
   );

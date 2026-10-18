@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { Exam } from "../../types/api";
+import { ImportButton } from "../ui/ImportButton";
 import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, classLabel, errText, fmtTime, listAll, todayISO, useUI, Select, DateField, TimeField } from "../ui/kitExports";
 import { useRefData } from "../ui/useRefData";
 
@@ -49,7 +50,7 @@ export function ExamsModule() {
 
   return (
     <>
-      <PageHeader icon="calendar" title="Exams" sub={staff ? "Schedule exams for a class. Students see only their own class." : "Your upcoming exams."} actions={staff && <button type="button" className="btn btn-primary btn-sm" onClick={openNew} disabled={!ref || ref.classes.length === 0}><Icon name="plus" size={16} /> Schedule exam</button>} />
+      <PageHeader icon="calendar" title="Exams" sub={staff ? "Schedule exams for a class. Students see only their own class." : "Your upcoming exams."} actions={staff && <>{user?.role === "SUPER_ADMIN" && <ImportButton kind="exams" label="Import exams" onDone={load} />}<button type="button" className="btn btn-primary btn-sm" onClick={openNew} disabled={!ref || ref.classes.length === 0}><Icon name="plus" size={16} /> Schedule exam</button></>} />
       <div className="toolbar"><Segmented value={tab} onChange={setTab} options={[{ value: "up", label: "Upcoming" }, { value: "past", label: "Past" }]} /></div>
       {items === null ? <Skeleton rows={4} /> : shown.length === 0 ? (
         <EmptyState icon="calendar" title={tab === "up" ? "No upcoming exams" : "No past exams"} text={tab === "up" ? "When an exam is scheduled for your class, it appears here." : undefined} />

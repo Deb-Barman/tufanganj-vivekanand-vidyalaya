@@ -4,6 +4,7 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { AcademicSession, Result, SchoolClass, StudentProfile, Subject } from "../../types/api";
 import { ResultRecords } from "./RecordsManager";
+import { ImportButton } from "../ui/ImportButton";
 import { EmptyState, Icon, PageHeader, Ring, Segmented, Skeleton, classLabel, errText, listAll, useUI, Select } from "../ui/kitExports";
 import { PageLoading } from "../ui/PageLoading";
 import { dashPath } from "../ui/nav";
@@ -11,13 +12,14 @@ import { dashPath } from "../ui/nav";
 export function ResultsModule() {
   const { user } = useAuth();
   const [tab, setTab] = useState<"enter" | "records">("enter");
+  const [rev, setRev] = useState(0); // bumped after an import so the lists reload
   if (!user) return null;
   if (user.role === "STUDENT") return <StudentResults />;
   const isAdmin = user.role === "SUPER_ADMIN";
   return (
     <>
-      {isAdmin && <div className="toolbar"><Segmented value={tab} onChange={setTab} options={[{ value: "enter", label: "Enter marks" }, { value: "records", label: "Saved results" }]} /></div>}
-      {isAdmin && tab === "records" ? <ResultRecords /> : <StaffResults isAdmin={isAdmin} />}
+      {isAdmin && <div className="toolbar"><Segmented value={tab} onChange={setTab} options={[{ value: "enter", label: "Enter marks" }, { value: "records", label: "Saved results" }]} /><ImportButton kind="results" label="Import marks" onDone={() => setRev((n) => n + 1)} /></div>}
+      {isAdmin && tab === "records" ? <ResultRecords key={rev} /> : <StaffResults key={rev} isAdmin={isAdmin} />}
     </>
   );
 }

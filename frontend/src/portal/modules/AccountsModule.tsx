@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import type { Role, User } from "../../types/api";
+import { ImportButton } from "../ui/ImportButton";
 import { Avatar, EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, StatusPill, errText, fmtDate, listAll, useDebounced, useUI, Select } from "../ui/kitExports";
 
 type Filter = "ALL" | "STUDENT" | "TEACHER" | "ISSUES";
@@ -149,7 +150,7 @@ export function AccountsModule() {
 
   return (
     <>
-      <PageHeader icon="users" title="Accounts" sub="Create Teacher and Student logins and set their passwords. They sign in with exactly the password you set. Public sign-up is off — this is the only place accounts come from." actions={<button type="button" className="btn btn-primary btn-sm" onClick={() => { setCPass(generatePassword()); setShowPass(false); setCreateOpen(true); }}><Icon name="plus" size={16} /> New account</button>} />
+      <PageHeader icon="users" title="Accounts" sub="Create Teacher and Student logins and set their passwords. They sign in with exactly the password you set. Public sign-up is off — this is the only place accounts come from." actions={<><ImportButton kind="students" label="Import students" onDone={load} /><ImportButton kind="teachers" label="Import teachers" onDone={load} /><button type="button" className="btn btn-primary btn-sm" onClick={() => { setCPass(generatePassword()); setShowPass(false); setCreateOpen(true); }}><Icon name="plus" size={16} /> New account</button></>} />
 
       {creds && (
         <div className="alert alert-info" style={{ marginBottom: 16 }}>

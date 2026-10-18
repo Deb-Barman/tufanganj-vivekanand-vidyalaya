@@ -1,0 +1,18 @@
+.ar-hint { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 16px; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13.5px; line-height: 1.6; color: var(--fg-soft); background: color-mix(in srgb, var(--warn) 10%, var(--surface)); box-shadow: var(--raise-sm); }
+.ar-hint svg { color: var(--warn); flex: none; margin-top: 2px; }
+.ar-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.ar-kpis > div { display: grid; gap: 3px; padding: 14px 16px; border-radius: var(--radius); background: var(--surface); box-shadow: var(--raise-sm); }
+.ar-kpis b { font-family: var(--serif); font-size: 26px; line-height: 1.1; }
+.ar-kpis span { font-size: 12px; color: var(--fg-soft); font-weight: 600; }
+.ar-kpis .ok b { color: var(--good); }
+.ar-kpis .bad b { color: var(--danger); }
+.ar-row { flex-wrap: wrap; gap: 10px 16px; }
+.ar-row .row-main { flex: 1 1 200px; min-width: 0; }
+.ar-nums { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--fg-soft); min-width: 130px; }
+.ar-nums b { color: var(--fg); }
+.ar-bar { display: flex; align-items: center; gap: 10px; flex: 1 1 170px; min-width: 150px; }
+.ar-bar .pct-bar { position: relative; flex: 1; overflow: visible; }
+.ar-bar .pct-bar i { border-radius: 999px; }
+/* the small tick shows the minimum % the school expects */
+.ar-bar .pct-bar em { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--fg-faint); border-radius: 2px; transform: translateX(-1px); }
+.ar-bar > b { min-width: 46px; text-align: right; font-size: 13px; color: var(--tone, var(--fg)); }
