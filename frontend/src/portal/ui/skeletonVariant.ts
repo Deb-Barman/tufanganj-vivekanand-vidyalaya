@@ -25,6 +25,8 @@ const SPEC: Record<string, Spec> = {
   homework: { variant: "list", rows: 4, toolbar: "staff" },
   attendance: { variant: "list", rows: 4, toolbar: "staff" },
   results: { variant: "list", rows: 4, toolbar: "staff" },
+  database: { variant: "cards", rows: 3, toolbar: false },
+  data: { variant: "list", rows: 5, toolbar: true },
 };
 
 export function skeletonSpecFor(pathname: string, role?: string): { variant: SkeletonVariant; rows: number; toolbar: boolean } {

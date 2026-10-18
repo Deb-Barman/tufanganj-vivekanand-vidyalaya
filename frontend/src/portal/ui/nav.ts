@@ -37,7 +37,10 @@ export const NAV: NavItem[] = [
 
   { to: "students", label: "Students", icon: "cap", roles: STAFF, group: "People", hint: "Student profiles and classes" },
   { to: "teachers", label: "Faculty", icon: "school", roles: ALL, group: "People", hint: "Teacher directory" },
-  { to: "accounts", label: "Accounts", icon: "users", roles: ADMIN, group: "People", hint: "Create, reset and disable logins" },
+  { to: "accounts", label: "Accounts", icon: "users", roles: ADMIN, group: "People", hint: "Create logins and set passwords" },
+
+  { to: "database", label: "Database", icon: "database", roles: ADMIN, group: "System", hint: "Supabase storage and database usage" },
+  { to: "data", label: "Data view", icon: "table", roles: ADMIN, group: "System", hint: "Browse every table, read-only" },
 ];
 
 export function navFor(role: Role): NavItem[] {
