@@ -1,12 +1,60 @@
-import { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
-import { NAV } from "../config/site";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { MORE, NAV } from "../config/site";
 import { SchoolLogo } from "./SchoolLogo";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "../lib/AuthContext";
 import "./SiteHeader.css";
 
 const NAV_LINKS = NAV.map((n) => ({ href: n.to, label: n.label }));
+
+/* Desktop bar: the pages people look for first, in the order they look for them; everything else lives under "More". */
+const PRIMARY_PATHS = ["/about", "/academics", "/faculty", "/notices", "/admissions", "/contact"];
+const DESKTOP_LINKS = [{ to: "/", label: "Home" }, ...NAV.filter((n) => PRIMARY_PATHS.includes(n.to))];
+const MORE_LINKS = [...NAV.filter((n) => !PRIMARY_PATHS.includes(n.to)), ...MORE.filter((m) => ["/events", "/downloads", "/faq", "/gallery"].includes(m.to))];
+
+/** "More ▾" menu for the desktop bar: a soft raised panel with every other public page. */
+function MoreMenu() {
+  const { pathname } = useLocation();
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement | null>(null);
+  const inMore = MORE_LINKS.some((l) => pathname === l.to || pathname.startsWith(l.to + "/"));
+
+  useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
+    setOpen(false);
+  }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const down = (e: PointerEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
+    const key = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", down);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("pointerdown", down);
+      document.removeEventListener("keydown", key);
+    };
+  }, [open]);
+
+  return (
+    <div className="nav-more" ref={box}>
+      <button type="button" className={`more-btn${inMore ? " active" : ""}${open ? " open" : ""}`} aria-haspopup="true" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        More
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+      </button>
+      {open && (
+        <div className="more-panel" role="menu">
+          {MORE_LINKS.map((l) => (
+            <NavLink key={l.to} to={l.to} role="menuitem" className={({ isActive }) => (isActive ? "active" : undefined)}>
+              <strong>{l.label}</strong>
+              <small>{l.desc}</small>
+            </NavLink>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function isRoutePath(href: string) {
   return !href.includes("#");
@@ -45,17 +93,12 @@ export function SiteHeader() {
         </Link>
 
         <nav className="primary" aria-label="Main navigation">
-          {NAV_LINKS.map((link) =>
-            isRoutePath(link.href) ? (
-              <NavLink key={link.href} to={link.href} className={({ isActive }) => (isActive ? "active" : undefined)}>
-                {link.label}
-              </NavLink>
-            ) : (
-              <a key={link.href} href={link.href}>
-                {link.label}
-              </a>
-            )
-          )}
+          {DESKTOP_LINKS.map((link) => (
+            <NavLink key={link.to} to={link.to} end={link.to === "/"} className={({ isActive }) => (isActive ? "active" : undefined)}>
+              {link.label}
+            </NavLink>
+          ))}
+          <MoreMenu />
         </nav>
 
         <div className="nav-actions">

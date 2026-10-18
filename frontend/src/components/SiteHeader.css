@@ -38,13 +38,30 @@
   display: flex; align-items: center; gap: 1px; font-size: 13px; color: var(--fg-soft); min-width: 0;
   padding: 6px; border-radius: 999px; background: var(--surface); box-shadow: var(--inset-sm);
 }
-.primary a {
-  position: relative; padding: 9px 10px; border-radius: 999px; white-space: nowrap;
+.primary a, .more-btn {
+  position: relative; padding: 9px 12px; border-radius: 999px; white-space: nowrap;
   transition: color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
 }
-.primary a:hover { color: var(--fg); background: var(--surface); box-shadow: var(--raise-sm); }
-.primary a:active { box-shadow: var(--inset-sm); }
-.primary a.active { color: var(--accent); background: var(--panel); box-shadow: var(--inset-sm); }
+.primary a:hover, .more-btn:hover { color: var(--fg); background: var(--surface); box-shadow: var(--raise-sm); }
+.primary a:active, .more-btn:active { box-shadow: var(--inset-sm); }
+.primary a.active, .more-btn.active, .more-btn.open { color: var(--accent); background: var(--panel); box-shadow: var(--inset-sm); }
+
+/* "More" menu — a raised soft panel under the rail */
+.nav-more { position: relative; }
+.more-btn { display: inline-flex; align-items: center; gap: 5px; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; }
+.more-btn svg { transition: transform 0.3s var(--ease-out); }
+.more-btn.open svg { transform: rotate(180deg); }
+.more-panel {
+  position: absolute; right: 0; top: calc(100% + 14px); z-index: 5; display: grid; gap: 4px; width: 340px; padding: 10px;
+  border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--raise-lg); transform-origin: top right; animation: more-in 0.24s var(--ease-out) both;
+}
+@keyframes more-in { from { opacity: 0; transform: translateY(-8px) scale(0.97); } to { opacity: 1; transform: none; } }
+.more-panel a { display: grid; gap: 1px; padding: 10px 14px; border-radius: var(--radius); background: none; box-shadow: none; white-space: normal; }
+.more-panel a strong { font-size: 14px; font-weight: 700; color: var(--fg); }
+.more-panel a small { font-size: 12px; color: var(--fg-faint); line-height: 1.4; }
+.more-panel a:hover { background: var(--panel); box-shadow: var(--inset-sm); }
+.more-panel a.active { background: var(--panel); box-shadow: var(--inset-sm); }
+.more-panel a.active strong { color: var(--accent); }
 .mobile-menu a.active { color: var(--accent); }
 
 .nav-actions { display: flex; align-items: center; gap: 12px; }
@@ -100,7 +117,17 @@
 .mobile-menu.show .mm-foot { opacity: 1; transform: none; }
 .mm-foot .btn { width: 100%; }
 
-@media (max-width: 1310px) {
+/* Desktop (and a phone's "desktop site" mode, ~980px): the links sit in the bar. Compact first, roomier as the screen grows. */
+@media (max-width: 1179px) {
+  .primary a, .more-btn { padding: 9px 9px; font-size: 12.5px; }
+  .nav-row { gap: 10px; }
+  .nav-actions { gap: 8px; }
+  .nav-login .lbl-full { display: none; }
+  .nav-login .lbl-short { display: inline; }
+  .brand .name small { display: none; }
+}
+@media (max-width: 899px) {
   .primary { display: none; }
   .burger { display: block; }
 }
+@media (min-width: 1400px) { .primary a, .more-btn { padding: 9px 14px; font-size: 13.5px; } }
