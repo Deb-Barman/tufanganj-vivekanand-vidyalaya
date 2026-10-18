@@ -75,17 +75,18 @@ function page(code, c, target) {
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${code} · ${esc(c.title)} | Tufanganj Vivekananda Vidyalaya</title>
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#050507">
+<meta name="theme-color" content="#181b27" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#e4e7f0" media="(prefers-color-scheme: light)">
 <meta name="color-scheme" content="dark light">
 <link rel="icon" type="image/png" href="${asset("favicon-64.png")}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@500;600;700;800&display=swap">
 <link rel="preload" as="image" href="${asset("swami-dark.webp")}" media="(prefers-color-scheme: dark)">
 <script>${wrap(themeBoot)}</script>
 <style>
-html,body{height:100%;margin:0;overflow:hidden;background:#050507}
-[data-theme="light"] body{background:#fbf3e3}
+html,body{height:100%;margin:0;overflow:hidden;background:#181b27}
+[data-theme="light"],[data-theme="light"] body{background:#e4e7f0}
 ${wrap(css)}
 </style>
 </head>
