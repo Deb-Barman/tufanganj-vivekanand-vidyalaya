@@ -20,6 +20,11 @@ urlpatterns = [
     path("students/", views.StudentProfileListView.as_view(), name="students"),
     path("students/<uuid:pk>/", views.StudentProfileDetailView.as_view(), name="student_detail"),
 
+    path("teacher-attendance/bulk/", views.BulkTeacherAttendanceView.as_view(), name="teacher_attendance_bulk"),
+    path("teacher-attendance/sheet/", views.TeacherAttendanceSheetView.as_view(), name="teacher_attendance_sheet"),
+    path("teacher-attendance/<uuid:pk>/", views.TeacherAttendanceDetailView.as_view(), name="teacher_attendance_detail"),
+    path("teacher-attendance/", views.TeacherAttendanceListView.as_view(), name="teacher_attendance"),
+
     path("attendance/bulk/", views.BulkAttendanceView.as_view(), name="attendance_bulk"),
     path("attendance/", views.AttendanceListCreateView.as_view(), name="attendance"),
     path("attendance/<uuid:pk>/", views.AttendanceDetailView.as_view(), name="attendance_detail"),

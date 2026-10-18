@@ -93,6 +93,27 @@ class Attendance(models.Model):
         ordering = ["-date"]
 
 
+class TeacherAttendance(models.Model):
+    """A teacher's attendance for one day. Only the Super Admin records it (like a class register for staff);
+    a teacher can read their own days and nobody else's."""
+
+    class Status(models.TextChoices):
+        PRESENT = "PRESENT", "Present"
+        ABSENT = "ABSENT", "Absent"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="teacher_attendance_records")
+    date = models.DateField()
+    status = models.CharField(max_length=10, choices=Status.choices)
+    marked_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "teacher_attendance"
+        unique_together = ["teacher", "date"]
+        ordering = ["-date"]
+
+
 class Result(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name="results")
@@ -150,6 +171,9 @@ class Homework(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="homework")
     title = models.CharField(max_length=200)
     details = models.TextField(blank=True, max_length=2000)
+    #: First day students can tick it off. Blank = open from the day it was set.
+    start_date = models.DateField(null=True, blank=True)
+    #: End date: the last day students can finish (and tick) it. After this the tick is locked.
     due_date = models.DateField()
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="homework_set")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -157,6 +181,26 @@ class Homework(models.Model):
     class Meta:
         db_table = "homework"
         ordering = ["due_date", "-created_at"]
+
+    @property
+    def opens_on(self):
+        """Effective first day: start_date, or the day the homework was created."""
+        if self.start_date:
+            return self.start_date
+        from django.utils import timezone
+
+        return timezone.localtime(self.created_at).date() if self.created_at else timezone.localdate()
+
+    def phase(self, today=None):
+        """'upcoming' (not started), 'open' (students can tick) or 'closed' (end date passed)."""
+        from django.utils import timezone
+
+        today = today or timezone.localdate()
+        if today > self.due_date:
+            return "closed"
+        if today < self.opens_on:
+            return "upcoming"
+        return "open"
 
 
 class HomeworkCompletion(models.Model):

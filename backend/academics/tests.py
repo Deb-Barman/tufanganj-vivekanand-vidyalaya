@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 from accounts.models import Role
 from config.testing import BaseAPITestCase
 
-from .models import AcademicSession, Attendance, Marksheet, Result, SchoolClass, StudentProfile, Subject
+from .models import AcademicSession, Attendance, Marksheet, Result, SchoolClass, StudentProfile, Subject, TeacherAttendance
 
 
 class AcademicsBase(BaseAPITestCase):
@@ -231,7 +231,7 @@ class ClassroomBase(AcademicsBase):
         StudentProfile.objects.filter(pk=self.alice_user.pk).update(school_class=self.klass)
         self.other_class = SchoolClass.objects.create(name="Class XII", stream="Arts", session=self.session)
         self.other_subject = Subject.objects.create(name="History", school_class=self.other_class)
-        self.hw_body = {"school_class": str(self.klass.id), "subject": str(self.subject.id), "title": "Chapter 3 questions", "details": "Do Q1-Q5", "due_date": "2030-01-10"}
+        self.hw_body = {"school_class": str(self.klass.id), "subject": str(self.subject.id), "title": "Chapter 3 questions", "details": "Do Q1-Q5", "due_date": str(datetime.date.today() + datetime.timedelta(days=60))}
 
 
 class TimetableTests(ClassroomBase):
@@ -311,6 +311,57 @@ class HomeworkTests(ClassroomBase):
         res = self.teacher_c.post("/api/academics/homework/", {**self.hw_body, "title": "<b>Read</b> & write"}, format="json")
         self.assertEqual(res.data["title"], "Read & write")
 
+    # ---- start / end date window ----
+    def _hw(self, start, end, **kw):
+        return self.teacher_c.post("/api/academics/homework/", {**self.hw_body, "start_date": str(start), "due_date": str(end), **kw}, format="json")
+
+    def test_start_defaults_to_today_and_must_not_be_after_the_end_date(self):
+        today = datetime.date.today()
+        res = self.teacher_c.post("/api/academics/homework/", self.hw_body, format="json")
+        self.assertEqual(res.data["start_date"], str(today))
+        self.assertEqual(res.data["phase"], "open")
+        bad = self._hw(today + datetime.timedelta(days=5), today + datetime.timedelta(days=1))
+        self.assertEqual(bad.status_code, 400)
+        self.assertIn("due_date", bad.data)
+
+    def test_student_can_tick_inside_the_window_and_it_is_flagged_tickable(self):
+        today = datetime.date.today()
+        hw = self._hw(today, today + datetime.timedelta(days=3)).data
+        row = self.alice_c.get("/api/academics/homework/").data["results"][0]
+        self.assertEqual((row["phase"], row["can_tick"]), ("open", True))
+        self.assertEqual(self.alice_c.post(f"/api/academics/homework/{hw['id']}/done/", {"done": True}, format="json").status_code, 200)
+        # on the very last day it still works
+        last = self._hw(today - datetime.timedelta(days=2), today).data
+        self.assertEqual(self.alice_c.post(f"/api/academics/homework/{last['id']}/done/", {"done": True}, format="json").status_code, 200)
+
+    def test_after_the_end_date_the_homework_is_locked(self):
+        from .models import Homework, HomeworkCompletion
+
+        today = datetime.date.today()
+        hw = self._hw(today - datetime.timedelta(days=5), today + datetime.timedelta(days=5)).data
+        self.assertEqual(self.alice_c.post(f"/api/academics/homework/{hw['id']}/done/", {"done": True}, format="json").status_code, 200)
+        missed = self._hw(today - datetime.timedelta(days=9), today + datetime.timedelta(days=9), title="Missed one").data
+        # time passes: both end dates are now in the past
+        Homework.objects.filter(pk__in=[hw["id"], missed["id"]]).update(due_date=today - datetime.timedelta(days=1))
+        rows = {r["title"]: r for r in self.alice_c.get("/api/academics/homework/").data["results"]}
+        self.assertEqual((rows["Missed one"]["phase"], rows["Missed one"]["can_tick"], rows["Missed one"]["done"]), ("closed", False, False))
+        res = self.alice_c.post(f"/api/academics/homework/{missed['id']}/done/", {"done": True}, format="json")
+        self.assertEqual(res.status_code, 400)
+        self.assertFalse(HomeworkCompletion.objects.filter(homework_id=missed["id"]).exists())
+        # a finished one stays finished: it cannot be un-ticked once the window closed
+        self.assertEqual(self.alice_c.post(f"/api/academics/homework/{hw['id']}/done/", {"done": False}, format="json").status_code, 400)
+        self.assertTrue(HomeworkCompletion.objects.filter(homework_id=hw["id"]).exists())
+        # staff can still see who did and who missed it
+        who = self.teacher_c.get(f"/api/academics/homework/{missed['id']}/completions/").data["students"]
+        self.assertEqual([r["done"] for r in who], [False])
+
+    def test_homework_that_has_not_started_cannot_be_ticked_yet(self):
+        today = datetime.date.today()
+        hw = self._hw(today + datetime.timedelta(days=2), today + datetime.timedelta(days=6)).data
+        row = self.alice_c.get("/api/academics/homework/").data["results"][0]
+        self.assertEqual((row["phase"], row["can_tick"]), ("upcoming", False))
+        self.assertEqual(self.alice_c.post(f"/api/academics/homework/{hw['id']}/done/", {"done": True}, format="json").status_code, 400)
+
 
 class ExamTests(ClassroomBase):
     body = {"name": "Unit Test II", "date": "2030-02-02", "start_time": "10:00", "room": "Hall"}
@@ -382,3 +433,93 @@ class SuperAdminParityTests(AcademicsBase):
         self.assertEqual(self.teacher_c.patch(url, {"file": new_pdf}, format="multipart").status_code, 403)
         new_pdf = SimpleUploadedFile("m2.pdf", b"%PDF-1.4 other", content_type="application/pdf")
         self.assertEqual(self.admin_c.patch(url, {"file": new_pdf}, format="multipart").status_code, 200)
+
+
+class TeacherAttendanceTests(AcademicsBase):
+    """The Super Admin takes teacher attendance; a teacher reads only their own; students have no access."""
+
+    def setUp(self):
+        super().setUp()
+        self.teacher2 = self.make_user("teach2", Role.TEACHER, full_name="Mr. Roy")
+        self.teacher2_c = self.login(self.teacher2)
+        self.today = datetime.date.today()
+        self.day = str(self.today)
+
+    def mark(self, client, records, date=None):
+        return client.post("/api/academics/teacher-attendance/bulk/", {"date": date or self.day, "records": records}, format="json")
+
+    def test_super_admin_marks_teachers_and_it_is_recorded_as_theirs(self):
+        res = self.mark(self.admin_c, [{"teacher": str(self.teacher.id), "status": "PRESENT"}, {"teacher": str(self.teacher2.id), "status": "ABSENT"}])
+        self.assertEqual((res.status_code, res.data["saved"]), (200, 2))
+        row = TeacherAttendance.objects.get(teacher=self.teacher, date=self.today)
+        self.assertEqual((row.status, row.marked_by_id), ("PRESENT", self.admin.id))
+
+    def test_marking_again_updates_instead_of_duplicating(self):
+        self.mark(self.admin_c, [{"teacher": str(self.teacher.id), "status": "PRESENT"}])
+        self.mark(self.admin_c, [{"teacher": str(self.teacher.id), "status": "ABSENT"}])
+        self.assertEqual(TeacherAttendance.objects.filter(teacher=self.teacher).count(), 1)
+        self.assertEqual(TeacherAttendance.objects.get(teacher=self.teacher).status, "ABSENT")
+
+    def test_only_super_admin_can_write(self):
+        rec = [{"teacher": str(self.teacher.id), "status": "PRESENT"}]
+        for c in (self.teacher_c, self.teacher2_c, self.alice_c):
+            self.assertEqual(self.mark(c, rec).status_code, 403)
+        self.assertEqual(TeacherAttendance.objects.count(), 0)
+        self.mark(self.admin_c, rec)
+        row = TeacherAttendance.objects.get()
+        url = f"/api/academics/teacher-attendance/{row.id}/"
+        for c in (self.teacher_c, self.alice_c):
+            self.assertEqual(c.patch(url, {"status": "ABSENT"}, format="json").status_code, 403)
+            self.assertEqual(c.delete(url).status_code, 403)
+        self.assertEqual(self.admin_c.patch(url, {"status": "ABSENT"}, format="json").status_code, 200)
+        self.assertEqual(self.admin_c.delete(url).status_code, 204)
+
+    def test_a_teacher_sees_only_their_own_days_even_if_they_ask_for_others(self):
+        self.mark(self.admin_c, [{"teacher": str(self.teacher.id), "status": "PRESENT"}, {"teacher": str(self.teacher2.id), "status": "ABSENT"}])
+        mine = self.teacher_c.get("/api/academics/teacher-attendance/")
+        self.assertEqual([str(r["teacher"]) for r in mine.data["results"]], [str(self.teacher.id)])
+        sneaky = self.teacher_c.get(f"/api/academics/teacher-attendance/?teacher={self.teacher2.id}")
+        self.assertEqual([str(r["teacher"]) for r in sneaky.data["results"]], [str(self.teacher.id)])
+        self.assertEqual(self.admin_c.get("/api/academics/teacher-attendance/").data["count"], 2)
+
+    def test_students_and_anonymous_have_no_access(self):
+        self.assertEqual(self.alice_c.get("/api/academics/teacher-attendance/").status_code, 403)
+        self.assertEqual(self.alice_c.get("/api/academics/teacher-attendance/sheet/").status_code, 403)
+        self.assertEqual(self.teacher_c.get("/api/academics/teacher-attendance/sheet/").status_code, 403)
+        self.assertEqual(APIClient().get("/api/academics/teacher-attendance/").status_code, 401)
+
+    def test_only_teacher_accounts_active_and_not_future_dates(self):
+        self.assertEqual(self.mark(self.admin_c, [{"teacher": str(self.alice_user.id), "status": "PRESENT"}]).status_code, 400)  # a student
+        self.assertEqual(self.mark(self.admin_c, [{"teacher": str(self.admin.id), "status": "PRESENT"}]).status_code, 400)  # the admin
+        self.assertEqual(self.mark(self.admin_c, [{"teacher": str(self.teacher.id), "status": "LATE"}]).status_code, 400)
+        tomorrow = str(self.today + datetime.timedelta(days=1))
+        self.assertEqual(self.mark(self.admin_c, [{"teacher": str(self.teacher.id), "status": "PRESENT"}], date=tomorrow).status_code, 400)
+        self.teacher2.is_active_account = False
+        self.teacher2.save()
+        self.assertEqual(self.mark(self.admin_c, [{"teacher": str(self.teacher2.id), "status": "PRESENT"}]).status_code, 400)
+        self.assertEqual(TeacherAttendance.objects.count(), 0)
+
+    def test_sheet_lists_active_teachers_with_the_days_marks(self):
+        self.mark(self.admin_c, [{"teacher": str(self.teacher.id), "status": "PRESENT"}])
+        gone = self.make_user("old", Role.TEACHER, full_name="Left School")
+        gone.is_active_account = False
+        gone.save()
+        data = self.admin_c.get(f"/api/academics/teacher-attendance/sheet/?date={self.day}").data
+        by_name = {r["full_name"]: r["status"] for r in data["teachers"]}
+        self.assertEqual(by_name, {self.teacher.full_name: "PRESENT", "Mr. Roy": None})
+        self.assertEqual(self.admin_c.get("/api/academics/teacher-attendance/sheet/?date=nonsense").status_code, 400)
+
+    def test_filters_by_teacher_date_and_month(self):
+        d1 = self.today
+        d2 = self.today - datetime.timedelta(days=40)
+        self.mark(self.admin_c, [{"teacher": str(self.teacher.id), "status": "PRESENT"}], date=str(d1))
+        self.mark(self.admin_c, [{"teacher": str(self.teacher.id), "status": "ABSENT"}, {"teacher": str(self.teacher2.id), "status": "PRESENT"}], date=str(d2))
+        get = lambda q: self.admin_c.get(f"/api/academics/teacher-attendance/?{q}").data["count"]
+        self.assertEqual(get(f"teacher={self.teacher.id}"), 2)
+        self.assertEqual(get(f"date={d2}"), 2)
+        self.assertEqual(get(f"month={d1:%Y-%m}"), 1)
+
+    def test_deleting_a_teacher_removes_their_attendance(self):
+        self.mark(self.admin_c, [{"teacher": str(self.teacher2.id), "status": "PRESENT"}])
+        self.teacher2.delete()
+        self.assertEqual(TeacherAttendance.objects.count(), 0)

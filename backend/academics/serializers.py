@@ -2,9 +2,12 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
+from accounts.models import Role, User
+
 from .models import (
     AcademicSession,
     Attendance,
+    TeacherAttendance,
     Exam,
     Homework,
     Marksheet,
@@ -149,6 +152,53 @@ class BulkAttendanceSerializer(serializers.Serializer):
     records = _AttendanceRecord(many=True, allow_empty=False, max_length=300)
 
 
+def _check_teacher(user):
+    if not user.is_teacher:
+        raise serializers.ValidationError("Teacher attendance can only be recorded for a Teacher account.")
+    if not user.is_active_account:
+        raise serializers.ValidationError("That teacher account is disabled.")
+    return user
+
+
+def _check_not_future(value):
+    from django.utils import timezone
+
+    if value > timezone.localdate():
+        raise serializers.ValidationError("Attendance cannot be recorded for a future date.")
+    return value
+
+
+class TeacherAttendanceSerializer(serializers.ModelSerializer):
+    teacher_name = serializers.CharField(source="teacher.full_name", read_only=True)
+
+    class Meta:
+        model = TeacherAttendance
+        fields = ["id", "teacher", "teacher_name", "date", "status", "marked_by", "created_at"]
+        read_only_fields = ["id", "marked_by", "created_at"]
+
+    def validate_teacher(self, user):
+        return _check_teacher(user)
+
+    def validate_date(self, value):
+        return _check_not_future(value)
+
+
+class _TeacherAttendanceRecord(serializers.Serializer):
+    teacher = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(role=Role.TEACHER))
+    status = serializers.ChoiceField(choices=TeacherAttendance.Status.choices)
+
+    def validate_teacher(self, user):
+        return _check_teacher(user)
+
+
+class BulkTeacherAttendanceSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    records = _TeacherAttendanceRecord(many=True, allow_empty=False, max_length=300)
+
+    def validate_date(self, value):
+        return _check_not_future(value)
+
+
 class _ResultRecord(serializers.Serializer):
     student = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all())
     marks_obtained = serializers.DecimalField(max_digits=5, decimal_places=2, min_value=Decimal("0"))
@@ -216,11 +266,28 @@ class HomeworkSerializer(serializers.ModelSerializer):
     done = serializers.SerializerMethodField()
     submitted = serializers.SerializerMethodField()
     class_size = serializers.SerializerMethodField()
+    phase = serializers.SerializerMethodField()
+    can_tick = serializers.SerializerMethodField()
+    start_date = serializers.DateField(required=False, allow_null=True)
 
     class Meta:
         model = Homework
-        fields = ["id", "school_class", "class_name", "subject", "subject_name", "title", "details", "due_date", "created_by", "created_by_name", "created_at", "done", "submitted", "class_size"]
+        fields = ["id", "school_class", "class_name", "subject", "subject_name", "title", "details", "start_date", "due_date", "phase", "can_tick", "created_by", "created_by_name", "created_at", "done", "submitted", "class_size"]
         read_only_fields = ["id", "created_by", "created_at"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Homework set before start dates existed opens from the day it was created.
+        data["start_date"] = data.get("start_date") or str(instance.opens_on)
+        return data
+
+    def get_phase(self, obj):
+        return obj.phase()
+
+    def get_can_tick(self, obj):
+        """True only for a student while the homework is inside its start–end window."""
+        user = self.context["request"].user
+        return bool(getattr(user, "is_student", False)) and obj.phase() == "open"
 
     def get_done(self, obj):
         user = self.context["request"].user
@@ -252,7 +319,18 @@ class HomeworkSerializer(serializers.ModelSerializer):
         klass = attrs.get("school_class", getattr(inst, "school_class", None))
         if subject and klass and subject.school_class_id != klass.id:
             raise serializers.ValidationError("That subject belongs to a different class.")
+        due = attrs.get("due_date", getattr(inst, "due_date", None))
+        start = attrs["start_date"] if "start_date" in attrs else getattr(inst, "start_date", None)
+        if start and due and start > due:
+            raise serializers.ValidationError({"due_date": "The end date cannot be before the start date."})
         return attrs
+
+    def create(self, validated_data):
+        from django.utils import timezone
+
+        if not validated_data.get("start_date"):
+            validated_data["start_date"] = timezone.localdate()
+        return super().create(validated_data)
 
 
 class ExamSerializer(serializers.ModelSerializer):
