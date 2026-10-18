@@ -1,5 +1,5 @@
 from django.urls import path
-from . import console_views, views
+from . import console_views, profiles, views
 
 app_name = "accounts"
 
@@ -10,6 +10,9 @@ urlpatterns = [
     path("logout/", views.LogoutView.as_view(), name="logout"),
     path("admin/stats/", views.AdminStatsView.as_view(), name="admin_stats"),
     path("me/", views.MeView.as_view(), name="me"),
+    path("me/profile/", profiles.MyProfileView.as_view(), name="my_profile"),
+    path("me/profile/photo/", profiles.MyProfilePhotoView.as_view(), name="my_profile_photo"),
+    path("profiles/<str:role>/<str:username>/", profiles.PublicProfileView.as_view(), name="public_profile"),
     path("me/change-password/", views.ChangePasswordView.as_view(), name="change_password"),
     path("admin/users/", views.AdminUserListCreateView.as_view(), name="admin_user_list_create"),
     path("admin/users/<uuid:pk>/", views.AdminUserDetailView.as_view(), name="admin_user_detail"),
