@@ -41,6 +41,12 @@ const PATHS = {
   clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3 2",
   trend: "M3 17l6-6 4 4 8-8M15 7h6v6",
   lock: "M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
+  chevronLeft: "m15 6-6 6 6 6",
+  chevronUp: "m6 15 6-6 6 6",
+  database: "M12 8c4.4 0 8-1.3 8-3s-3.6-3-8-3-8 1.3-8 3 3.6 3 8 3ZM4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3",
+  table: "M3 5h18v14H3zM3 10h18M3 15h18M9 5v14",
+  cloud: "M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9.5 4.5 4.5 0 0 1 17.5 18Z",
+  server: "M4 4h16v6H4zM4 14h16v6H4zM8 7h.01M8 17h.01",
 } as const;
 
 export type IconName = keyof typeof PATHS;

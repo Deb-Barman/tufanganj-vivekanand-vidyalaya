@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import type { Achievement } from "../../types/api";
-import { EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, errText, listAll, useUI } from "../ui/kitExports";
+import { EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, errText, listAll, useUI, Select } from "../ui/kitExports";
 
 const CATS: Record<Achievement["category"], string> = { ACADEMIC: "Academic", SPORTS: "Sports", ARTS: "Arts & culture", OTHER: "Other" };
 type Draft = { id?: string; title: string; year: string; category: Achievement["category"]; description: string; image: string | null };
@@ -72,7 +72,7 @@ export function AchievementsModule() {
             <div className="form-field"><label htmlFor="aTitle">Title</label><input id="aTitle" value={draft.title} maxLength={200} onChange={(e) => setDraft({ ...draft, title: e.target.value })} required /></div>
             <div className="form-grid">
               <div className="form-field"><label htmlFor="aYear">Year</label><input id="aYear" type="number" min={1964} max={new Date().getFullYear() + 1} value={draft.year} onChange={(e) => setDraft({ ...draft, year: e.target.value })} required /></div>
-              <div className="form-field"><label htmlFor="aCat">Category</label><select id="aCat" value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value as Achievement["category"] })}>{Object.entries(CATS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
+              <div className="form-field"><label htmlFor="aCat">Category</label><Select id="aCat" value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value as Achievement["category"] })}>{Object.entries(CATS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></div>
             </div>
             <div className="form-field"><label htmlFor="aDesc">Details (optional)</label><textarea id="aDesc" rows={4} maxLength={1500} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} /></div>
             <div className="form-field"><label htmlFor="aImg">Photo (optional{draft.image ? ", a new one replaces the current" : ""})</label><input id="aImg" type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>

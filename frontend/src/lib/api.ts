@@ -90,10 +90,12 @@ interface RequestOptions {
   body?: unknown;
   auth?: boolean;
   isMultipart?: boolean;
+  /** Return the raw response body (CSV/file downloads) instead of JSON. */
+  asBlob?: boolean;
 }
 
 async function request<T>(path: string, options: RequestOptions = {}, isRetry = false): Promise<T> {
-  const { method = "GET", body, auth = true, isMultipart = false } = options;
+  const { method = "GET", body, auth = true, isMultipart = false, asBlob = false } = options;
 
   const headers: Record<string, string> = {};
   if (!isMultipart) headers["Content-Type"] = "application/json";
@@ -127,6 +129,7 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
   }
 
   if (res.status === 204) return undefined as T;
+  if (asBlob && res.ok) return (await res.blob()) as T;
 
   const contentType = res.headers.get("content-type") ?? "";
   const data = contentType.includes("application/json") ? await res.json() : null;
@@ -143,5 +146,7 @@ export const api = {
     request<T>(path, { ...opts, method: "PATCH", body }),
   del: <T>(path: string, opts?: Omit<RequestOptions, "method" | "body">) => request<T>(path, { ...opts, method: "DELETE" }),
   /** For endpoints with file uploads (gallery, school forms, article covers, marksheets). */
+  /** Authenticated file download (e.g. CSV export) as a Blob. */
+  download: (path: string) => request<Blob>(path, { method: "GET", asBlob: true }),
   postForm: <T>(path: string, formData: FormData) => request<T>(path, { method: "POST", body: formData, isMultipart: true }),
 };

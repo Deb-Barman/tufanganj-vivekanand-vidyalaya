@@ -18,6 +18,12 @@ export const SITE = {
   /** Leave empty until confirmed by the school office. Shown on /contact only when filled in. */
   phone: "",
   email: "",
+  /**
+   * Optional exact pin for the Contact-page map. While lat/lng are empty the map is found by the
+   * school's name + town. To pin the exact gate, open Google Maps, long-press the school, copy the
+   * two numbers (e.g. 26.3150, 89.6583) and paste them here.
+   */
+  map: { lat: "", lng: "", zoom: 16 },
 } as const;
 
 export interface NavItem {

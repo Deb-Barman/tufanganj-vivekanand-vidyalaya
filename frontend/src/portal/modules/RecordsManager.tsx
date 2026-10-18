@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import type { AcademicSession, Attendance, Result, SchoolClass, StudentProfile, Subject } from "../../types/api";
-import { EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, classLabel, errText, fmtDate, listAll, useDebounced, useUI } from "../ui/kitExports";
+import { EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, classLabel, errText, fmtDate, listAll, useDebounced, useUI, Select, DateField } from "../ui/kitExports";
 import { PageLoading } from "../ui/PageLoading";
 
 /* Super-Admin tools to correct or remove single saved rows — the same power the Django admin gave. */
@@ -92,8 +92,8 @@ export function AttendanceRecords() {
     <>
       <PageHeader icon="checkCircle" title="Attendance records" sub="Find a saved attendance row, correct it or delete it." />
       <div className="toolbar">
-        <div className="field-inline" style={{ flex: "1 1 220px" }}><label htmlFor="arClass">Class</label><select id="arClass" value={cid} onChange={(e) => setClassId(e.target.value)}>{ref.classes.map((c) => <option key={c.id} value={c.id}>{classLabel(c, ref.sessions)}</option>)}</select></div>
-        <div className="field-inline"><label htmlFor="arDate">Date</label><input id="arDate" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+        <div className="field-inline" style={{ flex: "1 1 220px" }}><label htmlFor="arClass">Class</label><Select id="arClass" value={cid} onChange={(e) => setClassId(e.target.value)}>{ref.classes.map((c) => <option key={c.id} value={c.id}>{classLabel(c, ref.sessions)}</option>)}</Select></div>
+        <div className="field-inline"><label htmlFor="arDate">Date</label><DateField id="arDate" value={date} required onChange={(v) => setDate(v)} /></div>
         {date && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setDate("")}>All dates</button>}
         <div className="search-box grow"><Icon name="search" size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search student" aria-label="Search student" /></div>
       </div>
@@ -116,8 +116,8 @@ export function AttendanceRecords() {
           <form id="att-rec-form" onSubmit={save} className="stack" style={{ gap: 14 }}>
             <p className="modal-text">{nameOf(edit.student)}</p>
             <div className="form-grid">
-              <div className="form-field"><label htmlFor="arEDate">Date</label><input id="arEDate" type="date" value={edit.date} onChange={(e) => setEdit({ ...edit, date: e.target.value })} required /></div>
-              <div className="form-field"><label htmlFor="arEStatus">Status</label><select id="arEStatus" value={edit.status} onChange={(e) => setEdit({ ...edit, status: e.target.value as Attendance["status"] })}><option value="PRESENT">Present</option><option value="ABSENT">Absent</option></select></div>
+              <div className="form-field"><label htmlFor="arEDate">Date</label><DateField id="arEDate" value={edit.date} onChange={(v) => setEdit({ ...edit, date: v })} required /></div>
+              <div className="form-field"><label htmlFor="arEStatus">Status</label><Select id="arEStatus" value={edit.status} onChange={(e) => setEdit({ ...edit, status: e.target.value as Attendance["status"] })}><option value="PRESENT">Present</option><option value="ABSENT">Absent</option></Select></div>
             </div>
           </form>
         )}
@@ -203,9 +203,9 @@ export function ResultRecords() {
     <>
       <PageHeader icon="award" title="Result records" sub="Find a saved mark, correct it or delete it." />
       <div className="toolbar">
-        <div className="field-inline"><label htmlFor="rrSession">Session</label><select id="rrSession" value={sid} onChange={(e) => setSessionId(e.target.value)}>{ref.sessions.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></div>
-        <div className="field-inline"><label htmlFor="rrClass">Class</label><select id="rrClass" value={cid} onChange={(e) => setClassId(e.target.value)}>{classes.map((c) => <option key={c.id} value={c.id}>{classLabel(c, ref.sessions)}</option>)}</select></div>
-        <div className="field-inline"><label htmlFor="rrSubject">Subject</label><select id="rrSubject" value={subId} onChange={(e) => setSubjectId(e.target.value)}>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
+        <div className="field-inline"><label htmlFor="rrSession">Session</label><Select id="rrSession" value={sid} onChange={(e) => setSessionId(e.target.value)}>{ref.sessions.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</Select></div>
+        <div className="field-inline"><label htmlFor="rrClass">Class</label><Select id="rrClass" value={cid} onChange={(e) => setClassId(e.target.value)}>{classes.map((c) => <option key={c.id} value={c.id}>{classLabel(c, ref.sessions)}</option>)}</Select></div>
+        <div className="field-inline"><label htmlFor="rrSubject">Subject</label><Select id="rrSubject" value={subId} onChange={(e) => setSubjectId(e.target.value)}>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></div>
         <div className="search-box grow"><Icon name="search" size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search student" aria-label="Search student" /></div>
       </div>
       {rows === null ? <Skeleton rows={5} /> : shown.length === 0 ? (

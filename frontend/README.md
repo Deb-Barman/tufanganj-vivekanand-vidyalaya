@@ -35,11 +35,11 @@ src/
 - `lib/api.ts` — the one fetch wrapper: attaches `Authorization: Bearer`,
   retries once with a refreshed access token on a 401, supports both JSON
   and multipart (file upload) bodies
-- `lib/AuthContext.tsx` — wraps login/logout/change-password, holds the
-  current user
-- `portal/RequireAuth.tsx` — redirects to `/portal` if not signed in, to
-  `/portal/change-password` if the backend says `must_change_password`,
+- `lib/AuthContext.tsx` — wraps login/logout, holds the current user
+- `portal/RequireAuth.tsx` — redirects to `/portal` if not signed in,
   treats a disabled account as logged out
+- `portal/ui/Select.tsx`, `DateField.tsx` (date + time) — the neumorphic dropdown / calendar / clock pickers
+  used everywhere instead of the browser's native controls (floating menu on desktop, bottom sheet on phones)
 
 ## Where authorization actually happens
 

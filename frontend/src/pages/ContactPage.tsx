@@ -4,6 +4,7 @@ import { PageHero, Section } from "../components/site/PageHero";
 import { Spinner } from "../components/loading/Loading";
 import { api, ApiError } from "../lib/api";
 import { SITE } from "../config/site";
+import { LocationMap } from "../components/LocationMap";
 import { usePageMeta } from "../lib/usePageMeta";
 
 const blank = { name: "", email: "", phone: "", subject: "", message: "" };
@@ -56,9 +57,6 @@ export function ContactPage() {
               <span className="f-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M24 12.070C24 5.400 18.630 0 12 0S0 5.400 0 12.070C0 18.100 4.390 23.100 10.130 24v-8.440H7.080v-3.490h3.050V9.410c0-3.020 1.790-4.690 4.530-4.690 1.310 0 2.680.24 2.680.24v2.970h-1.510c-1.490 0-1.960.93-1.960 1.880v2.260h3.330l-.53 3.490h-2.800V24C19.610 23.100 24 18.100 24 12.070" /></svg></span>
               <div><b>Facebook</b><a href={SITE.facebook} target="_blank" rel="noopener noreferrer">facebook.com/TufanganjVivekanandaVidyalaya</a></div>
             </div>
-            <div className="map-card">
-              <a className="btn btn-outline btn-sm" target="_blank" rel="noopener noreferrer" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(SITE.nameFull + ", " + SITE.town)}`}>Open in Google Maps ↗</a>
-            </div>
           </div>
 
           <div className="form-card" data-reveal="right">
@@ -91,6 +89,9 @@ export function ContactPage() {
             )}
           </div>
         </div>
+      </Section>
+      <Section>
+        <div data-reveal="up"><LocationMap /></div>
       </Section>
     </>
   );

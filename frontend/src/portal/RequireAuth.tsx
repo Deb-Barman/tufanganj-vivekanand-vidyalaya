@@ -17,9 +17,5 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     return <Navigate to="/portal" state={{ disabled: true }} replace />;
   }
 
-  if (user.must_change_password && location.pathname !== "/portal/change-password") {
-    return <Navigate to="/portal/change-password" replace />;
-  }
-
   return <>{children}</>;
 }

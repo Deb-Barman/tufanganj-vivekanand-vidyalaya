@@ -3,6 +3,7 @@ from django.contrib import admin
 from .models import (
     AcademicSession,
     Attendance,
+    TeacherAttendance,
     Exam,
     Homework,
     HomeworkCompletion,
@@ -21,6 +22,7 @@ admin.site.register(Subject)
 admin.site.register(TeacherProfile)
 admin.site.register(StudentProfile)
 admin.site.register(Attendance)
+admin.site.register(TeacherAttendance)
 admin.site.register(Result)
 admin.site.register(Marksheet)
 
@@ -38,7 +40,7 @@ class TimetableEntryAdmin(admin.ModelAdmin):
 
 @admin.register(Homework)
 class HomeworkAdmin(admin.ModelAdmin):
-    list_display = ("title", "school_class", "subject", "due_date", "created_by", "created_at")
+    list_display = ("title", "school_class", "subject", "start_date", "due_date", "created_by", "created_at")
     list_filter = ("school_class", "subject", "due_date")
     search_fields = ("title", "details")
     list_select_related = ("school_class", "subject", "created_by")

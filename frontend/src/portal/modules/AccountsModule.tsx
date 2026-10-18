@@ -2,14 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import type { Role, User } from "../../types/api";
-import { Avatar, EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, StatusPill, errText, fmtDate, listAll, useDebounced, useUI } from "../ui/kitExports";
+import { Avatar, EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, StatusPill, errText, fmtDate, listAll, useDebounced, useUI, Select } from "../ui/kitExports";
 
 type Filter = "ALL" | "STUDENT" | "TEACHER" | "ISSUES";
 type Creds = { title: string; username: string; password: string; role?: Role };
+type Reset = { id: string; name: string; username: string };
 type Draft = { id: string; username: string; full_name: string; phone: string; email: string };
 
 // Meets the backend validators (10+ chars, not common, not all numeric).
-const tempPassword = () => `${crypto.randomUUID().replace(/-/g, "").slice(0, 14)}!9`;
+const generatePassword = () => `${crypto.randomUUID().replace(/-/g, "").slice(0, 14)}!9`;
+const MIN_PASSWORD = 10;
 const isLocked = (u: User) => !!u.locked_until && new Date(u.locked_until) > new Date();
 
 export function AccountsModule() {
@@ -25,6 +27,10 @@ export function AccountsModule() {
   const [cUser, setCUser] = useState("");
   const [cName, setCName] = useState("");
   const [cRole, setCRole] = useState<"TEACHER" | "STUDENT">("STUDENT");
+  const [cPass, setCPass] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [reset, setReset] = useState<Reset | null>(null);
+  const [rPass, setRPass] = useState("");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -57,13 +63,14 @@ export function AccountsModule() {
   async function create(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
-    const password = tempPassword();
+    const password = cPass;
     try {
       await api.post<User>("/auth/admin/users/", { username: cUser.trim(), password, full_name: cName.trim(), role: cRole });
-      setCreds({ title: "Account created — copy this now, it won't be shown again", username: cUser.trim(), password, role: cRole });
+      setCreds({ title: "Account created — share these with the person, the password won't be shown again", username: cUser.trim(), password, role: cRole });
       setCreateOpen(false);
       setCUser("");
       setCName("");
+      setCPass("");
       load();
     } catch (err) {
       toast("error", errText(err, "Could not create the account."));
@@ -104,18 +111,25 @@ export function AccountsModule() {
   const toggleActive = (u: User) => run(u, () => api.patch(`/auth/admin/users/${u.id}/`, { is_active_account: !u.is_active_account }), u.is_active_account ? "Account disabled." : "Account re-enabled.");
   const unlock = (u: User) => run(u, () => api.post(`/auth/admin/users/${u.id}/unlock/`, {}), "Account unlocked.");
 
-  async function resetPassword(u: User) {
-    if (!(await confirm({ title: "Reset password?", message: `${u.full_name} will get a new temporary password and must change it at next sign-in. Their current password stops working.`, confirmLabel: "Reset" }))) return;
-    const password = tempPassword();
-    setBusy(u.id);
+  function openReset(u: User) {
+    setRPass(generatePassword());
+    setShowPass(false);
+    setReset({ id: u.id, name: u.full_name, username: u.username });
+  }
+
+  async function submitReset(e: FormEvent) {
+    e.preventDefault();
+    if (!reset) return;
+    setSaving(true);
     try {
-      await api.post(`/auth/admin/users/${u.id}/reset-password/`, { new_password: password });
-      setCreds({ title: "Password reset — copy this now, it won't be shown again", username: u.username, password });
+      await api.post(`/auth/admin/users/${reset.id}/reset-password/`, { new_password: rPass });
+      setCreds({ title: "Password changed — share it with the person, it won't be shown again", username: reset.username, password: rPass });
+      setReset(null);
       load();
     } catch (err) {
-      toast("error", errText(err, "Could not reset the password."));
+      toast("error", errText(err, "Could not change the password."));
     } finally {
-      setBusy(null);
+      setSaving(false);
     }
   }
 
@@ -135,15 +149,15 @@ export function AccountsModule() {
 
   return (
     <>
-      <PageHeader icon="users" title="Accounts" sub="Create, edit, reset, unlock, disable or delete Teacher and Student logins. Public sign-up is off — this is the only place accounts come from." actions={<button type="button" className="btn btn-primary btn-sm" onClick={() => setCreateOpen(true)}><Icon name="plus" size={16} /> New account</button>} />
+      <PageHeader icon="users" title="Accounts" sub="Create Teacher and Student logins and set their passwords. They sign in with exactly the password you set. Public sign-up is off — this is the only place accounts come from." actions={<button type="button" className="btn btn-primary btn-sm" onClick={() => { setCPass(generatePassword()); setShowPass(false); setCreateOpen(true); }}><Icon name="plus" size={16} /> New account</button>} />
 
       {creds && (
         <div className="alert alert-info" style={{ marginBottom: 16 }}>
           <strong>{creds.title}</strong>
           <div style={{ marginTop: 8 }}>Username: <code>{creds.username}</code></div>
-          <div>Temporary password: <code>{creds.password}</code></div>
+          <div>Password: <code>{creds.password}</code></div>
           <div className="rcard-actions" style={{ marginTop: 10 }}>
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => copy(`Username: ${creds.username}\nTemporary password: ${creds.password}`)}>Copy both</button>
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => copy(`Username: ${creds.username}\nPassword: ${creds.password}`)}>Copy both</button>
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCreds(null)}>I have saved it</button>
           </div>
         </div>
@@ -166,7 +180,6 @@ export function AccountsModule() {
                 <span style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
                   {!u.is_active_account && <StatusPill tone="bad">disabled</StatusPill>}
                   {isLocked(u) && <StatusPill tone="warn">locked</StatusPill>}
-                  {u.must_change_password && u.is_active_account && <StatusPill tone="info">first login pending</StatusPill>}
                 </span>
               </div>
               <div className="rcard-meta">
@@ -176,7 +189,7 @@ export function AccountsModule() {
               </div>
               <div className="rcard-actions">
                 <button type="button" className="btn btn-outline btn-sm" onClick={() => setDraft({ id: u.id, username: u.username, full_name: u.full_name, phone: u.phone ?? "", email: u.email ?? "" })}><Icon name="edit" size={15} /> Edit</button>
-                <button type="button" className="btn btn-outline btn-sm" disabled={busy === u.id} onClick={() => resetPassword(u)}><Icon name="lock" size={15} /> Reset password</button>
+                <button type="button" className="btn btn-outline btn-sm" disabled={busy === u.id} onClick={() => openReset(u)}><Icon name="lock" size={15} /> Set password</button>
                 {isLocked(u) && <button type="button" className="btn btn-primary btn-sm" disabled={busy === u.id} onClick={() => unlock(u)}>Unlock</button>}
                 <button type="button" className="btn btn-ghost btn-sm" disabled={busy === u.id} onClick={() => toggleActive(u)}>{u.is_active_account ? "Disable" : "Re-enable"}</button>
                 <button type="button" className="icon-btn danger" style={{ marginLeft: "auto" }} disabled={busy === u.id} onClick={() => remove(u)} aria-label={`Delete ${u.full_name}`}><Icon name="trash" size={17} /></button>
@@ -186,15 +199,25 @@ export function AccountsModule() {
         </div>
       )}
 
-      <Modal open={createOpen} title="New account" onClose={() => setCreateOpen(false)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setCreateOpen(false)}>Cancel</button><button type="submit" form="acc-create" className="btn btn-primary btn-sm" disabled={saving || cUser.trim().length < 3 || !cName.trim()}>{saving ? "Creating…" : "Create account"}</button></>}>
+      <Modal open={createOpen} title="New account" onClose={() => setCreateOpen(false)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setCreateOpen(false)}>Cancel</button><button type="submit" form="acc-create" className="btn btn-primary btn-sm" disabled={saving || cUser.trim().length < 3 || !cName.trim() || cPass.length < MIN_PASSWORD}>{saving ? "Creating…" : "Create account"}</button></>}>
         <form id="acc-create" onSubmit={create} className="stack" style={{ gap: 14 }}>
           <div className="form-field"><label htmlFor="accName">Full name</label><input id="accName" value={cName} onChange={(e) => setCName(e.target.value)} required /></div>
           <div className="form-grid">
             <div className="form-field"><label htmlFor="accUser">Username</label><input id="accUser" value={cUser} minLength={3} onChange={(e) => setCUser(e.target.value)} required /></div>
-            <div className="form-field"><label htmlFor="accRole">Role</label><select id="accRole" value={cRole} onChange={(e) => setCRole(e.target.value as "TEACHER" | "STUDENT")}><option value="STUDENT">Student</option><option value="TEACHER">Teacher</option></select></div>
+            <div className="form-field"><label htmlFor="accRole">Role</label><Select id="accRole" value={cRole} onChange={(e) => setCRole(e.target.value as "TEACHER" | "STUDENT")}><option value="STUDENT">Student</option><option value="TEACHER">Teacher</option></Select></div>
           </div>
-          <p className="modal-text">A temporary password is generated and shown once. The person must change it at first sign-in.</p>
+          <PasswordInput id="accPass" label="Password" value={cPass} onChange={setCPass} show={showPass} onToggle={() => setShowPass((v) => !v)} onGenerate={() => { setCPass(generatePassword()); setShowPass(true); }} />
+          <p className="modal-text" style={{ fontSize: 13 }}>You choose the password. The person signs in with this exact password — nothing to change afterwards. Use at least {MIN_PASSWORD} characters, not only numbers.</p>
         </form>
+      </Modal>
+
+      <Modal open={reset !== null} title={reset ? `Set password — ${reset.name}` : "Set password"} onClose={() => setReset(null)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setReset(null)}>Cancel</button><button type="submit" form="acc-reset" className="btn btn-primary btn-sm" disabled={saving || rPass.length < MIN_PASSWORD}>{saving ? "Saving…" : "Save password"}</button></>}>
+        {reset && (
+          <form id="acc-reset" onSubmit={submitReset} className="stack" style={{ gap: 14 }}>
+            <PasswordInput id="accNewPass" label={`New password for @${reset.username}`} value={rPass} onChange={setRPass} show={showPass} onToggle={() => setShowPass((v) => !v)} onGenerate={() => { setRPass(generatePassword()); setShowPass(true); }} />
+            <p className="modal-text" style={{ fontSize: 13 }}>Their old password stops working straight away and any lock is cleared. They sign in with the new password as it is.</p>
+          </form>
+        )}
       </Modal>
 
       <Modal open={draft !== null} title="Edit account" onClose={() => setDraft(null)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setDraft(null)}>Cancel</button><button type="submit" form="acc-edit" className="btn btn-primary btn-sm" disabled={saving || !draft || draft.username.trim().length < 3 || !draft.full_name.trim()}>{saving ? "Saving…" : "Save changes"}</button></>}>
@@ -210,5 +233,20 @@ export function AccountsModule() {
         )}
       </Modal>
     </>
+  );
+}
+
+/** Password box with show/hide and a "Generate" shortcut (Super Admin chooses or generates). */
+function PasswordInput({ id, label, value, onChange, show, onToggle, onGenerate }: { id: string; label: string; value: string; onChange: (v: string) => void; show: boolean; onToggle: () => void; onGenerate: () => void }) {
+  return (
+    <div className="form-field">
+      <label htmlFor={id}>{label}</label>
+      <div style={{ display: "flex", gap: 10, alignItems: "stretch" }}>
+        <input id={id} type={show ? "text" : "password"} value={value} minLength={MIN_PASSWORD} autoComplete="new-password" spellCheck={false} onChange={(e) => onChange(e.target.value)} required style={{ flex: 1, minWidth: 0 }} />
+        <button type="button" className="btn btn-outline btn-sm" onClick={onToggle} aria-pressed={show}>{show ? "Hide" : "Show"}</button>
+        <button type="button" className="btn btn-outline btn-sm" onClick={onGenerate}>Generate</button>
+      </div>
+      {value.length > 0 && value.length < MIN_PASSWORD && <small style={{ color: "var(--danger)" }}>{MIN_PASSWORD - value.length} more character{MIN_PASSWORD - value.length === 1 ? "" : "s"} needed.</small>}
+    </div>
   );
 }

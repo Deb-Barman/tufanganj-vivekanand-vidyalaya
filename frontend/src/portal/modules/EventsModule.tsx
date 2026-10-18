@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { EventItem } from "../../types/api";
-import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, errText, fmtDate, listAll, todayISO, useDebounced, useUI } from "../ui/kitExports";
+import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, errText, fmtDate, listAll, todayISO, useDebounced, useUI, DateField } from "../ui/kitExports";
 
 type Draft = { id?: string; title: string; event_date: string; audience: string; description: string };
 const blank = (): Draft => ({ title: "", event_date: todayISO(), audience: "", description: "" });
@@ -98,7 +98,7 @@ export function EventsModule() {
           <form id="event-form" onSubmit={save} className="stack" style={{ gap: 14 }}>
             <div className="form-field"><label htmlFor="eTitle">Title</label><input id="eTitle" value={draft.title} maxLength={200} onChange={(e) => setDraft({ ...draft, title: e.target.value })} required /></div>
             <div className="form-grid">
-              <div className="form-field"><label htmlFor="eDate">Date</label><input id="eDate" type="date" value={draft.event_date} onChange={(e) => setDraft({ ...draft, event_date: e.target.value })} required /></div>
+              <div className="form-field"><label htmlFor="eDate">Date</label><DateField id="eDate" value={draft.event_date} onChange={(v) => setDraft({ ...draft, event_date: v })} required /></div>
               <div className="form-field"><label htmlFor="eAud">Audience (optional)</label><input id="eAud" value={draft.audience} maxLength={100} placeholder="e.g. All classes" onChange={(e) => setDraft({ ...draft, audience: e.target.value })} /></div>
             </div>
             <div className="form-field"><label htmlFor="eDesc">Description</label><textarea id="eDesc" rows={4} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} /></div>

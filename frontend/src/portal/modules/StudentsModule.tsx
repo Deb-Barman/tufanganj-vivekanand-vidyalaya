@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { AcademicSession, SchoolClass, StudentProfile } from "../../types/api";
-import { Avatar, EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, errText, listAll, useDebounced, useUI } from "../ui/kitExports";
+import { Avatar, EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, errText, listAll, useDebounced, useUI, Select } from "../ui/kitExports";
 import { dashPath } from "../ui/nav";
 
 export function StudentsModule() {
@@ -99,7 +99,7 @@ export function StudentsModule() {
           <Icon name="search" size={18} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, username or roll number" aria-label="Search students" />
         </div>
-        <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)} aria-label="Filter by class">
+        <Select value={classFilter} onChange={(e) => setClassFilter(e.target.value)} aria-label="Filter by class">
           <option value="">All classes</option>
           <option value="none">No class assigned</option>
           {classes.map((c) => (
@@ -107,7 +107,7 @@ export function StudentsModule() {
               {classLabel(c.id)}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {students === null ? (
@@ -179,14 +179,14 @@ export function StudentsModule() {
         <form id="student-form" onSubmit={save} className="stack" style={{ gap: 14 }}>
           <div className="form-field">
             <label htmlFor="stClass">Class</label>
-            <select id="stClass" value={form.school_class} onChange={(e) => setForm({ ...form, school_class: e.target.value })}>
+            <Select id="stClass" value={form.school_class} onChange={(e) => setForm({ ...form, school_class: e.target.value })}>
               <option value="">— not assigned —</option>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
                   {classLabel(c.id)}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="form-field">
             <label htmlFor="stRoll">Roll number</label>

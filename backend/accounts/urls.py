@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import console_views, views
 
 app_name = "accounts"
 
@@ -15,4 +15,9 @@ urlpatterns = [
     path("admin/users/<uuid:pk>/", views.AdminUserDetailView.as_view(), name="admin_user_detail"),
     path("admin/users/<uuid:pk>/reset-password/", views.AdminResetPasswordView.as_view(), name="admin_reset_password"),
     path("admin/users/<uuid:pk>/unlock/", views.AdminUnlockView.as_view(), name="admin_unlock"),
+    # Super Admin: Supabase usage + read-only data browser
+    path("admin/database/", console_views.AdminDatabaseView.as_view(), name="admin_database"),
+    path("admin/data/", console_views.AdminDataTablesView.as_view(), name="admin_data_tables"),
+    path("admin/data/<str:key>/export/", console_views.AdminDataExportView.as_view(), name="admin_data_export"),
+    path("admin/data/<str:key>/", console_views.AdminDataRowsView.as_view(), name="admin_data_rows"),
 ]

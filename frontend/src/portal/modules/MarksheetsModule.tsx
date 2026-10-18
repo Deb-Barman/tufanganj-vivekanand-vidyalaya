@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { AcademicSession, Marksheet, StudentProfile } from "../../types/api";
-import { Avatar, EmptyState, Icon, Modal, PageHeader, Skeleton, errText, fmtDate, listAll, useUI } from "../ui/kitExports";
+import { Avatar, EmptyState, Icon, Modal, PageHeader, Skeleton, errText, fmtDate, listAll, useUI, Select } from "../ui/kitExports";
 
 export function MarksheetsModule() {
   const { user } = useAuth();
@@ -172,24 +172,24 @@ export function MarksheetsModule() {
         <form id="marksheet-form" onSubmit={upload} className="stack" style={{ gap: 14 }}>
           <div className="form-field">
             <label htmlFor="msStudent">Student</label>
-            <select id="msStudent" value={studentId} onChange={(e) => setStudentId(e.target.value)} required>
+            <Select id="msStudent" searchable value={studentId} onChange={(e) => setStudentId(e.target.value)} required>
               {students.map((s) => (
                 <option key={s.user} value={s.user}>
                   {s.full_name}
                   {s.roll_number ? ` (Roll ${s.roll_number})` : ""}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="form-field">
             <label htmlFor="msSession">Session</label>
-            <select id="msSession" value={sessionId} onChange={(e) => setSessionId(e.target.value)} required>
+            <Select id="msSession" value={sessionId} onChange={(e) => setSessionId(e.target.value)} required>
               {sessions.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="form-field">
             <label htmlFor="msFile">{editId ? "Replace file (optional) — " : "File — "}PDF, PNG, JPEG or WebP, up to 10 MB</label>

@@ -4,7 +4,8 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { AcademicSession, Attendance, SchoolClass, StudentProfile } from "../../types/api";
 import { AttendanceRecords } from "./RecordsManager";
-import { EmptyState, Icon, PageHeader, Ring, Segmented, Skeleton, classLabel, errText, listAll, todayISO, useUI } from "../ui/kitExports";
+import { TeacherAttendanceAdmin } from "./TeacherAttendanceAdmin";
+import { EmptyState, Icon, PageHeader, Ring, Segmented, Skeleton, classLabel, errText, listAll, todayISO, useUI, Select, DateField } from "../ui/kitExports";
 import { PageLoading } from "../ui/PageLoading";
 import { dashPath } from "../ui/nav";
 
@@ -12,14 +13,24 @@ type Mark = "PRESENT" | "ABSENT";
 
 export function AttendanceModule() {
   const { user } = useAuth();
-  const [tab, setTab] = useState<"mark" | "records">("mark");
+  const [tab, setTab] = useState<"mark" | "records" | "teachers" | "mine">("mark");
   if (!user) return null;
-  if (user.role === "STUDENT") return <StudentAttendance />;
+  if (user.role === "STUDENT") return <OwnAttendance url="/academics/attendance/" sub="Days recorded by your teachers." emptyText="It will appear here once your teacher marks it." />;
   const isAdmin = user.role === "SUPER_ADMIN";
   return (
     <>
-      {isAdmin && <div className="toolbar"><Segmented value={tab} onChange={setTab} options={[{ value: "mark", label: "Mark a class" }, { value: "records", label: "Saved records" }]} /></div>}
-      {isAdmin && tab === "records" ? <AttendanceRecords /> : <StaffAttendance isAdmin={isAdmin} />}
+      <div className="toolbar">
+        {isAdmin ? (
+          <Segmented value={tab} onChange={setTab} options={[{ value: "mark", label: "Mark a class" }, { value: "records", label: "Saved records" }, { value: "teachers", label: "Teachers" }]} />
+        ) : (
+          <Segmented value={tab} onChange={setTab} options={[{ value: "mark", label: "Mark a class" }, { value: "mine", label: "My attendance" }]} />
+        )}
+      </div>
+      {tab === "teachers" && isAdmin ? <TeacherAttendanceAdmin /> : tab === "records" && isAdmin ? <AttendanceRecords /> : tab === "mine" && !isAdmin ? (
+        <OwnAttendance url="/academics/teacher-attendance/" sub="Days recorded by the Super Admin." emptyText="It will appear here once the Super Admin takes your attendance." />
+      ) : (
+        <StaffAttendance isAdmin={isAdmin} />
+      )}
     </>
   );
 }
@@ -121,17 +132,17 @@ function StaffAttendance({ isAdmin }: { isAdmin: boolean }) {
       <div className="toolbar">
         <div className="field-inline" style={{ flex: "2 1 220px" }}>
           <label htmlFor="attClass">Class</label>
-          <select id="attClass" value={classId} onChange={(e) => setClassId(e.target.value)}>
+          <Select id="attClass" value={classId} onChange={(e) => setClassId(e.target.value)}>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {classLabel(c, sessions)}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="field-inline" style={{ flex: "1 1 160px" }}>
           <label htmlFor="attDate">Date</label>
-          <input id="attDate" type="date" value={date} max={todayISO()} onChange={(e) => e.target.value && setDate(e.target.value)} />
+          <DateField id="attDate" value={date} max={todayISO()} required onChange={(v) => v && setDate(v)} />
         </div>
       </div>
 
@@ -190,19 +201,21 @@ function StaffAttendance({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
-/* ───────────── Student: my attendance ───────────── */
+/* ───────────── Student / Teacher: my own attendance ───────────── */
 
-function StudentAttendance() {
-  const [records, setRecords] = useState<Attendance[] | null>(null);
+type DayRecord = Pick<Attendance, "id" | "date" | "status">;
+
+function OwnAttendance({ url, sub, emptyText }: { url: string; sub: string; emptyText: string }) {
+  const [records, setRecords] = useState<DayRecord[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // No student filter is sent: the API scopes a student to their own rows.
-    listAll<Attendance>("/academics/attendance/").then(setRecords).catch((e) => {
+    // No person filter is sent: the API scopes the caller to their own rows.
+    listAll<DayRecord>(url).then(setRecords).catch((e) => {
       setError(errText(e, "Could not load your attendance."));
       setRecords([]);
     });
-  }, []);
+  }, [url]);
 
   const stats = useMemo(() => {
     const present = records?.filter((r) => r.status === "PRESENT").length ?? 0;
@@ -211,7 +224,7 @@ function StudentAttendance() {
   }, [records]);
 
   const byMonth = useMemo(() => {
-    const groups = new Map<string, Attendance[]>();
+    const groups = new Map<string, DayRecord[]>();
     [...(records ?? [])].sort((a, b) => b.date.localeCompare(a.date)).forEach((r) => {
       const key = new Date(r.date + "T00:00:00").toLocaleDateString("en-IN", { month: "long", year: "numeric" });
       groups.set(key, [...(groups.get(key) ?? []), r]);
@@ -221,12 +234,12 @@ function StudentAttendance() {
 
   return (
     <>
-      <PageHeader icon="checkCircle" title="My attendance" sub="Days recorded by your teachers." />
+      <PageHeader icon="checkCircle" title="My attendance" sub={sub} />
       {error && <p className="alert alert-error">{error}</p>}
       {records === null ? (
         <Skeleton rows={3} />
       ) : records.length === 0 ? (
-        <EmptyState icon="clock" title="No attendance recorded yet" text="It will appear here once your teacher marks it." />
+        <EmptyState icon="clock" title="No attendance recorded yet" text={emptyText} />
       ) : (
         <>
           <section className="panel">

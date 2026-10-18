@@ -26,7 +26,7 @@ Two different sites, two different dashboards:
 | Timetable | `timetable` | `academics/timetable/` | `academics/timetableentry/` **(added)** |
 | Homework | `homework` | `academics/homework/` | `academics/homework/` and `academics/homeworkcompletion/` **(added)** |
 | Exams | `exams` | `academics/exams/` | `academics/exam/` **(added)** |
-| Attendance | `attendance` | `academics/attendance/` | `academics/attendance/` |
+| Attendance | `attendance` | `academics/attendance/`, `academics/teacher-attendance/` (+ `bulk/`, `sheet/`) | `academics/attendance/` |
 | Results | `results` | `academics/results/` | `academics/result/` |
 | Marksheets | `marksheets` | `academics/marksheets/` | `academics/marksheet/` |
 | Classes & Subjects | `academics` | `academics/sessions/`, `classes/`, `subjects/` | `academics/academicsession/`, `schoolclass/`, `subject/` |
@@ -38,7 +38,8 @@ Two different sites, two different dashboards:
 `notices/public/`, `content/articles/public/`, `content/events/public/`, `content/gallery/public/`, `content/forms/public/`, `content/achievements/public/`, `academics/teachers/public/`, `content/admissions/submit/`, `content/contact/submit/`, `health/`.
 
 ## Auth endpoints
-`auth/admin-login/`, `auth/staff-login/`, `auth/token/refresh/`, `auth/logout/`, `auth/me/`, `auth/me/change-password/`, `auth/admin/users/<id>/reset-password/`.
+`auth/admin-login/`, `auth/staff-login/`, `auth/token/refresh/`, `auth/logout/`, `auth/me/`, `auth/me/change-password/`, `auth/admin/users/<id>/reset-password/`,
+`auth/admin/database/`, `auth/admin/data/`, `auth/admin/data/<app.model>/`, `auth/admin/data/<app.model>/export/` (Super Admin only).
 
 
 ## Added in V8

@@ -2,9 +2,10 @@ from django.db import transaction
 from rest_framework import generics, serializers as drf_serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny
 
+from accounts.models import Role, User
 from accounts.permissions import IsAuthenticatedActiveUser, IsSuperAdmin, IsSuperAdminOrReadOnly, IsSuperAdminOrTeacher
 
 from .models import (
@@ -18,6 +19,7 @@ from .models import (
     SchoolClass,
     StudentProfile,
     Subject,
+    TeacherAttendance,
     TeacherProfile,
     TimetableEntry,
 )
@@ -29,12 +31,14 @@ from .serializers import (
     AttendanceSerializer,
     BulkAttendanceSerializer,
     BulkResultSerializer,
+    BulkTeacherAttendanceSerializer,
     MarksheetSerializer,
     PublicTeacherSerializer,
     ResultSerializer,
     SchoolClassSerializer,
     StudentProfileSerializer,
     SubjectSerializer,
+    TeacherAttendanceSerializer,
     TeacherProfileSerializer,
 )
 
@@ -211,6 +215,80 @@ class AttendanceDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdminOrTeacher]
     serializer_class = AttendanceSerializer
     queryset = Attendance.objects.all()
+
+
+# --- Teacher attendance: the Super Admin takes it (like a class register for staff). A teacher may read
+# their OWN days only; students have no access at all. ---
+
+class TeacherAttendanceListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticatedActiveUser]
+    serializer_class = TeacherAttendanceSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_super_admin:
+            qs = TeacherAttendance.objects.select_related("teacher").all()
+            p = self.request.query_params
+            if p.get("teacher"):
+                qs = qs.filter(teacher_id=p["teacher"])
+            if p.get("date"):
+                qs = qs.filter(date=p["date"])
+            month = p.get("month", "")  # YYYY-MM
+            if len(month) == 7 and month[:4].isdigit() and month[5:].isdigit():
+                qs = qs.filter(date__year=int(month[:4]), date__month=int(month[5:]))
+            return qs
+        if user.is_teacher:
+            # Hard-scoped to the caller: a query param can never widen this.
+            return TeacherAttendance.objects.filter(teacher=user)
+        raise PermissionDenied("Students cannot view teacher attendance.")
+
+
+class TeacherAttendanceDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsSuperAdmin]
+    serializer_class = TeacherAttendanceSerializer
+    queryset = TeacherAttendance.objects.select_related("teacher")
+
+
+class TeacherAttendanceSheetView(APIView):
+    """GET ?date=YYYY-MM-DD — every active teacher with that day's mark (null = not marked yet)."""
+
+    permission_classes = [IsSuperAdmin]
+
+    def get(self, request):
+        import datetime
+
+        from django.utils import timezone
+
+        raw = request.query_params.get("date")
+        try:
+            day = datetime.datetime.strptime(raw, "%Y-%m-%d").date() if raw else timezone.localdate()
+        except ValueError:
+            raise ValidationError({"date": "Use the format YYYY-MM-DD."})
+        marks = dict(TeacherAttendance.objects.filter(date=day).values_list("teacher_id", "status"))
+        teachers = User.objects.filter(role=Role.TEACHER, is_active_account=True).select_related("teacher_profile").order_by("full_name")
+        rows = []
+        for t in teachers:
+            profile = getattr(t, "teacher_profile", None)
+            rows.append({"teacher": str(t.id), "full_name": t.full_name, "department": getattr(profile, "department", "") or "", "status": marks.get(t.id)})
+        return Response({"date": str(day), "teachers": rows})
+
+
+class BulkTeacherAttendanceView(APIView):
+    permission_classes = [IsSuperAdmin]
+
+    @transaction.atomic
+    def post(self, request):
+        ser = BulkTeacherAttendanceSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        date = ser.validated_data["date"]
+        saved = 0
+        for rec in ser.validated_data["records"]:
+            TeacherAttendance.objects.update_or_create(
+                teacher=rec["teacher"], date=date,
+                defaults={"status": rec["status"], "marked_by": request.user},
+            )
+            saved += 1
+        return Response({"saved": saved, "date": str(date)}, status=status.HTTP_200_OK)
 
 
 # --- Results: identical scoping pattern to Attendance. ---
@@ -444,6 +522,11 @@ class HomeworkDoneView(APIView):
         if hw is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         done = bool(request.data.get("done", True))
+        phase = hw.phase()
+        if phase == "closed":
+            raise ValidationError({"detail": f"The end date for this homework was {hw.due_date:%d %b %Y}. It can no longer be changed."})
+        if phase == "upcoming":
+            raise ValidationError({"detail": f"This homework opens on {hw.opens_on:%d %b %Y}."})
         if done:
             HomeworkCompletion.objects.get_or_create(homework=hw, student=profile)
         else:

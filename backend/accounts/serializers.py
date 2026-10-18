@@ -133,7 +133,7 @@ class AdminCreateUserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password")
-        user = User(**validated_data, must_change_password=True)
+        user = User(**validated_data, must_change_password=False)
         user.set_password(password)
         user.save()
         return user

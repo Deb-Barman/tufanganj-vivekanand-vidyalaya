@@ -75,8 +75,8 @@ class User(AbstractUser):
         help_text="Super Admin can disable an account without deleting it.",
     )
     must_change_password = models.BooleanField(
-        default=True,
-        help_text="True until the user changes the temporary password Super Admin assigned.",
+        default=False,
+        help_text="Legacy flag, no longer used: the password the Super Admin sets is the user's real password.",
     )
     failed_login_attempts = models.PositiveSmallIntegerField(default=0)
     locked_until = models.DateTimeField(null=True, blank=True)

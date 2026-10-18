@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import type { AcademicSession, SchoolClass, Subject } from "../../types/api";
-import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, StatusPill, errText, listAll, useUI } from "../ui/kitExports";
+import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, StatusPill, errText, listAll, useUI, Select } from "../ui/kitExports";
 
 type Tab = "sessions" | "classes" | "subjects";
 
@@ -274,14 +274,14 @@ function ClassesTab({ classes, sessions, sessionLabel, onChanged, onDelete }: { 
           </div>
           <div className="form-field">
             <label htmlFor="cSession">Session</label>
-            <select id="cSession" value={session} onChange={(e) => setSession(e.target.value)} required>
+            <Select id="cSession" value={session} onChange={(e) => setSession(e.target.value)} required>
               {sessions.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.label}
                   {s.is_current ? " (current)" : ""}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </form>
       </Modal>
@@ -330,14 +330,14 @@ function SubjectsTab({ subjects, classes, className, onChanged, onDelete }: { su
       <div className="toolbar">
         <div className="field-inline" style={{ flex: "1 1 220px" }}>
           <label htmlFor="subFilter">Class</label>
-          <select id="subFilter" value={filter} onChange={(e) => setFilter(e.target.value)}>
+          <Select id="subFilter" value={filter} onChange={(e) => setFilter(e.target.value)}>
             <option value="">All classes</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {className(c.id)}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <button type="button" className="btn btn-primary btn-sm" onClick={() => open("new")} style={{ alignSelf: "flex-end" }}>
           <Icon name="plus" size={16} /> New subject
@@ -392,13 +392,13 @@ function SubjectsTab({ subjects, classes, className, onChanged, onDelete }: { su
           </div>
           <div className="form-field">
             <label htmlFor="subClass">Class</label>
-            <select id="subClass" value={klass} onChange={(e) => setKlass(e.target.value)} required>
+            <Select id="subClass" value={klass} onChange={(e) => setKlass(e.target.value)} required>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
                   {className(c.id)}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </form>
       </Modal>

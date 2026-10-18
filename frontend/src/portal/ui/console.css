@@ -112,7 +112,7 @@ a.row-link:hover { transform: translateX(4px); box-shadow: var(--inset-sm), 0 0 
 .bar-num { font-size: 11px; color: var(--fg-soft); font-variant-numeric: tabular-nums; }
 
 /* ── toolbar / inputs ── */
-.toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 18px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 18px; } /* flex-end: a search box (no label) sits on the same baseline as the labelled dropdowns */
 .toolbar .grow { flex: 1; min-width: 180px; }
 .search-box { position: relative; }
 .search-box svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--fg-faint); pointer-events: none; }

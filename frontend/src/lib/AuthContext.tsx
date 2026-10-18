@@ -9,7 +9,6 @@ interface AuthContextValue {
   loading: boolean;
   login: (username: string, password: string, portal?: LoginPortal) => Promise<void>;
   logout: () => void;
-  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -83,14 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
-    await api.post("/auth/me/change-password/", { current_password: currentPassword, new_password: newPassword });
-    setUser((prev) => (prev ? { ...prev, must_change_password: false } : prev));
-  }, []);
-
   const value = useMemo(
-    () => ({ user, loading, login, logout, changePassword, refreshUser }),
-    [user, loading, login, logout, changePassword, refreshUser]
+    () => ({ user, loading, login, logout, refreshUser }),
+    [user, loading, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

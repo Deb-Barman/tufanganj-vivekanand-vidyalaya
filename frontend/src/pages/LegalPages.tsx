@@ -40,7 +40,7 @@ export function TermsPage() {
           <p>The public pages are for information about {SITE.name}. Please do not misuse the forms or attempt to disrupt the site.</p>
           <h2>Accounts</h2>
           <ul>
-            <li>Accounts are issued by the school office. Keep your password private and change the temporary one at first sign-in.</li>
+            <li>Accounts are issued by the school office. Your password is set by the school office. Keep it private, and ask the office if you forget it.</li>
             <li>Do not try to open another person's records. Access is limited by role.</li>
             <li>Repeated wrong passwords temporarily lock the account to protect it.</li>
           </ul>

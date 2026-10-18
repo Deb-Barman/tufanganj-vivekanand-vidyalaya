@@ -118,11 +118,11 @@ class AdminResetPasswordView(APIView):
         serializer = AdminResetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user.set_password(serializer.validated_data["new_password"])
-        user.must_change_password = True
+        user.must_change_password = False
         user.failed_login_attempts = 0
         user.locked_until = None
         user.save(update_fields=["password", "must_change_password", "failed_login_attempts", "locked_until"])
-        return Response({"detail": "Password reset. User must change it on next login."})
+        return Response({"detail": "Password updated. The user can sign in with it right away."})
 
 
 class AdminUnlockView(APIView):
@@ -165,7 +165,6 @@ class AdminStatsView(APIView):
             students=Count("id", filter=active & Q(role="STUDENT")),
             teachers=Count("id", filter=active & Q(role="TEACHER")),
             disabled=Count("id", filter=Q(is_active_account=False)),
-            awaiting=Count("id", filter=active & Q(must_change_password=True)),
         )
         adm = Admission.objects.aggregate(
             total=Count("id"),
@@ -197,7 +196,6 @@ class AdminStatsView(APIView):
                 "students": ppl["students"],
                 "teachers": ppl["teachers"],
                 "disabled": ppl["disabled"],
-                "awaiting_first_login": ppl["awaiting"],
                 "students_without_class": StudentProfile.objects.filter(school_class__isnull=True, user__is_active_account=True).count(),
             },
             "admissions": adm,
