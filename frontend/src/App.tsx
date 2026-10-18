@@ -45,6 +45,7 @@ const PrivacyPage = lazyNamed(L.PrivacyPage, "PrivacyPage");
 const TermsPage = lazyNamed(L.TermsPage, "TermsPage");
 const GalleryPage = lazyNamed(L.GalleryPage, "GalleryPage");
 const DeveloperPage = lazyNamed(L.DeveloperPage, "DeveloperPage");
+const PublicProfilePage = lazyNamed(L.PublicProfilePage, "PublicProfilePage");
 
 // portal
 const LoginPage = lazyNamed(L.LoginPage, "LoginPage");
@@ -72,6 +73,9 @@ const DatabaseModule = lazyNamed(L.DatabaseModule, "DatabaseModule");
 const DataViewModule = lazyNamed(L.DataViewModule, "DataViewModule");
 const MessagesModule = lazyNamed(L.MessagesModule, "MessagesModule");
 const AchievementsModule = lazyNamed(L.AchievementsModule, "AchievementsModule");
+const ProfileModule = lazyNamed(L.ProfileModule, "ProfileModule");
+const ImportModule = lazyNamed(L.ImportModule, "ImportModule");
+const AttendanceReportModule = lazyNamed(L.AttendanceReportModule, "AttendanceReportModule");
 
 const ADMIN = ["SUPER_ADMIN"] as const;
 const STAFF = ["SUPER_ADMIN", "TEACHER"] as const;
@@ -99,6 +103,7 @@ export default function App() {
         <Route path="terms" element={<TermsPage />} />
         <Route path="gallery" element={<GalleryPage />} />
         <Route path="developer" element={<DeveloperPage />} />
+        <Route path="profile/:role/:username" element={<PublicProfilePage />} />
 
       </Route>
 
@@ -127,6 +132,9 @@ export default function App() {
           <Route path="timetable" element={<TimetableModule />} />
           <Route path="homework" element={<HomeworkModule />} />
           <Route path="exams" element={<ExamsModule />} />
+          <Route path="profile" element={<ProfileModule />} />
+          <Route path="import" element={<RoleOnly roles={[...ADMIN]}><ImportModule /></RoleOnly>} />
+          <Route path="attendance-report" element={<RoleOnly roles={[...ADMIN]}><AttendanceReportModule /></RoleOnly>} />
           <Route path="database" element={<RoleOnly roles={[...ADMIN]}><DatabaseModule /></RoleOnly>} />
           <Route path="data" element={<RoleOnly roles={[...ADMIN]}><DataViewModule /></RoleOnly>} />
           <Route path="accounts" element={<RoleOnly roles={[...ADMIN]}><AccountsModule /></RoleOnly>} />

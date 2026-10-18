@@ -31,6 +31,7 @@ export const L = {
   TermsPage: track(() => import("./pages/LegalPages")),
   GalleryPage: track(() => import("./pages/GalleryPage")),
   DeveloperPage: track(() => import("./pages/DeveloperPage")),
+  PublicProfilePage: track(() => import("./pages/PublicProfilePage")),
   LoginPage: track(() => import("./portal/pages/LoginPage")),
   AdminLoginPage: track(() => import("./portal/pages/AdminLoginPage")),
   DashboardShell: track(() => import("./portal/pages/DashboardShell")),
@@ -56,4 +57,7 @@ export const L = {
   AchievementsModule: track(() => import("./portal/modules/AchievementsModule")),
   DatabaseModule: track(() => import("./portal/modules/DatabaseModule")),
   DataViewModule: track(() => import("./portal/modules/DataViewModule")),
+  ProfileModule: track(() => import("./portal/modules/ProfileModule")),
+  ImportModule: track(() => import("./portal/modules/ImportModule")),
+  AttendanceReportModule: track(() => import("./portal/modules/AttendanceReportModule")),
 } as const;
