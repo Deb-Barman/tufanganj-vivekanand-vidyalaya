@@ -23,7 +23,11 @@ from .models import (
 class AcademicSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = AcademicSession
-        fields = ["id", "label", "is_current"]
+        fields = ["id", "label", "is_current", "start_date", "working_days", "attendance_min_percent"]
+        extra_kwargs = {
+            "working_days": {"min_value": 1, "max_value": 366},
+            "attendance_min_percent": {"min_value": 1, "max_value": 100},
+        }
 
     # Only one session can be "current" — marking one unmarks the rest.
     def create(self, validated_data):

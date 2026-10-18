@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import reports, views
 
 app_name = "academics"
 
@@ -25,6 +25,7 @@ urlpatterns = [
     path("teacher-attendance/<uuid:pk>/", views.TeacherAttendanceDetailView.as_view(), name="teacher_attendance_detail"),
     path("teacher-attendance/", views.TeacherAttendanceListView.as_view(), name="teacher_attendance"),
 
+    path("attendance-report/", reports.AttendanceReportView.as_view(), name="attendance_report"),
     path("attendance/bulk/", views.BulkAttendanceView.as_view(), name="attendance_bulk"),
     path("attendance/", views.AttendanceListCreateView.as_view(), name="attendance"),
     path("attendance/<uuid:pk>/", views.AttendanceDetailView.as_view(), name="attendance_detail"),

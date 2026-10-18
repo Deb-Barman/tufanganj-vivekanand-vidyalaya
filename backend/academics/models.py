@@ -8,6 +8,12 @@ class AcademicSession(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     label = models.CharField(max_length=20, unique=True)
     is_current = models.BooleanField(default=False)
+    #: First school day of the session. Attendance before this date is ignored in the attendance report.
+    start_date = models.DateField(null=True, blank=True)
+    #: Total working days in the whole session (e.g. 200). Attendance % is worked out against this number.
+    working_days = models.PositiveSmallIntegerField(null=True, blank=True)
+    #: Minimum attendance % a student/teacher should keep. Anyone below it is flagged "needs attention".
+    attendance_min_percent = models.PositiveSmallIntegerField(default=75)
 
     class Meta:
         db_table = "academic_sessions"
