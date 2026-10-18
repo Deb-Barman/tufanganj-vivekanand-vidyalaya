@@ -1,0 +1,66 @@
+/* Bulk import wizard (Excel / CSV) — neumorphic, uses the site tokens. */
+.bi { display: grid; gap: 18px; min-width: 0; }
+.bi-lead { color: var(--fg-soft); font-size: 14px; line-height: 1.6; margin: 0; }
+.bi-step { background: var(--panel); box-shadow: var(--inset-sm); border-radius: var(--radius); padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.bi-step h4 { margin: 0; display: flex; align-items: center; gap: 10px; font-size: 15px; }
+.bi-step h4 span { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-ink, #fff); font-size: 13px; box-shadow: var(--raise-sm); }
+.bi-step p { margin: 0; color: var(--fg-soft); font-size: 13.5px; line-height: 1.6; }
+.bi-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.bi-cols summary { cursor: pointer; font-weight: 700; font-size: 13.5px; color: var(--accent); padding: 4px 0; }
+.bi-notes { margin: 10px 0 0; padding-left: 20px; color: var(--fg-soft); font-size: 13px; line-height: 1.7; }
+.bi-drop { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 26px 16px; border-radius: var(--radius); background: var(--surface); box-shadow: var(--raise-sm); border: 2px dashed color-mix(in srgb, var(--accent) 35%, transparent); color: var(--fg-soft); transition: box-shadow .25s, border-color .25s; }
+.bi-drop svg { color: var(--accent); }
+.bi-drop strong { color: var(--fg); }
+.bi-drop small { color: var(--fg-faint); font-size: 12px; }
+.bi-drop.is-over { border-color: var(--accent); box-shadow: var(--inset-sm); }
+.bi-drop.is-busy { opacity: .75; }
+.bi-safe { display: flex; align-items: center; gap: 7px; color: var(--good) !important; font-size: 12.5px !important; font-weight: 600; }
+.bi-file { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13.5px; }
+.bi-file svg { color: var(--accent); }
+.bi-h { margin: 0; font-size: 16px; }
+.bi-stats { display: flex; flex-wrap: wrap; gap: 10px; }
+.bi-stats > div { display: grid; gap: 2px; min-width: 92px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--raise-sm); }
+.bi-stats b { font-size: 22px; line-height: 1.1; font-family: var(--serif); }
+.bi-stats span { font-size: 11.5px; color: var(--fg-soft); font-weight: 600; }
+.bi-stats .ok b { color: var(--good); }
+.bi-stats .bad b { color: var(--danger); }
+.bi-filter { display: inline-flex; gap: 6px; padding: 5px; border-radius: 999px; background: var(--panel); box-shadow: var(--inset-sm); flex-wrap: wrap; }
+.bi-filter button { border: 0; font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: var(--fg-soft); background: none; }
+.bi-filter button.on { background: var(--surface); color: var(--accent); box-shadow: var(--raise-sm); }
+.bi-scroll { overflow: auto; max-height: min(46vh, 420px); border-radius: var(--radius-sm); box-shadow: var(--inset-sm); background: var(--panel); -webkit-overflow-scrolling: touch; }
+.bi-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.bi-table th { position: sticky; top: 0; z-index: 1; text-align: left; padding: 9px 11px; background: var(--surface); font-size: 11.5px; letter-spacing: .03em; color: var(--fg-soft); white-space: nowrap; }
+.bi-table td { padding: 8px 11px; border-top: 1px solid color-mix(in srgb, var(--fg) 8%, transparent); vertical-align: top; }
+.bi-data td:not(.bi-msg) { white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.bi-data tr.bad td { background: color-mix(in srgb, var(--danger) 7%, transparent); }
+.bi-msg { min-width: 220px; }
+.bi-msg span { display: block; line-height: 1.5; }
+.bi-msg .e { color: var(--danger); font-weight: 600; }
+.bi-msg .w { color: var(--warn); }
+.bi-msg .ok { color: var(--good); font-weight: 600; }
+.bi-file .link-btn { border: 0; background: none; color: var(--accent); font-weight: 700; font-size: 13px; padding: 4px 8px; }
+.bi-empty { text-align: center; color: var(--fg-faint); padding: 18px !important; }
+.bi-pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; background: var(--surface); box-shadow: var(--raise-sm); color: var(--fg-soft); white-space: nowrap; }
+.bi-req, .bi-new { color: var(--good); }
+.bi-req { color: var(--accent); }
+.bi-upd { color: var(--accent); }
+.bi-skip { color: var(--fg-faint); }
+.bi-bad { color: var(--danger); }
+.bi-note { margin: 0; font-size: 13px; color: var(--fg-soft); line-height: 1.6; }
+.bi-error { margin: 0; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13.5px; line-height: 1.6; color: var(--danger); background: color-mix(in srgb, var(--danger) 9%, var(--surface)); box-shadow: var(--raise-sm); }
+.bi-error ul { margin: 6px 0 10px; padding-left: 20px; }
+.bi-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; position: sticky; bottom: -1px; padding-top: 6px; }
+.bi-center { justify-items: center; text-align: center; padding: 26px 8px; }
+.bi-center small { color: var(--fg-faint); }
+.bi-done { display: grid; justify-items: center; gap: 12px; text-align: center; padding: 8px 0; }
+.bi-done svg { color: var(--good); }
+.bi-done.warn svg { color: var(--warn); }
+.bi-creds { padding: 14px; border-radius: var(--radius); background: color-mix(in srgb, var(--warn) 10%, var(--surface)); box-shadow: var(--raise-sm); display: grid; gap: 8px; justify-items: start; }
+.bi-creds p { margin: 0; font-size: 13px; color: var(--fg-soft); line-height: 1.6; }
+
+/* central "Bulk import" page */
+.bi-kinds { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 14px; }
+.bi-kind { text-align: left; display: grid; gap: 6px; padding: 16px; border-radius: var(--radius); background: var(--surface); box-shadow: var(--raise-sm); transition: transform .25s var(--ease-out), box-shadow .25s; }
+.bi-kind:hover { transform: translateY(-3px); box-shadow: var(--raise); }
+.bi-kind b { font-size: 14.5px; }
+.bi-kind span { color: var(--fg-soft); font-size: 12.5px; line-height: 1.55; }
