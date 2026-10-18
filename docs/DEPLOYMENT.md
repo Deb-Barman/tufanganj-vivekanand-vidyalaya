@@ -44,6 +44,7 @@ bucket (e.g. `tvv-media`) for `SUPABASE_S3_BUCKET`.
 | `FRONTEND_URL` | Your Vercel URL (set after step 3, update here after) |
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SECRET_KEY` | Supabase project API secret key (not currently used by any code path — kept for future direct API calls if ever needed) |
+| `SUPABASE_DB_LIMIT_MB` / `SUPABASE_STORAGE_LIMIT_MB` | Optional. Plan sizes for the usage bars on the Super Admin *Database* page (defaults 500 / 1024 = Supabase free plan) |
 | `SUPABASE_S3_ACCESS_KEY_ID` | From Storage → S3 Configuration (step 1) |
 | `SUPABASE_S3_SECRET_ACCESS_KEY` | From Storage → S3 Configuration (step 1) |
 | `SUPABASE_S3_ENDPOINT` | From Storage → S3 Configuration (step 1) |
