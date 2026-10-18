@@ -302,6 +302,11 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_SECRET_KEY = os.environ.get("SUPABASE_SECRET_KEY", "")  # kept for potential future direct API calls; unused by auth
 
+# Plan sizes shown on the Super Admin "Database" page (usage bars). Defaults are the Supabase
+# free plan (500 MB database, 1 GB file storage); raise them here if the project is upgraded.
+SUPABASE_DB_LIMIT_MB = os.environ.get("SUPABASE_DB_LIMIT_MB", "500")
+SUPABASE_STORAGE_LIMIT_MB = os.environ.get("SUPABASE_STORAGE_LIMIT_MB", "1024")
+
 # ---------------------------------------------------------------------------
 # Logging — errors to stdout (Render captures this); never log secrets or
 # full request bodies (which could contain passwords).
