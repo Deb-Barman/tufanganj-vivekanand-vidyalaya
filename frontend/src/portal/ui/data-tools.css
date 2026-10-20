@@ -1,0 +1,29 @@
+/* Data view: filters, selection and delete */
+.dv-filterbar { display: grid; gap: 12px; margin: 0 0 14px; }
+.dv-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dv-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 6px 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700; background: var(--surface); box-shadow: var(--raise-sm); color: var(--accent); max-width: 100%; }
+.dv-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dv-chip button { display: inline-grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 50%; background: none; color: var(--fg-soft); cursor: pointer; flex: none; }
+.dv-chip button:hover { color: var(--danger); }
+.dv-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12.5px; color: var(--fg-faint); }
+.dv-quick button { border: 0; font: inherit; font-size: 12.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; background: var(--panel); box-shadow: var(--inset-sm); color: var(--fg-soft); cursor: pointer; }
+.dv-quick button.on { color: var(--accent); background: var(--surface); box-shadow: var(--raise-sm); }
+.dv-builder { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: end; padding: 14px; border-radius: var(--radius); background: var(--panel); box-shadow: var(--inset-sm); }
+.dv-builder .form-field { min-width: 0; }
+.dv-builder .btn { align-self: end; }
+.dv-selbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 0 0 12px; padding: 10px 14px; border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); box-shadow: var(--raise-sm); font-size: 13.5px; }
+.dv-selbar .link-btn { border: 0; background: none; }
+.dv-check { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+.data-table th.dv-sel, .data-table td.dv-sel { width: 40px; padding-right: 0; }
+.data-table tr.is-selected td { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.btn-danger { background: var(--danger); color: #fff; box-shadow: var(--raise-sm); border: 0; }
+.btn-danger:hover { filter: brightness(1.08); }
+.btn-danger:disabled { opacity: .45; cursor: not-allowed; }
+.dv-del { display: grid; gap: 14px; }
+.dv-del h4 { margin: 0 0 6px; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--fg-faint); }
+.dv-del ul { margin: 0; padding-left: 20px; font-size: 13.5px; line-height: 1.7; color: var(--fg-soft); }
+.dv-del .warn { padding: 12px 14px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--danger) 9%, var(--surface)); box-shadow: var(--raise-sm); color: var(--danger); font-size: 13.5px; line-height: 1.6; font-weight: 600; }
+.dv-del .soft { padding: 12px 14px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--warn) 10%, var(--surface)); box-shadow: var(--raise-sm); font-size: 13px; line-height: 1.6; color: var(--fg-soft); }
+.dv-del code { font-family: var(--mono); font-size: 12px; background: var(--panel); padding: 2px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+.dv-del .big { font-size: 15px; line-height: 1.6; color: var(--fg); }
+.dv-chips .link-btn, .dv-selbar .link-btn { border: 0; background: none; }

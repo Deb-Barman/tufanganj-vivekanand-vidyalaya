@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { MediaSourceField } from "../ui/MediaSourceField";
+import { appendMedia, emptyMedia, mediaInvalid } from "../ui/mediaHelpers";
+import type { MediaValue } from "../ui/mediaHelpers";
 import type { FormEvent } from "react";
 import { api, ApiError } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
@@ -15,7 +18,7 @@ export function BlogModule() {
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [body, setBody] = useState("");
-  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [cover, setCover] = useState<MediaValue>(emptyMedia);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -51,13 +54,14 @@ export function BlogModule() {
       formData.append("excerpt", excerpt);
       formData.append("body", body);
       formData.append("published", "false");
-      if (coverImage) formData.append("cover_image", coverImage);
+      if (mediaInvalid("image", cover)) { setFormError("Fix the cover picture link first."); setSubmitting(false); return; }
+      appendMedia(formData, cover, "cover_image", "cover_link");
       const created = await api.postForm<Article>("/content/articles/", formData);
       setArticles((prev) => [created, ...prev]);
       setTitle("");
       setExcerpt("");
       setBody("");
-      setCoverImage(null);
+      setCover(emptyMedia);
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "Could not save the article.");
     } finally {
@@ -108,10 +112,7 @@ export function BlogModule() {
             <label htmlFor="aExcerpt">Excerpt (short summary)</label>
             <input id="aExcerpt" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} maxLength={300} />
           </div>
-          <div className="form-field">
-            <label htmlFor="aCover">Cover image (optional, max 5 MB)</label>
-            <input id="aCover" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setCoverImage(e.target.files?.[0] ?? null)} />
-          </div>
+          <MediaSourceField kind="image" idPrefix="aCover" label="Cover picture (optional)" accept="image/jpeg,image/png,image/webp" value={cover} onChange={setCover} />
           <div className="form-field">
             <label htmlFor="aBody">Body</label>
             <textarea id="aBody" rows={6} value={body} onChange={(e) => setBody(e.target.value)} required />

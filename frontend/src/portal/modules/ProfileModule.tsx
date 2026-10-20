@@ -1,16 +1,22 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
+import { SOCIAL_SITES } from "../../lib/mediaLinks";
 import type { MyProfile } from "../../types/api";
-import { Avatar, EmptyState, Icon, PageHeader, Skeleton, StatusPill, errText, useUI } from "../ui/kitExports";
+import { SocialIcon } from "../../components/site/SocialIcon";
+import { Avatar, EmptyState, Icon, PageHeader, Select, Skeleton, StatusPill, errText, useUI } from "../ui/kitExports";
+import { MediaSourceField } from "../ui/MediaSourceField";
+import { emptyMedia, mediaChosen, mediaInvalid } from "../ui/mediaHelpers";
+import type { MediaValue } from "../ui/mediaHelpers";
 import "./profile.css";
 
-type Draft = Pick<MyProfile, "headline" | "about" | "background" | "talents" | "interests" | "achievements" | "website">;
-const pick = (p: MyProfile): Draft => ({ headline: p.headline, about: p.about, background: p.background, talents: p.talents, interests: p.interests, achievements: p.achievements, website: p.website });
+const FIELDS = ["headline", "about", "background", "talents", "interests", "achievements", "website", "age", "show_age", "gender", "show_gender", "city", "languages", "favorite_subject", "career_goal", "qualification", "quote", "projects", "social_links"] as const;
+type Draft = Pick<MyProfile, (typeof FIELDS)[number]>;
+const pick = (p: MyProfile): Draft => Object.fromEntries(FIELDS.map((k) => [k, p[k]])) as Draft;
 const ROLE_WORD = { SUPER_ADMIN: "Super Admin", TEACHER: "Teacher", STUDENT: "Student" } as const;
 
-/** Add/remove short items (talents, interests) — Enter or comma adds, × removes. */
+/** Add/remove short items (talents, interests, languages) — Enter or comma adds, × removes. */
 function ChipInput({ id, label, hint, value, onChange }: { id: string; label: string; hint: string; value: string[]; onChange: (v: string[]) => void }) {
   const [text, setText] = useState("");
   const add = () => {
@@ -37,6 +43,10 @@ function ChipInput({ id, label, hint, value, onChange }: { id: string; label: st
   );
 }
 
+const Text = ({ id, label, value, max, onChange, placeholder }: { id: string; label: string; value: string; max: number; onChange: (v: string) => void; placeholder?: string }) => (
+  <div className="form-field"><label htmlFor={id}>{label} <small className="pf-count">{value.length}/{max}</small></label><input id={id} value={value} maxLength={max} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} /></div>
+);
+
 export function ProfileModule() {
   const { user } = useAuth();
   const { toast, confirm } = useUI();
@@ -44,8 +54,9 @@ export function ProfileModule() {
   const [failed, setFailed] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const fileInput = useRef<HTMLInputElement>(null);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [photo, setPhoto] = useState<MediaValue>(emptyMedia);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -63,7 +74,10 @@ export function ProfileModule() {
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(pick(profile));
   const canPublish = profile.public_path !== null;
+  const isStudent = profile.role === "STUDENT";
+  const isTeacher = profile.role === "TEACHER";
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft({ ...draft, [k]: v });
+  const setSocial = (k: string, v: string) => setDraft({ ...draft, social_links: { ...draft.social_links, [k]: v } });
   const link = profile.public_path ? `${window.location.origin}${profile.public_path}` : "";
 
   async function save() {
@@ -84,7 +98,7 @@ export function ProfileModule() {
   async function togglePublic() {
     if (!profile) return;
     const next = !profile.is_public;
-    if (next && !(await confirm({ title: "Make your profile public?", message: "Anyone on the internet with your link will be able to read the page below: your name, class or department, photo and everything you wrote here. Your phone, e-mail, marks and attendance are never shown. You can switch it off at any time.", confirmLabel: "Make public" }))) return;
+    if (next && !(await confirm({ title: "Make your profile public?", message: "Anyone on the internet with your link will be able to read the page below: your name, class or department, photo and everything you wrote here. Your phone, e-mail, marks and attendance are never shown, and age and gender stay hidden unless you switch them on. You can switch it off at any time.", confirmLabel: "Make public" }))) return;
     try {
       setProfile(await api.patch<MyProfile>("/auth/me/profile/", { is_public: next }));
       toast("success", next ? "Your profile is now public." : "Your profile is now private.");
@@ -93,28 +107,35 @@ export function ProfileModule() {
     }
   }
 
-  async function uploadPhoto(f: File) {
-    if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return toast("error", "Please choose a JPEG, PNG or WebP photo.");
-    if (f.size > 5 * 1024 * 1024) return toast("error", "That photo is larger than 5 MB.");
-    setUploading(true);
+  async function savePhoto() {
+    setPhotoBusy(true);
     try {
-      const fd = new FormData();
-      fd.append("photo", f);
-      const r = await api.postForm<{ photo: string }>("/auth/me/profile/photo/", fd);
-      setProfile((p) => (p ? { ...p, photo: r.photo } : p));
+      if (photo.file) {
+        const f = photo.file;
+        if (!/^image\/(jpeg|png|webp)$/.test(f.type)) throw new Error("Please choose a JPEG, PNG or WebP photo.");
+        if (f.size > 5 * 1024 * 1024) throw new Error("That photo is larger than 5 MB.");
+        const fd = new FormData();
+        fd.append("photo", f);
+        await api.postForm("/auth/me/profile/photo/", fd);
+      } else {
+        await api.patch("/auth/me/profile/", { photo_link: photo.link.trim() });
+      }
+      const fresh = await api.get<MyProfile>("/auth/me/profile/");
+      setProfile(fresh); // photo only — leave unsaved text edits alone
+      setPhoto(emptyMedia);
+      setPhotoOpen(false);
       toast("success", "Photo updated.");
     } catch (e) {
-      toast("error", errText(e, "Could not upload the photo."));
+      toast("error", errText(e, "Could not update the photo."));
     } finally {
-      setUploading(false);
-      if (fileInput.current) fileInput.current.value = "";
+      setPhotoBusy(false);
     }
   }
 
   async function removePhoto() {
     try {
       await api.del("/auth/me/profile/photo/");
-      setProfile((p) => (p ? { ...p, photo: null } : p));
+      setProfile((p) => (p ? { ...p, photo: null, photo_source: null } : p));
     } catch (e) {
       toast("error", errText(e, "Could not remove the photo."));
     }
@@ -129,7 +150,7 @@ export function ProfileModule() {
     }
   }
 
-  const facts = profile.role === "STUDENT" ? profile.class_label : [profile.department, profile.years_experience ? `${profile.years_experience} yrs experience` : ""].filter(Boolean).join(" · ");
+  const facts = isStudent ? profile.class_label : [profile.department, profile.years_experience ? `${profile.years_experience} yrs experience` : ""].filter(Boolean).join(" · ");
 
   return (
     <>
@@ -137,11 +158,10 @@ export function ProfileModule() {
 
       <section className="panel pf-head">
         <div className="pf-photo">
-          {profile.photo ? <img src={profile.photo} alt="Your profile photo" /> : <Avatar name={profile.full_name} size={96} />}
+          {profile.photo ? <img src={profile.photo} alt="Your profile photo" referrerPolicy="no-referrer" /> : <Avatar name={profile.full_name} size={96} />}
           <div className="pf-photo-actions">
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => fileInput.current?.click()} disabled={uploading}>{uploading ? "Uploading…" : profile.photo ? "Change photo" : "Add photo"}</button>
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => setPhotoOpen((o) => !o)}>{profile.photo ? "Change photo" : "Add photo"}</button>
             {profile.photo && <button type="button" className="link-btn" onClick={removePhoto}>Remove</button>}
-            <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadPhoto(f); }} />
           </div>
         </div>
         <div className="pf-id">
@@ -149,6 +169,15 @@ export function ProfileModule() {
           <p>@{profile.username} · {ROLE_WORD[user?.role ?? profile.role]}{facts ? ` · ${facts}` : ""}</p>
           <small>Name, class and department come from the school office. Ask them if something is wrong.</small>
         </div>
+        {photoOpen && (
+          <div className="pf-photo-edit">
+            <MediaSourceField kind="image" idPrefix="pfPhoto" label="Profile photo" accept="image/jpeg,image/png,image/webp" value={photo} onChange={setPhoto} />
+            <div className="pf-photo-go">
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setPhotoOpen(false); setPhoto(emptyMedia); }}>Cancel</button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={savePhoto} disabled={photoBusy || !mediaChosen(photo) || mediaInvalid("image", photo)}>{photoBusy ? "Saving…" : "Use this photo"}</button>
+            </div>
+          </div>
+        )}
       </section>
 
       {canPublish ? (
@@ -172,13 +201,61 @@ export function ProfileModule() {
         <div className="panel-title"><h3>About you</h3></div>
         <p className="pf-warn"><Icon name="shield" size={15} /> This can be public. Never write phone numbers, e-mail addresses or your home address — they are rejected automatically.</p>
         <div className="stack" style={{ gap: 14 }}>
-          <div className="form-field"><label htmlFor="pfHead">Headline <small className="pf-count">{draft.headline.length}/120</small></label><input id="pfHead" value={draft.headline} maxLength={120} placeholder={profile.role === "TEACHER" ? "e.g. Physics teacher who loves experiments" : "e.g. Class XI student · robotics and chess"} onChange={(e) => set("headline", e.target.value)} /></div>
+          <Text id="pfHead" label="Headline" value={draft.headline} max={120} placeholder={isTeacher ? "e.g. Physics teacher who loves experiments" : "e.g. Class XI student · robotics and chess"} onChange={(v) => set("headline", v)} />
           <div className="form-field"><label htmlFor="pfAbout">About me <small className="pf-count">{draft.about.length}/1200</small></label><textarea id="pfAbout" rows={5} value={draft.about} maxLength={1200} placeholder="A few lines about you — what you enjoy, what you want to become." onChange={(e) => set("about", e.target.value)} /></div>
-          <div className="form-field"><label htmlFor="pfBg">Background <small className="pf-count">{draft.background.length}/1500</small></label><textarea id="pfBg" rows={5} value={draft.background} maxLength={1500} placeholder={profile.role === "TEACHER" ? "Education, training, previous schools…" : "Where you come from, schools, what shaped you…"} onChange={(e) => set("background", e.target.value)} /></div>
+          <Text id="pfQuote" label="Favourite quote or motto" value={draft.quote} max={200} placeholder="Something that inspires you" onChange={(v) => set("quote", v)} />
+          <div className="form-field"><label htmlFor="pfBg">Background <small className="pf-count">{draft.background.length}/1500</small></label><textarea id="pfBg" rows={5} value={draft.background} maxLength={1500} placeholder={isTeacher ? "Education, training, previous schools…" : "Where you come from, schools, what shaped you…"} onChange={(e) => set("background", e.target.value)} /></div>
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title"><h3>Quick facts</h3></div>
+        <div className="form-grid">
+          <Text id="pfCity" label="Town / city" value={draft.city} max={80} placeholder="e.g. Tufanganj" onChange={(v) => set("city", v)} />
+          {isStudent && <Text id="pfFav" label="Favourite subject" value={draft.favorite_subject} max={60} placeholder="e.g. Physics" onChange={(v) => set("favorite_subject", v)} />}
+          {isStudent && <Text id="pfGoal" label="What I want to become" value={draft.career_goal} max={120} placeholder="e.g. Robotics engineer" onChange={(v) => set("career_goal", v)} />}
+          {isTeacher && <Text id="pfQual" label="Qualification" value={draft.qualification} max={120} placeholder="e.g. M.Sc. Physics, B.Ed." onChange={(v) => set("qualification", v)} />}
+        </div>
+        <div className="stack" style={{ gap: 14, marginTop: 14 }}>
+          <ChipInput id="pfLang" label="Languages I speak" hint="e.g. Bengali, English — press Enter" value={draft.languages} onChange={(v) => set("languages", v)} />
+          <div className="form-grid">
+            <div className="form-field">
+              <label htmlFor="pfAge">Age</label>
+              <input id="pfAge" type="number" inputMode="numeric" min={4} max={100} value={draft.age ?? ""} onChange={(e) => set("age", e.target.value === "" ? null : Number(e.target.value))} placeholder="e.g. 16" />
+              <label className="pf-show"><input type="checkbox" checked={draft.show_age} onChange={(e) => set("show_age", e.target.checked)} /> Show my age on my public page</label>
+            </div>
+            <div className="form-field">
+              <label htmlFor="pfGender">Gender</label>
+              <Select id="pfGender" value={draft.gender} onChange={(e) => set("gender", e.target.value as Draft["gender"])}>
+                <option value="">Prefer not to say</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option>
+              </Select>
+              <label className="pf-show"><input type="checkbox" checked={draft.show_gender} onChange={(e) => set("show_gender", e.target.checked)} /> Show my gender on my public page</label>
+            </div>
+          </div>
+          <p className="pf-note" style={{ margin: 0 }}>Age and gender are private unless you tick “show”. You can untick at any time.</p>
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title"><h3>Talents &amp; achievements</h3></div>
+        <div className="stack" style={{ gap: 14 }}>
           <ChipInput id="pfTal" label="Talents & skills" hint="e.g. Python, Drawing, Singing — press Enter" value={draft.talents} onChange={(v) => set("talents", v)} />
-          <ChipInput id="pfInt" label="Interests" hint="e.g. Robotics, Cricket — press Enter" value={draft.interests} onChange={(v) => set("interests", v)} />
-          <div className="form-field"><label htmlFor="pfAch">Achievements <small className="pf-count">{draft.achievements.length}/1500</small></label><textarea id="pfAch" rows={4} value={draft.achievements} maxLength={1500} placeholder="Prizes, projects, competitions, publications…" onChange={(e) => set("achievements", e.target.value)} /></div>
-          <div className="form-field"><label htmlFor="pfWeb">Website or portfolio (optional)</label><input id="pfWeb" type="url" inputMode="url" value={draft.website} maxLength={200} placeholder="https://" onChange={(e) => set("website", e.target.value)} /></div>
+          <ChipInput id="pfInt" label="Interests & hobbies" hint="e.g. Robotics, Cricket — press Enter" value={draft.interests} onChange={(v) => set("interests", v)} />
+          <div className="form-field"><label htmlFor="pfProj">Projects &amp; work <small className="pf-count">{draft.projects.length}/1500</small></label><textarea id="pfProj" rows={4} value={draft.projects} maxLength={1500} placeholder="Things you have built or done" onChange={(e) => set("projects", e.target.value)} /></div>
+          <div className="form-field"><label htmlFor="pfAch">Achievements <small className="pf-count">{draft.achievements.length}/1500</small></label><textarea id="pfAch" rows={4} value={draft.achievements} maxLength={1500} placeholder="Prizes, competitions, publications…" onChange={(e) => set("achievements", e.target.value)} /></div>
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title"><h3>Social media &amp; links</h3></div>
+        <p className="pf-note">Type just your @username or paste the profile link — the site's logo is shown automatically on your public page. Only public profile links are accepted (no phone numbers).</p>
+        <div className="pf-social">
+          {SOCIAL_SITES.map((s) => (
+            <div className="pf-social-row form-field" key={s.key}>
+              <span className="pf-social-ico" title={s.label}><SocialIcon name={s.key} size={20} /></span>
+              <input aria-label={`${s.label} link or username`} value={draft.social_links[s.key] ?? ""} maxLength={300} placeholder={`${s.label} — ${s.hint}`} onChange={(e) => setSocial(s.key, e.target.value)} inputMode="url" autoCapitalize="none" spellCheck={false} />
+            </div>
+          ))}
         </div>
       </section>
 

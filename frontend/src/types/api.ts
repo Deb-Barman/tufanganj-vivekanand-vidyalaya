@@ -47,6 +47,8 @@ export interface Article {
   excerpt: string;
   body: string;
   cover_image: string | null;
+  /** "upload" | "link" — where the cover picture comes from (cover_image always holds the address to show). */
+  source?: "upload" | "link" | null;
   published: boolean;
   created_by: string | null;
   created_at: string;
@@ -67,6 +69,7 @@ export interface GalleryImage {
   id: string;
   caption: string;
   image: string;
+  source?: "upload" | "link" | null;
   uploaded_by: string | null;
   created_at: string;
 }
@@ -75,6 +78,9 @@ export interface SchoolForm {
   id: string;
   title: string;
   file: string;
+  source?: "upload" | "link" | null;
+  /** Direct-download address for Google Drive files (null for anything else). */
+  download_url?: string | null;
   uploaded_by: string | null;
   created_at: string;
 }
@@ -207,6 +213,7 @@ export interface Achievement {
   year: number;
   category: "ACADEMIC" | "SPORTS" | "ARTS" | "OTHER";
   image: string | null;
+  source?: "upload" | "link" | null;
 }
 
 export interface ContactMessage {
@@ -304,7 +311,24 @@ export interface DatabaseOverview {
 
 export interface DataTableInfo { key: string; app: string; name: string; db_table: string; rows: number; columns: number }
 export interface DataTables { tables: DataTableInfo[]; storage_files: number | null; storage_key: string | null }
-export interface DataColumn { name: string; label: string; type: string; redacted: boolean; pk: boolean }
+export type DataFilterType = "text" | "number" | "bool" | "date" | "datetime" | "choice" | "id";
+export interface DataColumn {
+  name: string; label: string; type: string; redacted: boolean; pk: boolean;
+  /** What kind of filter suits this column (null = cannot be filtered). */
+  filter: DataFilterType | null;
+  choices: { value: string; label: string }[] | null;
+}
+export interface DataFilter { field: string; op: string; value: string }
+export interface DeletePreview {
+  count: number;
+  blocked: { id: string; label: string; reason: string }[];
+  blocked_count: number;
+  also: { name: string; count: number }[];
+  files: number;
+  error: string | null;
+  samples: string[];
+}
+export interface DeleteResult { deleted: number; also_deleted: { name: string; count: number }[]; blocked_count: number; failed: string[] }
 export type DataCell = string | number | boolean | null;
 export interface DataRows {
   key: string; name: string; db_table: string; columns: DataColumn[]; count: number; page: number; page_size: number; pages: number; ordering: string;
@@ -324,8 +348,22 @@ export interface MyProfile {
   achievements: string;
   website: string;
   photo: string | null;
+  photo_source: "upload" | "link" | null;
   is_public: boolean;
   updated_at: string;
+  age: number | null;
+  show_age: boolean;
+  gender: "" | "male" | "female" | "other";
+  show_gender: boolean;
+  city: string;
+  languages: string[];
+  favorite_subject: string;
+  career_goal: string;
+  qualification: string;
+  quote: string;
+  projects: string;
+  /** site key (instagram, github, …) -> clean https link */
+  social_links: Record<string, string>;
   username: string;
   full_name: string;
   role: Role;
@@ -350,6 +388,17 @@ export interface PublicProfile {
   website: string;
   photo: string | null;
   updated_at: string;
+  city: string;
+  languages: string[];
+  favorite_subject: string;
+  career_goal: string;
+  qualification: string;
+  quote: string;
+  projects: string;
+  social_links: Record<string, string>;
+  /** only present when the owner chose to show them */
+  age: number | null;
+  gender: string;
   class_label: string | null;
   department: string | null;
   years_experience: number | null;

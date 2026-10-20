@@ -179,3 +179,102 @@ class ProfileTests(APITestCase):
         self.client.post("/api/auth/me/profile/photo/", {"photo": jpeg_with_gps((200, 200))}, format="multipart")
         self.client.patch("/api/auth/me/profile/", {"is_public": True}, format="json")
         self.assertTrue(self.public("student", "asha").json()["photo"])
+
+
+from accounts.profiles import normalize_social  # noqa: E402
+
+
+class SocialLinkTests(APITestCase):
+    def test_handles_and_links_become_clean_links(self):
+        cases = [
+            ("instagram", "@asha.roy", "https://www.instagram.com/asha.roy"),
+            ("instagram", "https://www.instagram.com/asha.roy/?igsh=abc123", "https://www.instagram.com/asha.roy"),
+            ("x", "asha_roy", "https://x.com/asha_roy"),
+            ("x", "twitter.com/asha_roy?s=20", "https://twitter.com/asha_roy"),
+            ("github", "https://github.com/deb-barman166", "https://github.com/deb-barman166"),
+            ("youtube", "@MyChannel", "https://www.youtube.com/@MyChannel"),
+            ("linkedin", "https://in.linkedin.com/in/asha-roy-123", "https://in.linkedin.com/in/asha-roy-123"),
+            ("facebook", "asha.roy.12", "https://www.facebook.com/asha.roy.12"),
+            ("telegram", "@asha", "https://t.me/asha"),
+            ("website", "https://asha.dev/portfolio?x=1", "https://asha.dev/portfolio?x=1"),
+            ("website", "asha.dev", "https://asha.dev/"),
+            ("instagram", "  ", ""),
+        ]
+        for platform, value, expect in cases:
+            self.assertEqual(normalize_social(platform, value), expect, (platform, value))
+
+    def test_wrong_site_unsafe_or_private_values_are_refused(self):
+        for platform, value in [
+            ("instagram", "https://facebook.com/asha"), ("github", "https://evil.example/asha"), ("x", "javascript:alert(1)"),
+            ("instagram", "http://instagram.com/asha"), ("telegram", "+91 98765 43210"), ("website", "https://127.0.0.1/x"),
+            ("website", "https://user:pw@example.org"), ("instagram", "me@example.com"), ("instagram", "has space here"),
+        ]:
+            with self.assertRaises(ValueError, msg=(platform, value)):
+                normalize_social(platform, value)
+
+
+@override_settings(MEDIA_ROOT=TMP)
+class RicherProfileTests(APITestCase):
+    def setUp(self):
+        self.stu = User.objects.create_user("asha", PW, role=Role.STUDENT, full_name="Asha Roy", phone="9111111111")
+        self.client.force_authenticate(self.stu)
+
+    def public(self):
+        self.client.force_authenticate(None)
+        r = self.client.get("/api/auth/profiles/student/asha/")
+        self.client.force_authenticate(self.stu)
+        return r
+
+    def test_new_fields_save_and_show(self):
+        r = self.client.patch("/api/auth/me/profile/", {
+            "is_public": True, "city": "Tufanganj", "languages": ["Bengali", "English", "Hindi"], "favorite_subject": "Physics",
+            "career_goal": "Robotics engineer", "quote": "Stay curious", "projects": "Built a line-following robot.",
+            "social_links": {"instagram": "@asha.roy", "github": "https://github.com/asha", "x": ""},
+        }, format="json")
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertEqual(r.json()["social_links"], {"instagram": "https://www.instagram.com/asha.roy", "github": "https://github.com/asha"})
+        d = self.public().json()
+        self.assertEqual((d["city"], d["languages"], d["career_goal"], d["quote"]), ("Tufanganj", ["Bengali", "English", "Hindi"], "Robotics engineer", "Stay curious"))
+        self.assertEqual(d["social_links"]["instagram"], "https://www.instagram.com/asha.roy")
+
+    def test_age_and_gender_are_hidden_until_switched_on(self):
+        self.client.patch("/api/auth/me/profile/", {"is_public": True, "age": 16, "gender": "female"}, format="json")
+        d = self.public().json()
+        self.assertEqual((d["age"], d["gender"]), (None, ""))  # saved, but private
+        self.client.patch("/api/auth/me/profile/", {"show_age": True}, format="json")
+        d = self.public().json()
+        self.assertEqual((d["age"], d["gender"]), (16, ""))
+        self.client.patch("/api/auth/me/profile/", {"show_gender": True}, format="json")
+        self.assertEqual(self.public().json()["gender"], "female")
+        own = self.client.get("/api/auth/me/profile/").json()
+        self.assertEqual((own["age"], own["gender"], own["show_age"]), (16, "female", True))  # the owner always sees their own values
+
+    def test_validation(self):
+        for body in ({"age": 3}, {"age": 101}, {"gender": "robot"}, {"social_links": {"myspace": "x"}}, {"social_links": {"instagram": "https://facebook.com/x"}},
+                     {"city": "call 98765 43210"}, {"quote": "mail a@b.co"}, {"languages": [f"l{i}" for i in range(13)]}, {"projects": "x" * 1501}):
+            self.assertEqual(self.client.patch("/api/auth/me/profile/", body, format="json").status_code, 400, body)
+        self.assertEqual(self.client.patch("/api/auth/me/profile/", {"gender": ""}, format="json").status_code, 200)
+
+    def test_photo_by_link_replaces_upload_and_back(self):
+        up = jpeg_with_gps((200, 200))
+        self.client.post("/api/auth/me/profile/photo/", {"photo": up}, format="multipart")
+        p = PublicProfile.objects.get(user=self.stu)
+        path = p.photo.path
+        import os
+
+        self.assertTrue(os.path.exists(path))
+        fid = "1AbCdEfGhIjKlMnOpQrStUvWxYz012345"
+        r = self.client.patch("/api/auth/me/profile/", {"photo_link": f"https://drive.google.com/file/d/{fid}/view?usp=sharing", "is_public": True}, format="json")
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertEqual((r.json()["photo"], r.json()["photo_source"]), (f"https://drive.google.com/thumbnail?id={fid}&sz=w1600", "link"))
+        p.refresh_from_db()
+        self.assertFalse(p.photo)
+        self.assertFalse(os.path.exists(path))  # uploaded file removed, storage freed
+        self.assertEqual(self.public().json()["photo"], f"https://drive.google.com/thumbnail?id={fid}&sz=w1600")
+        self.assertEqual(self.client.patch("/api/auth/me/profile/", {"photo_link": "https://www.instagram.com/p/xyz/"}, format="json").status_code, 400)
+        self.client.post("/api/auth/me/profile/photo/", {"photo": jpeg_with_gps((100, 100))}, format="multipart")
+        p.refresh_from_db()
+        self.assertEqual((bool(p.photo), p.photo_link), (True, ""))
+        self.client.delete("/api/auth/me/profile/photo/")
+        p.refresh_from_db()
+        self.assertEqual((bool(p.photo), p.photo_link), (False, ""))

@@ -22,6 +22,9 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from urllib.parse import urlparse, urlunparse
+
+from content.links import LinkError, normalize_image_link
 from content.serializers import validate_image_upload
 from notices.serializers import sanitize
 
@@ -63,16 +66,69 @@ def _public_list(items, label: str):
     return out
 
 
+# platform -> (domains that count as that platform, how to build a link from just a @handle)
+SOCIAL = {
+    "instagram": (("instagram.com",), "https://www.instagram.com/{h}"),
+    "facebook": (("facebook.com", "fb.com"), "https://www.facebook.com/{h}"),
+    "x": (("x.com", "twitter.com"), "https://x.com/{h}"),
+    "youtube": (("youtube.com", "youtu.be"), "https://www.youtube.com/@{h}"),
+    "linkedin": (("linkedin.com",), "https://www.linkedin.com/in/{h}"),
+    "github": (("github.com",), "https://github.com/{h}"),
+    "telegram": (("t.me", "telegram.me"), "https://t.me/{h}"),
+    "threads": (("threads.net", "threads.com"), "https://www.threads.net/@{h}"),
+    "pinterest": (("pinterest.com",), "https://www.pinterest.com/{h}"),
+    "snapchat": (("snapchat.com",), "https://www.snapchat.com/add/{h}"),
+    "behance": (("behance.net",), "https://www.behance.net/{h}"),
+    "medium": (("medium.com",), "https://medium.com/@{h}"),
+    "website": ((), ""),
+}
+_HANDLE = re.compile(r"^[A-Za-z0-9._-]{1,60}$")
+GENDERS = {"", "male", "female", "other"}
+
+
+def normalize_social(platform: str, value: str) -> str:
+    """A @handle or a link -> one clean https link on the right site. Raises ValueError with a friendly message."""
+    domains, template = SOCIAL[platform]
+    v = (value or "").strip()
+    if not v:
+        return ""
+    if _EMAIL.search(v) or _PHONE.search(v):
+        raise ValueError("Please remove phone numbers and e-mail addresses.")
+    if template and _HANDLE.match(v.lstrip("@")):
+        return template.format(h=v.lstrip("@"))
+    if re.match(r"^[a-z][a-z0-9+.-]*:", v, re.I) and not v.lower().startswith(("https://", "http://")):
+        raise ValueError("Only https:// links are allowed.")
+    if not re.match(r"^https?://", v, re.I):
+        v = "https://" + v
+    p = urlparse(v)
+    host = (p.hostname or "").lower()
+    if p.scheme != "https" or p.username or p.password or "." not in host or re.fullmatch(r"[\d.]+", host) or len(v) > 300:
+        raise ValueError("Use a full https:// link.")
+    if domains and not any(host == d or host.endswith("." + d) for d in domains):
+        raise ValueError(f"That does not look like a {platform.capitalize()} link ({domains[0]}).")
+    # drop tracking junk (?igsh=…, ?utm_…) for profile links; keep the whole link for a personal website
+    return urlunparse(("https", host, p.path.rstrip("/") or "/", "", p.query if platform == "website" else "", ""))
+
+
 class MyProfileSerializer(serializers.ModelSerializer):
-    """What the owner reads and edits (JSON). The photo has its own upload endpoint."""
+    """What the owner reads and edits (JSON). The photo has its own upload endpoint (or paste a link)."""
 
     photo = serializers.ImageField(read_only=True)
+    photo_link = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+    languages = serializers.ListField(child=serializers.CharField(max_length=MAX_ITEM_LEN), required=False, max_length=MAX_LIST_ITEMS)
+    social_links = serializers.DictField(child=serializers.CharField(allow_blank=True, max_length=300), required=False)
 
     class Meta:
         model = PublicProfile
-        fields = ["headline", "about", "background", "talents", "interests", "achievements", "website", "photo", "is_public", "updated_at"]
+        fields = [
+            "headline", "about", "background", "talents", "interests", "achievements", "website", "photo", "photo_link", "is_public", "updated_at",
+            "age", "show_age", "gender", "show_gender", "city", "languages", "favorite_subject", "career_goal", "qualification", "quote", "projects", "social_links",
+        ]
         read_only_fields = ["photo", "updated_at"]
-        extra_kwargs = {"headline": {"max_length": 120}, "about": {"max_length": 1200}, "background": {"max_length": 1500}, "achievements": {"max_length": 1500}}
+        extra_kwargs = {
+            "headline": {"max_length": 120}, "about": {"max_length": 1200}, "background": {"max_length": 1500}, "achievements": {"max_length": 1500}, "projects": {"max_length": 1500},
+            "age": {"min_value": 4, "max_value": 100},
+        }
 
     def validate_headline(self, v):
         return _public_text(v, "Headline")
@@ -86,17 +142,73 @@ class MyProfileSerializer(serializers.ModelSerializer):
     def validate_achievements(self, v):
         return _public_text(v, "Achievements")
 
+    def validate_projects(self, v):
+        return _public_text(v, "Projects")
+
     def validate_talents(self, v):
         return _public_list(v, "Talents")
 
     def validate_interests(self, v):
         return _public_list(v, "Interests")
 
+    def validate_languages(self, v):
+        return _public_list(v, "Languages")
+
+    def validate_city(self, v):
+        return _public_text(v, "City")
+
+    def validate_favorite_subject(self, v):
+        return _public_text(v, "Favourite subject")
+
+    def validate_career_goal(self, v):
+        return _public_text(v, "Career goal")
+
+    def validate_qualification(self, v):
+        return _public_text(v, "Qualification")
+
+    def validate_quote(self, v):
+        return _public_text(v, "Quote")
+
+    def validate_gender(self, v):
+        v = (v or "").strip().lower()
+        if v not in GENDERS:
+            raise serializers.ValidationError("Choose male, female, other, or leave it empty.")
+        return v
+
     def validate_website(self, v):
         v = (v or "").strip()
         if v and not v.lower().startswith("https://"):
             raise serializers.ValidationError("Website must start with https://")
         return v
+
+    def validate_photo_link(self, v):
+        v = (v or "").strip()
+        if not v:
+            return ""
+        try:
+            return normalize_image_link(v)
+        except LinkError as exc:
+            raise serializers.ValidationError(str(exc)) from None
+
+    def validate_social_links(self, v):
+        out = {}
+        for platform, value in v.items():
+            if platform not in SOCIAL:
+                raise serializers.ValidationError(f"“{platform}” is not a supported site.")
+            try:
+                link = normalize_social(platform, value)
+            except ValueError as exc:
+                raise serializers.ValidationError(f"{platform.capitalize()}: {exc}") from None
+            if link:
+                out[platform] = link
+        return out
+
+    def update(self, instance, validated_data):
+        link = validated_data.get("photo_link")
+        if link and instance.photo:  # a pasted link replaces the uploaded photo, so its file is deleted
+            instance.photo.delete(save=False)
+            instance.photo = None
+        return super().update(instance, validated_data)
 
 
 def _facts(user: User) -> dict:
@@ -120,6 +232,8 @@ def _public_path(user: User):
 
 
 def _photo_url(profile, request):
+    if profile.photo_link:
+        return profile.photo_link
     if not profile.photo:
         return None
     try:
@@ -137,6 +251,7 @@ class MyProfileView(APIView):
     def _payload(self, request, profile):
         data = MyProfileSerializer(profile, context={"request": request}).data
         data["photo"] = _photo_url(profile, request)
+        data["photo_source"] = "link" if profile.photo_link else ("upload" if profile.photo else None)
         user = request.user
         return {
             **data,
@@ -192,14 +307,17 @@ class MyProfilePhotoView(APIView):
         if profile.photo:
             profile.photo.delete(save=False)
         profile.photo = ser.validated_data["photo"]
+        profile.photo_link = ""
         profile.save()
         return Response({"photo": _photo_url(profile, request)}, status=status.HTTP_200_OK)
 
     def delete(self, request):
         profile = PublicProfile.objects.filter(user=request.user).first()
-        if profile and profile.photo:
-            profile.photo.delete(save=False)
+        if profile and (profile.photo or profile.photo_link):
+            if profile.photo:
+                profile.photo.delete(save=False)
             profile.photo = None
+            profile.photo_link = ""
             profile.save()
         return Response({"photo": None})
 
@@ -237,6 +355,17 @@ class PublicProfileView(APIView):
             "website": profile.website,
             "photo": _photo_url(profile, request),
             "updated_at": profile.updated_at,
+            "city": profile.city,
+            "languages": profile.languages or [],
+            "favorite_subject": profile.favorite_subject,
+            "career_goal": profile.career_goal,
+            "qualification": profile.qualification,
+            "quote": profile.quote,
+            "projects": profile.projects,
+            "social_links": profile.social_links or {},
+            # age and gender are shown ONLY when the owner switched them on
+            "age": profile.age if profile.show_age else None,
+            "gender": profile.gender if profile.show_gender else "",
             **_facts(user),
         })
         resp["Cache-Control"] = "public, max-age=60"

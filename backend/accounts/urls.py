@@ -22,5 +22,7 @@ urlpatterns = [
     path("admin/database/", console_views.AdminDatabaseView.as_view(), name="admin_database"),
     path("admin/data/", console_views.AdminDataTablesView.as_view(), name="admin_data_tables"),
     path("admin/data/<str:key>/export/", console_views.AdminDataExportView.as_view(), name="admin_data_export"),
+    path("admin/data/<str:key>/delete-preview/", console_views.AdminDataDeletePreviewView.as_view(), name="admin_data_delete_preview"),
+    path("admin/data/<str:key>/delete/", console_views.AdminDataDeleteView.as_view(), name="admin_data_delete"),
     path("admin/data/<str:key>/", console_views.AdminDataRowsView.as_view(), name="admin_data_rows"),
 ]

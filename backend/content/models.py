@@ -27,6 +27,8 @@ class Article(models.Model):
     excerpt = models.CharField(max_length=300, blank=True)
     body = models.TextField()
     cover_image = models.ImageField(upload_to=article_cover_path, blank=True, null=True)
+    #: Instead of uploading: a public picture link (Google Drive "Anyone with the link", Imgur, …). Saves storage.
+    cover_link = models.URLField(max_length=1000, blank=True)
     published = models.BooleanField(default=False)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -60,7 +62,8 @@ class Event(models.Model):
 class GalleryImage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     caption = models.CharField(max_length=200, blank=True)
-    image = models.ImageField(upload_to=gallery_path)
+    image = models.ImageField(upload_to=gallery_path, blank=True, null=True)
+    image_link = models.URLField(max_length=1000, blank=True)  # public picture link used instead of an upload
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -72,7 +75,8 @@ class GalleryImage(models.Model):
 class SchoolForm(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
-    file = models.FileField(upload_to=school_form_path)
+    file = models.FileField(upload_to=school_form_path, blank=True, null=True)
+    file_link = models.URLField(max_length=1000, blank=True)  # public file link (Google Drive, …) used instead of an upload
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -142,6 +146,7 @@ class Achievement(models.Model):
     year = models.PositiveSmallIntegerField()
     category = models.CharField(max_length=10, choices=Category.choices, default=Category.ACADEMIC)
     image = models.ImageField(upload_to=achievement_path, blank=True, null=True)
+    image_link = models.URLField(max_length=1000, blank=True)  # public picture link used instead of an upload
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

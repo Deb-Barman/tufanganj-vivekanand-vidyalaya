@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Avatar } from "../components/site/Avatar";
+import { SocialIcon } from "../components/site/SocialIcon";
 import { Sk } from "../components/loading/Loading";
 import { SITE } from "../config/site";
 import { api, ApiError } from "../lib/api";
+import { SOCIAL_SITES } from "../lib/mediaLinks";
 import { usePageMeta } from "../lib/usePageMeta";
 import type { PublicProfile } from "../types/api";
 import "./PublicProfile.css";
+
+const GENDER: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
 
 /** Keep these pages out of search engines: they describe students, so they are shared by link, not indexed. */
 function useNoIndex() {
@@ -78,17 +82,31 @@ export function PublicProfilePage() {
     );
 
   const facts = data.role === "student" ? data.class_label : [data.department, data.years_experience ? `${data.years_experience} years of experience` : ""].filter(Boolean).join(" · ");
-  const empty = !data.about && !data.background && !data.achievements && data.talents.length === 0 && data.interests.length === 0;
+  const empty = !data.about && !data.background && !data.achievements && !data.projects && data.talents.length === 0 && data.interests.length === 0;
+  const chips: [string, string][] = [
+    ["Town", data.city], ["Age", data.age ? String(data.age) : ""], ["Gender", GENDER[data.gender] ?? ""],
+    ["Favourite subject", data.favorite_subject], ["Wants to become", data.career_goal], ["Qualification", data.qualification],
+    ["Speaks", data.languages.join(", ")],
+  ];
+  const facts2 = chips.filter(([, v]) => v);
+  const socials = SOCIAL_SITES.filter((x) => data.social_links[x.key]);
   return (
     <div className="pp wrap">
       <nav className="crumbs" aria-label="Breadcrumb"><Link to="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">{data.role === "student" ? "Student" : "Teacher"} profile</span></nav>
       <header className="pp-card">
-        {data.photo ? <img className="pp-photo" src={data.photo} alt={`Photo of ${data.full_name}`} width={120} height={120} /> : <Avatar name={data.full_name} size={120} />}
+        {data.photo ? <img className="pp-photo" referrerPolicy="no-referrer" src={data.photo} alt={`Photo of ${data.full_name}`} width={120} height={120} /> : <Avatar name={data.full_name} size={120} />}
         <div className="pp-who">
           <span className="pp-role">{data.role === "student" ? "Student" : "Teacher"}</span>
           <h1>{data.full_name}</h1>
           {data.headline && <p className="pp-headline">{data.headline}</p>}
           {facts && <p className="pp-facts">{facts} · {SITE.nameFull}</p>}
+          {socials.length > 0 && (
+            <ul className="pp-social" aria-label="Social media">
+              {socials.map((x) => (
+                <li key={x.key}><a href={data.social_links[x.key]} target="_blank" rel="noopener noreferrer nofollow ugc" aria-label={`${data.full_name} on ${x.label}`} title={x.label}><SocialIcon name={x.key} size={22} /></a></li>
+              ))}
+            </ul>
+          )}
           <div className="pp-actions">
             <button type="button" className="btn btn-outline btn-sm" onClick={share}>Share</button>
             {/^https:\/\//i.test(data.website) && <a className="btn btn-outline btn-sm" href={data.website} target="_blank" rel="noopener noreferrer nofollow ugc">Website ↗</a>}
@@ -97,6 +115,10 @@ export function PublicProfilePage() {
       </header>
 
       {empty && <p className="pp-empty">{data.full_name.split(" ")[0]} has not added more details yet.</p>}
+      {data.quote && <blockquote className="pp-quote">“{data.quote}”</blockquote>}
+      {facts2.length > 0 && (
+        <section className="pp-block"><h2>Quick facts</h2><dl className="pp-facts-grid">{facts2.map(([k, v]) => (<div key={k}><dt>{k}</dt><dd>{v}</dd></div>))}</dl></section>
+      )}
       {data.about && <Block title="About">{data.about}</Block>}
       {data.background && <Block title="Background">{data.background}</Block>}
       {data.talents.length > 0 && (
@@ -105,6 +127,7 @@ export function PublicProfilePage() {
       {data.interests.length > 0 && (
         <section className="pp-block"><h2>Interests</h2><ul className="pp-tags alt">{data.interests.map((t) => <li key={t}>{t}</li>)}</ul></section>
       )}
+      {data.projects && <Block title="Projects & work">{data.projects}</Block>}
       {data.achievements && <Block title="Achievements">{data.achievements}</Block>}
       <p className="pp-foot">This page was written by {data.full_name.split(" ")[0]} and is shown with their choice. Only the school office can change their name and class.</p>
     </div>
