@@ -27,7 +27,14 @@ export function DownloadsPage() {
                   <h3>{f.title}</h3>
                   <div className="row-meta"><span>Added {fmtLong(f.created_at)}</span></div>
                 </div>
-                {f.file && <a className="btn btn-primary btn-sm" href={f.file} target="_blank" rel="noopener noreferrer" download>Download</a>}
+                {f.file && (f.source === "link" ? (
+                  <span className="row-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <a className="btn btn-primary btn-sm" href={f.file} target="_blank" rel="noopener noreferrer">Open</a>
+                    {f.download_url && <a className="btn btn-outline btn-sm" href={f.download_url} target="_blank" rel="noopener noreferrer">Download</a>}
+                  </span>
+                ) : (
+                  <a className="btn btn-primary btn-sm" href={f.file} target="_blank" rel="noopener noreferrer" download>Download</a>
+                ))}
               </article>
             ))}
           </div>

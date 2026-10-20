@@ -51,7 +51,7 @@ export function AchievementsPage() {
                 <div className="card-grid">
                   {items.map((a, i) => (
                     <article className="ach-card" key={a.id} data-reveal style={{ ["--d" as string]: i % 3 }}>
-                      {a.image && <img src={a.image} alt="" loading="lazy" />}
+                      {a.image && <img src={a.image} alt="" loading="lazy" referrerPolicy="no-referrer" />}
                       <span className="pill">{CATS.find((c) => c.v === a.category)?.l}</span>
                       <h3>{a.title}</h3>
                       {a.description && <p>{a.description}</p>}

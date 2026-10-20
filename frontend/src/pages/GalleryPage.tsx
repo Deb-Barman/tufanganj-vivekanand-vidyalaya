@@ -30,7 +30,7 @@ export function GalleryPage() {
               {data.map((g, i) => (
                 <li key={g.id} data-reveal style={{ ["--d" as string]: i % 4 }}>
                   <button type="button" className="gal-tile" onClick={() => setOpen(i)} aria-label={g.caption ? `Open photo: ${g.caption}` : "Open photo"}>
-                    <img src={g.image} alt={g.caption || "School photo"} loading="lazy" decoding="async" />
+                    <img src={g.image} alt={g.caption || "School photo"} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
                     {g.caption && <span className="gal-cap">{g.caption}</span>}
                   </button>
                 </li>
@@ -96,7 +96,7 @@ function Lightbox({ items, index, onIndex, onClose }: { items: GalleryImage[]; i
       <button ref={closeRef} type="button" className="gal-x" onClick={onClose} aria-label="Close photo viewer">✕</button>
       {items.length > 1 && <button type="button" className="gal-nav prev" onClick={() => go(-1)} aria-label="Previous photo">‹</button>}
       <figure className="gal-fig">
-        <img src={g.image} alt={g.caption || "School photo"} />
+        <img src={g.image} alt={g.caption || "School photo"} referrerPolicy="no-referrer" />
         <figcaption>
           {g.caption && <span>{g.caption} · </span>}
           {index + 1} / {items.length}

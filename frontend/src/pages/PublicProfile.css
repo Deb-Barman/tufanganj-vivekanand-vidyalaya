@@ -18,3 +18,12 @@
 .pp-missing { text-align: center; display: grid; gap: 12px; justify-items: center; padding: 48px 16px; }
 .pp-missing h1 { margin: 0; font-family: var(--serif); font-size: clamp(24px, 5vw, 34px); }
 .pp-missing p { margin: 0; color: var(--fg-soft); max-width: 46ch; }
+
+.pp-social { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 0; padding: 0; list-style: none; }
+.pp-social a { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--surface); box-shadow: var(--raise-sm); color: var(--fg); transition: transform .25s var(--ease-out), box-shadow .25s; }
+.pp-social a:hover { transform: translateY(-3px); box-shadow: var(--raise); }
+.pp-quote { margin: 0; padding: clamp(16px, 3vw, 26px); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--raise); font-family: var(--serif); font-size: clamp(17px, 3.6vw, 22px); line-height: 1.5; text-align: center; color: var(--fg); overflow-wrap: anywhere; }
+.pp-facts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0; }
+.pp-facts-grid > div { padding: 10px 14px; border-radius: var(--radius-sm); background: var(--panel); box-shadow: var(--inset-sm); min-width: 0; }
+.pp-facts-grid dt { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-faint); }
+.pp-facts-grid dd { margin: 3px 0 0; font-size: 14.5px; font-weight: 600; color: var(--fg); overflow-wrap: anywhere; }
