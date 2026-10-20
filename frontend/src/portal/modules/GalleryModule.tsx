@@ -3,9 +3,12 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { GalleryImage } from "../../types/api";
+import { MediaSourceField } from "../ui/MediaSourceField";
+import { appendMedia, emptyMedia, mediaChosen, mediaInvalid } from "../ui/mediaHelpers";
+import type { MediaValue } from "../ui/mediaHelpers";
 import { EmptyState, Icon, Modal, PageHeader, Skeleton, errText, listAll, useDebounced, useUI } from "../ui/kitExports";
 
-type Draft = { id?: string; caption: string; image?: string };
+type Draft = { id?: string; caption: string; image?: string; source?: GalleryImage["source"] };
 
 export function GalleryModule() {
   const { user } = useAuth();
@@ -16,7 +19,7 @@ export function GalleryModule() {
   const [query, setQuery] = useState("");
   const q = useDebounced(query);
   const [draft, setDraft] = useState<Draft | null>(null);
-  const [file, setFile] = useState<File | null>(null);
+  const [media, setMedia] = useState<MediaValue>(emptyMedia);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
@@ -40,17 +43,18 @@ export function GalleryModule() {
   async function save(e: FormEvent) {
     e.preventDefault();
     if (!draft) return;
-    if (!draft.id && !file) { toast("error", "Choose an image first."); return; }
+    if (!draft.id && !mediaChosen(media)) { toast("error", "Upload a picture or paste a link first."); return; }
+    if (mediaInvalid("image", media)) { toast("error", "Fix the picture link first."); return; }
     setSaving(true);
     try {
       const fd = new FormData();
       fd.append("caption", draft.caption.trim());
-      if (file) fd.append("image", file);
+      appendMedia(fd, media, "image", "image_link");
       if (draft.id) await api.patch(`/content/gallery/${draft.id}/`, fd, { isMultipart: true });
       else await api.postForm("/content/gallery/", fd);
       toast("success", draft.id ? "Photo updated." : "Photo uploaded.");
       setDraft(null);
-      setFile(null);
+      setMedia(emptyMedia);
       load();
     } catch (err) {
       toast("error", errText(err, "Could not save the photo."));
@@ -72,7 +76,7 @@ export function GalleryModule() {
 
   return (
     <>
-      <PageHeader icon="image" title="Gallery" sub={canManage ? "Upload, caption, replace or remove school photos (max 5 MB, JPEG/PNG/WebP)." : "School photo gallery."} actions={canManage && (<button type="button" className="btn btn-primary btn-sm" onClick={() => { setFile(null); setDraft({ caption: "" }); }}><Icon name="plus" size={16} /> Upload photo</button>)} />
+      <PageHeader icon="image" title="Gallery" sub={canManage ? "Add school photos by upload (max 5 MB) or — to save storage — by pasting a Google Drive / picture link." : "School photo gallery."} actions={canManage && (<button type="button" className="btn btn-primary btn-sm" onClick={() => { setMedia(emptyMedia); setDraft({ caption: "" }); }}><Icon name="plus" size={16} /> Add photo</button>)} />
       <div className="toolbar">
         <div className="search-box grow"><Icon name="search" size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search captions" aria-label="Search photos" /></div>
       </div>
@@ -82,11 +86,11 @@ export function GalleryModule() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 14 }}>
           {shown.map((img) => (
             <div key={img.id} className="stack" style={{ gap: 6 }}>
-              <img src={img.image} alt={img.caption || "Gallery photo"} loading="lazy" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 12, border: "1px solid var(--border)" }} />
+              <img src={img.image} alt={img.caption || "Gallery photo"} loading="lazy" referrerPolicy="no-referrer" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 12, border: "1px solid var(--border)" }} />
               {img.caption && <span className="mini-meta">{img.caption}</span>}
               {canManage && (
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button type="button" className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setFile(null); setDraft({ id: img.id, caption: img.caption, image: img.image }); }}><Icon name="edit" size={15} /> Edit</button>
+                  <button type="button" className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setMedia(emptyMedia); setDraft({ id: img.id, caption: img.caption, image: img.image, source: img.source }); }}><Icon name="edit" size={15} /> Edit</button>
                   <button type="button" className="icon-btn danger" onClick={() => remove(img)} aria-label="Delete photo"><Icon name="trash" size={17} /></button>
                 </div>
               )}
@@ -94,11 +98,10 @@ export function GalleryModule() {
           ))}
         </div>
       )}
-      <Modal open={draft !== null} title={draft?.id ? "Edit photo" : "Upload photo"} onClose={() => setDraft(null)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setDraft(null)}>Cancel</button><button type="submit" form="gallery-form" className="btn btn-primary btn-sm" disabled={saving || (!draft?.id && !file)}>{saving ? "Saving…" : draft?.id ? "Save changes" : "Upload"}</button></>}>
+      <Modal open={draft !== null} title={draft?.id ? "Edit photo" : "Add photo"} onClose={() => setDraft(null)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setDraft(null)}>Cancel</button><button type="submit" form="gallery-form" className="btn btn-primary btn-sm" disabled={saving || (!draft?.id && !mediaChosen(media)) || mediaInvalid("image", media)}>{saving ? "Saving…" : draft?.id ? "Save changes" : "Add"}</button></>}>
         {draft && (
           <form id="gallery-form" onSubmit={save} className="stack" style={{ gap: 14 }}>
-            {draft.image && !file && <img src={draft.image} alt="Current" style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 12 }} />}
-            <div className="form-field"><label htmlFor="gFile">{draft.id ? "Replace image (optional)" : "Image"}</label><input id="gFile" type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
+            <MediaSourceField kind="image" idPrefix="g" label={draft.id ? "Replace picture (optional)" : "Picture"} accept="image/jpeg,image/png,image/webp" value={media} onChange={setMedia} current={draft.id ? { url: draft.image ?? null, source: draft.source ?? null } : undefined} />
             <div className="form-field"><label htmlFor="gCaption">Caption (optional)</label><input id="gCaption" value={draft.caption} maxLength={200} onChange={(e) => setDraft({ ...draft, caption: e.target.value })} /></div>
           </form>
         )}
