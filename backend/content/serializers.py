@@ -1,8 +1,10 @@
+from django.db import transaction
 from django.utils.text import slugify
 from rest_framework import serializers
 
 from notices.serializers import sanitize
 
+from .links import LinkError, drive_download_url, normalize_file_link, normalize_image_link
 from .models import Achievement, ContactMessage, Admission, Article, Event, GalleryImage, SchoolForm
 
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
@@ -38,10 +40,75 @@ def validate_doc_upload(file):
         raise serializers.ValidationError("This file does not look like a real PDF or Word document.")
 
 
-class ArticleSerializer(serializers.ModelSerializer):
+class LinkOrUploadMixin:
+    """
+    An image/file can be UPLOADED or a pasted public LINK (Google Drive "Anyone with the link", Imgur, …).
+    Pasting a link keeps the free storage empty. The API still returns the usual field (`image`, `cover_image`,
+    `file`) holding the address to show — the upload's URL or the link — so pages need no changes — plus `source`
+    ("upload" / "link").
+    """
+
+    upload_field = ""
+    link_field = ""
+    link_kind = "image"  # "image" or "file"
+    media_required = False
+
+    def _normalize(self, link):
+        try:
+            return (normalize_image_link if self.link_kind == "image" else normalize_file_link)(link)
+        except LinkError as exc:
+            raise serializers.ValidationError({self.link_field: str(exc)}) from None
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        up, ln = self.upload_field, self.link_field
+        new_link = attrs.get(ln)
+        if new_link is not None:
+            new_link = new_link.strip()
+            attrs[ln] = self._normalize(new_link) if new_link else ""
+        new_upload = attrs.get(up)
+        if new_upload and attrs.get(ln):
+            raise serializers.ValidationError("Choose either an upload or a link, not both.")
+        if attrs.get(ln):
+            attrs[up] = None  # a link replaces any earlier upload (its file is deleted after saving)
+        elif new_upload:
+            attrs[ln] = ""
+        if self.media_required:
+            inst = self.instance
+            keeps_upload = inst is not None and bool(getattr(inst, up)) and up not in attrs
+            keeps_link = inst is not None and bool(getattr(inst, ln)) and ln not in attrs
+            if not (attrs.get(up) or attrs.get(ln) or keeps_upload or keeps_link):
+                what = "a picture" if self.link_kind == "image" else "a file"
+                raise serializers.ValidationError({ln: f"Upload {what} or paste a link."})
+        return attrs
+
+    def update(self, instance, validated_data):
+        old = getattr(instance, self.upload_field)
+        old_name, storage = (old.name, old.storage) if old else (None, None)
+        instance = super().update(instance, validated_data)
+        now = getattr(instance, self.upload_field)
+        if old_name and (not now or now.name != old_name):
+            transaction.on_commit(lambda: storage.delete(old_name))
+        return instance
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        link = getattr(instance, self.link_field, "") or ""
+        if link:
+            data[self.upload_field] = link
+        data["source"] = "link" if link else ("upload" if data.get(self.upload_field) else None)
+        if self.link_kind == "file":
+            data["download_url"] = drive_download_url(link) if link else None
+        return data
+
+
+class ArticleSerializer(LinkOrUploadMixin, serializers.ModelSerializer):
+    upload_field, link_field = "cover_image", "cover_link"
+    cover_link = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+
     class Meta:
         model = Article
-        fields = ["id", "title", "slug", "excerpt", "body", "cover_image", "published", "created_by", "created_at", "updated_at"]
+        fields = ["id", "title", "slug", "excerpt", "body", "cover_image", "cover_link", "published", "created_by", "created_at", "updated_at"]
         read_only_fields = ["id", "slug", "created_by", "created_at", "updated_at"]
 
     def validate_title(self, value):
@@ -93,24 +160,31 @@ class EventSerializer(serializers.ModelSerializer):
         return sanitize(value.strip())
 
 
-class GalleryImageSerializer(serializers.ModelSerializer):
+class GalleryImageSerializer(LinkOrUploadMixin, serializers.ModelSerializer):
+    upload_field, link_field, media_required = "image", "image_link", True
+    image_link = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+
     class Meta:
         model = GalleryImage
-        fields = ["id", "caption", "image", "uploaded_by", "created_at"]
+        fields = ["id", "caption", "image", "image_link", "uploaded_by", "created_at"]
         read_only_fields = ["id", "uploaded_by", "created_at"]
 
     def validate_image(self, value):
-        validate_image_upload(value)
+        if value:
+            validate_image_upload(value)
         return value
 
     def validate_caption(self, value):
         return sanitize(value.strip())
 
 
-class SchoolFormSerializer(serializers.ModelSerializer):
+class SchoolFormSerializer(LinkOrUploadMixin, serializers.ModelSerializer):
+    upload_field, link_field, link_kind, media_required = "file", "file_link", "file", True
+    file_link = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+
     class Meta:
         model = SchoolForm
-        fields = ["id", "title", "file", "uploaded_by", "created_at"]
+        fields = ["id", "title", "file", "file_link", "uploaded_by", "created_at"]
         read_only_fields = ["id", "uploaded_by", "created_at"]
 
     def validate_title(self, value):
@@ -120,7 +194,8 @@ class SchoolFormSerializer(serializers.ModelSerializer):
         return value
 
     def validate_file(self, value):
-        validate_doc_upload(value)
+        if value:
+            validate_doc_upload(value)
         return value
 
 
@@ -228,10 +303,13 @@ class ContactMessageAdminSerializer(ContactMessageSerializer):
         read_only_fields = ["id", "created_at"]
 
 
-class AchievementSerializer(serializers.ModelSerializer):
+class AchievementSerializer(LinkOrUploadMixin, serializers.ModelSerializer):
+    upload_field, link_field = "image", "image_link"
+    image_link = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+
     class Meta:
         model = Achievement
-        fields = ["id", "title", "description", "year", "category", "image", "created_by", "created_at"]
+        fields = ["id", "title", "description", "year", "category", "image", "image_link", "created_by", "created_at"]
         read_only_fields = ["id", "created_by", "created_at"]
 
     def validate_title(self, value):
