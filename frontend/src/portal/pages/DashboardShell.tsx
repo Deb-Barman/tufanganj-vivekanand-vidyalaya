@@ -1,16 +1,16 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/AuthContext";
-import { RoleBadge } from "../components/RoleBadge";
 import { CommandPalette } from "../ui/CommandPalette";
 import { Icon } from "../ui/icons";
 import { dashPath, groupNav, navFor } from "../ui/nav";
-import { Avatar, UIProvider } from "../ui/kit";
+import { UIProvider } from "../ui/kit";
+import { Sidebar } from "../ui/Sidebar";
+import { api } from "../../lib/api";
 import { ProgressBusy } from "../../components/loading/Loading";
 import { AdminOverviewSkeleton, HeroSkeleton, MemberOverviewSkeleton, ModuleSkeleton } from "../ui/Skeletons";
 import { skeletonSpecFor } from "../ui/skeletonVariant";
-import { SchoolLogo } from "../../components/SchoolLogo";
-import { SITE } from "../../config/site";
+import type { AdminStats } from "../../types/api";
 import { preloadPortalPages } from "../../lib/routePreload";
 import "./DashboardShell.css";
 
@@ -31,6 +31,40 @@ export function DashboardShell() {
   const drawer = drawerFor === location.pathname;
   const setDrawer = (open: boolean) => setDrawerFor(open ? location.pathname : null);
   const [palette, setPalette] = useState(false);
+  // Desktop: collapse the sidebar to an icon rail (remembered between visits).
+  const [rail, setRail] = useState(() => {
+    try {
+      return localStorage.getItem("tvv_nav_rail") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleRail = () =>
+    setRail((r) => {
+      try {
+        localStorage.setItem("tvv_nav_rail", r ? "0" : "1");
+      } catch {
+        /* not remembered in private mode */
+      }
+      return !r;
+    });
+  // Number bubbles on menu rows (Super Admin: enquiries waiting). Failure just means no bubbles.
+  const [badges, setBadges] = useState<Record<string, number>>({});
+  const isAdmin = user?.role === "SUPER_ADMIN";
+  useEffect(() => {
+    if (!isAdmin) return;
+    let alive = true;
+    const pull = () => {
+      if (document.visibilityState === "hidden") return;
+      api.get<AdminStats>("/auth/admin/stats/").then((s) => alive && setBadges({ admissions: s.admissions.pending }), () => undefined);
+    };
+    pull();
+    const t = setInterval(pull, 120000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [isAdmin]);
 
   const items = useMemo(() => (user ? navFor(user.role) : []), [user]);
   const groups = useMemo(() => groupNav(items), [items]);
@@ -58,60 +92,21 @@ export function DashboardShell() {
 
   return (
     <UIProvider>
-      <div className="console">
+      <div className={`console${rail ? " is-rail" : ""}`}>
         {drawer && <div className="console-scrim" onClick={() => setDrawer(false)} />}
 
-        <aside className={`console-side ${drawer ? "open" : ""}`} aria-label="Dashboard navigation">
-          <div className="side-head">
-            <Link to="/" className="side-brand" aria-label={`${SITE.short} — public website`}>
-              <SchoolLogo size={34} />
-              <span className="side-brand-text">
-                <strong>{SITE.short}</strong>
-                <small>Dashboard</small>
-              </span>
-            </Link>
-            <button type="button" className="icon-btn side-close" onClick={() => setDrawer(false)} aria-label="Close menu">
-              <Icon name="x" size={20} />
-            </button>
-          </div>
-
-          <div className="side-who">
-            <Avatar name={user.full_name || user.username} size={46} />
-            <div className="side-who-text">
-              <span className="side-who-name">{user.full_name || user.username}</span>
-              <RoleBadge role={user.role} />
-            </div>
-          </div>
-
-          <nav aria-label="Sections">
-            {groups.map((g) => (
-              <div className="side-group" key={g.group}>
-                <span className="side-group-label">{g.group}</span>
-                {g.items.map((item) => (
-                  <NavLink key={item.to || "home"} to={dashPath(item.to)} end={item.to === ""} className={({ isActive }) => (isActive ? "side-link active" : "side-link")}>
-                    <Icon name={item.icon} size={19} />
-                    {item.label}
-                  </NavLink>
-                ))}
-              </div>
-            ))}
-          </nav>
-
-          <div className="side-foot">
-            <button type="button" className="side-kbd" onClick={() => setPalette(true)}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-                <Icon name="search" size={17} /> Quick jump
-              </span>
-              <kbd>Ctrl K</kbd>
-            </button>
-            <Link to="/" className="side-link">
-              <Icon name="external" size={19} /> View website
-            </Link>
-            <button type="button" className="side-link" onClick={handleLogout} style={{ background: "none", border: 0, cursor: "pointer", font: "inherit", textAlign: "left", width: "100%" }}>
-              <Icon name="logout" size={19} /> Log out
-            </button>
-          </div>
-        </aside>
+        <Sidebar
+          user={user}
+          groups={groups}
+          open={drawer}
+          onClose={() => setDrawer(false)}
+          rail={rail}
+          onToggleRail={toggleRail}
+          onLogout={handleLogout}
+          onQuickJump={() => setPalette(true)}
+          activePath={location.pathname}
+          badges={badges}
+        />
 
         <div className="console-main">
           <div className="console-top">
