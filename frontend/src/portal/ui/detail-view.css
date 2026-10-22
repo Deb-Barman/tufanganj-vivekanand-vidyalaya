@@ -1,0 +1,24 @@
+/* tappable cards / rows that open a full "detail" pop-up (notices, events) */
+.rcard.is-open { cursor: pointer; transition: transform 0.25s var(--ease-out), box-shadow 0.25s; }
+.rcard.is-open:hover { transform: translateY(-3px); box-shadow: var(--raise-lg); }
+.rcard-title { all: unset; display: block; cursor: pointer; font-weight: 700; color: var(--fg); font-size: inherit; line-height: 1.3; overflow-wrap: anywhere; }
+.rcard-title:focus-visible, .row-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+.rcard-more { font-size: 12.5px; font-weight: 800; color: var(--accent); }
+.row-open { all: unset; box-sizing: border-box; display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; cursor: pointer; }
+.row-link.is-open { cursor: pointer; }
+.row-link.is-open:hover { transform: translateY(-2px); }
+
+.dv { display: grid; gap: 14px; }
+.dv-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.dv-chip { font-size: 12px; font-weight: 800; padding: 5px 12px; border-radius: 999px; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.dv-chip.soft { color: var(--fg-soft); background: color-mix(in srgb, var(--fg) 8%, transparent); }
+.dv-chip.good { color: var(--success); background: color-mix(in srgb, var(--success) 15%, transparent); }
+.dv-meta { margin: 0; font-size: 13px; color: var(--fg-faint); }
+.dv-body { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.75; font-size: 15.5px; color: var(--fg); padding: 16px 18px; border-radius: 14px; background: var(--panel); box-shadow: var(--inset-sm); }
+.dv-body a { color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.dv-date { display: flex; align-items: center; gap: 14px; }
+.dv-date-box { display: grid; place-items: center; width: 68px; height: 72px; border-radius: 16px; background: var(--panel); box-shadow: var(--raise-sm); line-height: 1.05; text-align: center; }
+.dv-date-box b { font-size: 26px; color: var(--fg); }
+.dv-date-box small { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.dv-date-text strong { display: block; font-size: 16px; color: var(--fg); }
+.dv-date-text span { font-size: 13px; color: var(--fg-faint); }

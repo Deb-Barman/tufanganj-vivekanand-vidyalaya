@@ -1,4 +1,5 @@
 from rest_framework import generics, status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.views import APIView
@@ -6,7 +7,10 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .models import User
+from django.utils import timezone
+
+from .backends import forget_failures
+from .models import PasswordResetRequest, User
 from .permissions import IsSuperAdmin
 from .serializers import (
     AdminCreateUserSerializer,
@@ -30,6 +34,16 @@ class LoginRateThrottle(SimpleRateThrottle):
         return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
 
 
+class RefreshRateThrottle(SimpleRateThrottle):
+    """Token refreshes get their own, roomier bucket — a whole class refreshing on school Wi-Fi must never be
+    throttled by (or throttle) the sign-in attempts."""
+
+    scope = "token_refresh"
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
+
+
 class AdminPortalLoginView(TokenObtainPairView):
     """POST /api/auth/admin-login/ — Super User page. Rejects every non-Super-Admin."""
 
@@ -48,7 +62,7 @@ class SafeTokenRefreshView(TokenRefreshView):
     """POST /api/auth/token/refresh/ — refuses tokens issued under an old password."""
 
     serializer_class = PasswordAwareTokenRefreshSerializer
-    throttle_classes = [LoginRateThrottle]
+    throttle_classes = [RefreshRateThrottle]
 
 
 class MeView(APIView):
@@ -122,6 +136,8 @@ class AdminResetPasswordView(APIView):
         user.failed_login_attempts = 0
         user.locked_until = None
         user.save(update_fields=["password", "must_change_password", "failed_login_attempts", "locked_until"])
+        forget_failures(user.username)
+        PasswordResetRequest.objects.filter(user=user, resolved_at__isnull=True).update(resolved_at=timezone.now())
         return Response({"detail": "Password updated. The user can sign in with it right away."})
 
 
@@ -137,7 +153,65 @@ class AdminUnlockView(APIView):
         user.failed_login_attempts = 0
         user.locked_until = None
         user.save(update_fields=["failed_login_attempts", "locked_until"])
+        forget_failures(user.username)  # also lifts any "this device is blocked" counters
         return Response({"detail": "Account unlocked."})
+
+
+class ForgotPasswordThrottle(SimpleRateThrottle):
+    scope = "forgot_password"
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
+
+
+class ForgotPasswordView(APIView):
+    """
+    POST /api/auth/forgot-password/ {username, note?} — "I forgot my password", from the login page. Nobody can READ a
+    password (only one-way hashes are stored); this just puts the person in the Super Admin's queue so the office can
+    set a new one. The answer is always the same, so it cannot be used to find out which usernames exist.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes: list = []
+    throttle_classes = [ForgotPasswordThrottle]
+
+    def post(self, request):
+        username = str(request.data.get("username", "")).strip()[:150]
+        note = str(request.data.get("note", "")).strip()[:200]
+        user = User.objects.exclude(role="SUPER_ADMIN").filter(username__iexact=username, is_active_account=True, is_active=True).first() if username else None
+        if user is not None:
+            req = PasswordResetRequest.objects.filter(user=user, resolved_at__isnull=True).first()
+            if req is None:
+                PasswordResetRequest.objects.create(user=user, note=note)
+            elif note:
+                req.note = note
+                req.save(update_fields=["note"])
+        return Response({"detail": "If that username exists, the school office has been told. They will set a new password and share it with you."}, status=status.HTTP_202_ACCEPTED)
+
+
+class AdminResetRequestListView(APIView):
+    """GET /api/auth/admin/reset-requests/ — who is waiting for a new password."""
+
+    permission_classes = [IsSuperAdmin]
+
+    def get(self, request):
+        rows = PasswordResetRequest.objects.filter(resolved_at__isnull=True).select_related("user")[:100]
+        return Response([
+            {"id": str(r.id), "user": str(r.user_id), "username": r.user.username, "full_name": r.user.full_name, "role": r.user.role, "note": r.note, "created_at": r.created_at}
+            for r in rows
+        ])
+
+
+class AdminResetRequestDismissView(APIView):
+    """POST /api/auth/admin/reset-requests/<id>/dismiss/ — the request was handled another way (or was not genuine)."""
+
+    permission_classes = [IsSuperAdmin]
+
+    def post(self, request, pk):
+        updated = PasswordResetRequest.objects.filter(pk=pk, resolved_at__isnull=True).update(resolved_at=timezone.now())
+        if not updated:
+            return Response({"detail": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Dismissed."})
 
 
 class AdminStatsView(APIView):

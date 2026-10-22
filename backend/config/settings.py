@@ -229,12 +229,16 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ),
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "30/minute",
-        "user": "180/minute",
+        # Rates are per network address. A whole school shares ONE public address (school Wi-Fi), so the everyday
+        # limits are roomy; the real brute-force protection is the per-account lockout (accounts/backends.py).
+        "anon": "120/minute",
+        "user": "300/minute",
         "admission_submit": "3/hour",
         "contact_submit": "5/hour",
-        "login": "10/minute",
-        "profile_view": "60/minute",
+        "login": "40/minute",
+        "token_refresh": "300/minute",
+        "forgot_password": "10/hour",
+        "profile_view": "120/minute",
     },
     "DEFAULT_PAGINATION_CLASS": "config.pagination.StandardPagination",
     "PAGE_SIZE": 25,

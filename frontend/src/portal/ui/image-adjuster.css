@@ -1,21 +1,50 @@
-.ia { display: grid; gap: 10px; justify-items: start; padding: 12px; border-radius: var(--radius); background: var(--panel); box-shadow: var(--inset-sm); min-width: 0; }
-.ia-title { margin: 0; font-size: 13px; font-weight: 800; color: var(--fg-soft); }
-.ia-frame { position: relative; overflow: hidden; width: 100%; background: var(--surface); box-shadow: var(--raise-sm); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; outline-offset: 3px; }
-.ia-frame:focus-visible { outline: 2px solid var(--accent); }
+.ia { display: grid; gap: 14px; padding: 14px; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--raise-sm), inset 0 0 0 1px color-mix(in srgb, var(--fg) 6%, transparent); min-width: 0; width: 100%; }
+.ia-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ia-title { font-size: 14px; font-weight: 800; color: var(--fg); letter-spacing: 0.01em; }
+.ia-reset { border: 0; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 800; padding: 6px 14px; border-radius: 999px; cursor: pointer; transition: background 0.2s, opacity 0.2s; }
+.ia-reset:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.ia-reset:disabled { opacity: 0.4; cursor: default; }
+
+/* the "stage": a soft dark-ish backdrop that makes the frame pop, like a photo editor */
+.ia-stage { display: grid; place-items: center; padding: 22px 12px; border-radius: 18px; background: radial-gradient(120% 120% at 50% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%), color-mix(in srgb, var(--fg) 8%, var(--panel)); box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.18); }
+.ia-frame { position: relative; overflow: hidden; width: 100%; background: var(--panel); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; outline: none; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.92), 0 0 0 7px color-mix(in srgb, var(--accent) 45%, transparent), 0 20px 44px rgba(0, 0, 0, 0.32); transition: box-shadow 0.25s; }
+.ia-frame:focus-visible { box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--accent), 0 20px 44px rgba(0, 0, 0, 0.32); }
 .ia-frame.dragging { cursor: grabbing; }
 .ia-frame img { pointer-events: none; }
-.ia-circle { width: min(240px, 100%); aspect-ratio: 1; border-radius: 50%; }
-.ia-square { width: min(260px, 100%); aspect-ratio: 1; border-radius: 14px; }
-.ia-wide { max-width: 420px; aspect-ratio: 16 / 9; border-radius: 14px; }
-.ia-card { max-width: 380px; aspect-ratio: 4 / 3; border-radius: 14px; }
-.ia-photo { max-width: 380px; aspect-ratio: 16 / 10; border-radius: 14px; }
-/* rule-of-thirds guide, only while moving */
+.ia-circle { width: min(250px, 100%); aspect-ratio: 1; border-radius: 50%; }
+.ia-square { width: min(260px, 100%); aspect-ratio: 1; border-radius: 16px; }
+.ia-wide { width: min(420px, 100%); aspect-ratio: 16 / 9; border-radius: 14px; }
+.ia-card { width: min(380px, 100%); aspect-ratio: 4 / 3; border-radius: 14px; }
+.ia-photo { width: min(380px, 100%); aspect-ratio: 16 / 10; border-radius: 14px; }
+
+/* rule-of-thirds guide while moving */
 .ia-grid { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s; background:
-  linear-gradient(to right, transparent calc(33.33% - 0.5px), rgba(255, 255, 255, 0.7) calc(33.33% - 0.5px), rgba(255, 255, 255, 0.7) calc(33.33% + 0.5px), transparent calc(33.33% + 0.5px), transparent calc(66.66% - 0.5px), rgba(255, 255, 255, 0.7) calc(66.66% - 0.5px), rgba(255, 255, 255, 0.7) calc(66.66% + 0.5px), transparent calc(66.66% + 0.5px)),
-  linear-gradient(to bottom, transparent calc(33.33% - 0.5px), rgba(255, 255, 255, 0.7) calc(33.33% - 0.5px), rgba(255, 255, 255, 0.7) calc(33.33% + 0.5px), transparent calc(33.33% + 0.5px), transparent calc(66.66% - 0.5px), rgba(255, 255, 255, 0.7) calc(66.66% - 0.5px), rgba(255, 255, 255, 0.7) calc(66.66% + 0.5px), transparent calc(66.66% + 0.5px)); }
-.ia-frame.dragging .ia-grid { opacity: 0.55; }
-.ia-broken { display: grid; place-items: center; height: 100%; font-size: 12.5px; color: var(--danger); text-align: center; padding: 10px; }
-.ia-controls { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 420px; }
-.ia-zoom { flex: 1; display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 700; color: var(--fg-soft); min-width: 0; }
-.ia-zoom input { flex: 1; min-width: 0; width: 100%; accent-color: var(--accent); height: 28px; }
-.ia-hint { margin: 0; font-size: 12px; color: var(--fg-faint); line-height: 1.55; }
+  linear-gradient(to right, transparent calc(33.33% - 0.5px), rgba(255, 255, 255, 0.75) calc(33.33% - 0.5px), rgba(255, 255, 255, 0.75) calc(33.33% + 0.5px), transparent calc(33.33% + 0.5px), transparent calc(66.66% - 0.5px), rgba(255, 255, 255, 0.75) calc(66.66% - 0.5px), rgba(255, 255, 255, 0.75) calc(66.66% + 0.5px), transparent calc(66.66% + 0.5px)),
+  linear-gradient(to bottom, transparent calc(33.33% - 0.5px), rgba(255, 255, 255, 0.75) calc(33.33% - 0.5px), rgba(255, 255, 255, 0.75) calc(33.33% + 0.5px), transparent calc(33.33% + 0.5px), transparent calc(66.66% - 0.5px), rgba(255, 255, 255, 0.75) calc(66.66% - 0.5px), rgba(255, 255, 255, 0.75) calc(66.66% + 0.5px), transparent calc(66.66% + 0.5px)); }
+.ia-frame.dragging .ia-grid { opacity: 0.5; }
+.ia-chip { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #fff; background: rgba(12, 14, 24, 0.62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); pointer-events: none; white-space: nowrap; animation: ia-chip 2.4s ease-in-out infinite; }
+@keyframes ia-chip { 0%, 100% { opacity: 0.95; } 50% { opacity: 0.6; } }
+.ia-broken { display: grid; place-items: center; height: 100%; padding: 16px; text-align: center; font-size: 12.5px; line-height: 1.5; color: var(--danger); }
+
+/* zoom row */
+.ia-zoom { display: flex; align-items: center; gap: 10px; }
+.ia-step { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border: 0; border-radius: 50%; cursor: pointer; color: var(--fg); background: var(--surface); box-shadow: var(--raise-sm); transition: transform 0.15s, opacity 0.2s; }
+.ia-step:active:not(:disabled) { transform: scale(0.92); box-shadow: var(--inset-sm); }
+.ia-step:disabled { opacity: 0.35; cursor: default; }
+.ia-level { flex: none; min-width: 42px; text-align: right; font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent); }
+.ia-range { flex: 1; min-width: 0; -webkit-appearance: none; appearance: none; height: 8px; border-radius: 999px; outline: none; cursor: pointer; background: linear-gradient(to right, var(--accent) var(--p, 0%), color-mix(in srgb, var(--fg) 16%, transparent) var(--p, 0%)); }
+.ia-range::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: #fff; border: 4px solid var(--accent); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.32); }
+.ia-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 4px solid var(--accent); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.32); }
+.ia-range:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
+
+/* live previews */
+.ia-previews { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--fg) 5%, transparent); }
+.ia-previews > span:first-child { font-size: 12px; font-weight: 800; color: var(--fg-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-right: 2px; }
+.ia-pv { display: block; overflow: hidden; flex: none; background: var(--panel); box-shadow: var(--raise-sm); }
+.ia-pv.ia-circle { border-radius: 50%; aspect-ratio: 1; }
+.ia-pv.ia-square { border-radius: 10px; aspect-ratio: 1; }
+.ia-pv.ia-wide { border-radius: 8px; aspect-ratio: 16 / 9; }
+.ia-pv.ia-card { border-radius: 8px; aspect-ratio: 4 / 3; }
+.ia-pv.ia-photo { border-radius: 8px; aspect-ratio: 16 / 10; }
+.ia-hint { margin: 0; font-size: 12px; color: var(--fg-faint); line-height: 1.55; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .ia-chip { animation: none; } }

@@ -1,22 +1,35 @@
 import { useRef, useState } from "react";
-import type { KeyboardEvent, PointerEvent } from "react";
-import { DEFAULT_ADJUST, MAX_ZOOM, formatAdjust, parseAdjust } from "../../lib/imageAdjust";
+import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
+import { MAX_ZOOM, formatAdjust, parseAdjust } from "../../lib/imageAdjust";
 import type { Adjust, AdjustShape } from "../../lib/imageAdjust";
 import { AdjustedImg } from "../../components/media/AdjustedImg";
 import "./image-adjuster.css";
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 const HELP: Record<AdjustShape, string> = {
-  circle: "This is how your round profile picture will look.",
-  square: "This is how the square picture will look.",
-  wide: "This is how the wide cover will look.",
-  card: "This is how the picture will look on its card.",
-  photo: "This is how the photo will look on the website.",
+  circle: "your round profile picture",
+  square: "the square picture",
+  wide: "the wide cover",
+  card: "the picture on its card",
+  photo: "the photo on the website",
+};
+/** Small previews of the finished result, so people see what everyone else will see. */
+const PREVIEWS: Record<AdjustShape, { w: number; cls: string }[]> = {
+  circle: [{ w: 56, cls: "circle" }, { w: 36, cls: "circle" }, { w: 24, cls: "circle" }],
+  square: [{ w: 64, cls: "square" }, { w: 40, cls: "square" }],
+  wide: [{ w: 132, cls: "wide" }],
+  card: [{ w: 108, cls: "card" }],
+  photo: [{ w: 120, cls: "photo" }],
 };
 
+const PlusIcon = () => <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>;
+const MinusIcon = () => <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M5 12h14" /></svg>;
+const MoveIcon = () => <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18M8 7l4-4 4 4M8 17l4 4 4-4M7 8l-4 4 4 4M17 8l4 4-4 4" /></svg>;
+
 /**
- * Instagram-style "move and zoom": drag the picture inside the frame, use the slider (or pinch the slider with two
- * fingers' worth of patience) to zoom. The result is a tiny text value; the original picture is never changed or cut.
+ * Instagram-style "move and zoom": drag the picture inside the frame, zoom with the slider or the − / + buttons.
+ * The result is a tiny text value; the original picture is never changed or cut. Small live previews show how the
+ * finished picture looks at the sizes where people will actually see it.
  */
 export function ImageAdjuster({ src, value, onChange, shape }: { src: string; value: string; onChange: (v: string) => void; shape: AdjustShape }) {
   const a = parseAdjust(value);
@@ -24,9 +37,11 @@ export function ImageAdjuster({ src, value, onChange, shape }: { src: string; va
   const nat = useRef<{ w: number; h: number } | null>(null);
   const drag = useRef<{ x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [touched, setTouched] = useState(false);
   const [broken, setBroken] = useState(false);
 
   const set = (next: Adjust) => onChange(formatAdjust({ x: clamp(next.x, 0, 100), y: clamp(next.y, 0, 100), z: clamp(next.z, 1, MAX_ZOOM) }));
+  const changed = formatAdjust(a) !== "";
 
   /** How many screen pixels the picture can travel along each axis at the current zoom (exact for object-fit: cover). */
   function range() {
@@ -42,6 +57,7 @@ export function ImageAdjuster({ src, value, onChange, shape }: { src: string; va
   function down(e: PointerEvent<HTMLDivElement>) {
     drag.current = { x: e.clientX, y: e.clientY };
     setDragging(true);
+    setTouched(true);
     e.currentTarget.setPointerCapture(e.pointerId);
   }
   function move(e: PointerEvent<HTMLDivElement>) {
@@ -66,40 +82,58 @@ export function ImageAdjuster({ src, value, onChange, shape }: { src: string; va
     };
     if (map[e.key]) {
       e.preventDefault();
+      setTouched(true);
       set(map[e.key]);
     }
   }
+  const zoomBy = (d: number) => set({ ...a, z: a.z + d });
 
   return (
     <div className="ia">
-      <p className="ia-title">Position &amp; zoom</p>
-      <div
-        ref={frame}
-        className={`ia-frame ia-${shape}${dragging ? " dragging" : ""}`}
-        tabIndex={0}
-        role="group"
-        aria-label={`${HELP[shape]} Drag to move the picture. Arrow keys move it, plus and minus zoom.`}
-        onPointerDown={down}
-        onPointerMove={move}
-        onPointerUp={up}
-        onPointerCancel={up}
-        onKeyDown={key}
-      >
-        {broken ? (
-          <span className="ia-broken">Picture could not be shown</span>
-        ) : (
-          <AdjustedImg src={src} adjust={value} alt="" loading="eager" draggable={false} onLoad={(e) => { nat.current = { w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight }; setBroken(false); }} onError={() => setBroken(true)} />
-        )}
-        <i className="ia-grid" aria-hidden="true" />
+      <div className="ia-head">
+        <span className="ia-title">Position &amp; zoom</span>
+        <button type="button" className="ia-reset" onClick={() => onChange("")} disabled={!changed}>Reset</button>
       </div>
-      <div className="ia-controls">
-        <label className="ia-zoom">
-          <span>Zoom</span>
-          <input type="range" min={1} max={MAX_ZOOM} step={0.01} value={a.z} onChange={(e) => set({ ...a, z: Number(e.target.value) })} aria-label="Zoom the picture" />
-        </label>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange("")} disabled={formatAdjust(a) === "" || formatAdjust(a) === formatAdjust(DEFAULT_ADJUST)}>Reset</button>
+
+      <div className="ia-stage">
+        <div
+          ref={frame}
+          className={`ia-frame ia-${shape}${dragging ? " dragging" : ""}`}
+          tabIndex={0}
+          role="group"
+          aria-label={`Preview of ${HELP[shape]}. Drag to move the picture. Arrow keys move it, plus and minus zoom.`}
+          onPointerDown={down}
+          onPointerMove={move}
+          onPointerUp={up}
+          onPointerCancel={up}
+          onKeyDown={key}
+        >
+          {broken ? (
+            <span className="ia-broken">This picture could not be shown. Check that sharing is set to “Anyone with the link”.</span>
+          ) : (
+            <AdjustedImg src={src} adjust={value} alt="" loading="eager" draggable={false} onLoad={(e) => { nat.current = { w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight }; setBroken(false); }} onError={() => setBroken(true)} />
+          )}
+          <i className="ia-grid" aria-hidden="true" />
+          {!touched && !broken && <span className="ia-chip"><MoveIcon /> Drag to move</span>}
+        </div>
       </div>
-      <p className="ia-hint">{HELP[shape]} Drag the picture to move it. The original picture is not changed.</p>
+
+      <div className="ia-zoom">
+        <button type="button" className="ia-step" onClick={() => zoomBy(-0.25)} disabled={a.z <= 1} aria-label="Zoom out"><MinusIcon /></button>
+        <input className="ia-range" type="range" min={1} max={MAX_ZOOM} step={0.01} value={a.z} style={{ ["--p" as string]: `${((a.z - 1) / (MAX_ZOOM - 1)) * 100}%` } as CSSProperties} onChange={(e) => { setTouched(true); set({ ...a, z: Number(e.target.value) }); }} aria-label="Zoom the picture" />
+        <button type="button" className="ia-step" onClick={() => zoomBy(0.25)} disabled={a.z >= MAX_ZOOM} aria-label="Zoom in"><PlusIcon /></button>
+        <output className="ia-level">{a.z.toFixed(1)}×</output>
+      </div>
+
+      {!broken && (
+        <div className="ia-previews" aria-hidden="true">
+          <span>Preview</span>
+          {PREVIEWS[shape].map((p) => (
+            <span key={p.w} className={`ia-pv ia-${p.cls}`} style={{ width: p.w }}><AdjustedImg src={src} adjust={value} alt="" /></span>
+          ))}
+        </div>
+      )}
+      <p className="ia-hint">Drag the picture to move it. Your original picture is never changed.</p>
     </div>
   );
 }

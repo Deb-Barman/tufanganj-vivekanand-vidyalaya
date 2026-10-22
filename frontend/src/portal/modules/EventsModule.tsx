@@ -4,6 +4,9 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { EventItem } from "../../types/api";
 import { ImportButton } from "../ui/ImportButton";
+import { Linkified } from "../../lib/linkify";
+import { downloadText, eventToIcs } from "../../lib/ics";
+import "../ui/detail-view.css";
 import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, errText, fmtDate, listAll, todayISO, useDebounced, useUI, DateField } from "../ui/kitExports";
 
 type Draft = { id?: string; title: string; event_date: string; audience: string; description: string };
@@ -20,6 +23,7 @@ export function EventsModule() {
   const q = useDebounced(query);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
+  const [view, setView] = useState<EventItem | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -60,6 +64,15 @@ export function EventsModule() {
     }
   }
 
+  async function copyEvent(ev: EventItem) {
+    try {
+      await navigator.clipboard.writeText(`${ev.title}\n${fmtDate(ev.event_date)} · ${ev.audience || "Everyone"}${ev.description ? `\n\n${ev.description}` : ""}`);
+      toast("success", "Event details copied.");
+    } catch {
+      toast("error", "Could not copy — select the text and copy it by hand.");
+    }
+  }
+
   async function remove(ev: EventItem) {
     if (!(await confirm({ title: "Delete this event?", message: `“${ev.title}” will be removed from the calendar.`, confirmLabel: "Delete", danger: true }))) return;
     try {
@@ -85,15 +98,45 @@ export function EventsModule() {
           {shown.map((ev) => {
             const d = new Date(ev.event_date + "T00:00:00");
             return (
-              <div key={ev.id} className="row-link">
+              <div key={ev.id} className="row-link is-open" onClick={() => setView(ev)}>
                 <span className="row-icon" style={{ flexDirection: "column", lineHeight: 1, width: 52, height: 52 }}><b style={{ fontSize: 18, color: "var(--fg)" }}>{d.getDate()}</b><small style={{ fontSize: 10, textTransform: "uppercase" }}>{d.toLocaleDateString("en-IN", { month: "short" })}</small></span>
-                <span className="row-main"><strong>{ev.title}</strong><span>{fmtDate(ev.event_date)} · {ev.audience || "Everyone"}{ev.description ? ` · ${ev.description.slice(0, 80)}${ev.description.length > 80 ? "…" : ""}` : ""}</span></span>
-                {canManage && (<><button type="button" className="icon-btn" onClick={() => setDraft({ id: ev.id, title: ev.title, event_date: ev.event_date, audience: ev.audience, description: ev.description })} aria-label={`Edit ${ev.title}`}><Icon name="edit" size={17} /></button><button type="button" className="icon-btn danger" onClick={() => remove(ev)} aria-label={`Delete ${ev.title}`}><Icon name="trash" size={17} /></button></>)}
+                <button type="button" className="row-open" onClick={(e) => { e.stopPropagation(); setView(ev); }} aria-label={`Open event: ${ev.title}`}><strong>{ev.title}</strong><span>{fmtDate(ev.event_date)} · {ev.audience || "Everyone"}{ev.description ? ` · ${ev.description.slice(0, 80)}${ev.description.length > 80 ? "…" : ""}` : ""}</span></button>
+                {canManage && (<><button type="button" className="icon-btn" onClick={(e) => { e.stopPropagation(); setDraft({ id: ev.id, title: ev.title, event_date: ev.event_date, audience: ev.audience, description: ev.description }); }} aria-label={`Edit ${ev.title}`}><Icon name="edit" size={17} /></button><button type="button" className="icon-btn danger" onClick={(e) => { e.stopPropagation(); remove(ev); }} aria-label={`Delete ${ev.title}`}><Icon name="trash" size={17} /></button></>)}
               </div>
             );
           })}
         </div>
       )}
+      <Modal
+        open={view !== null}
+        title={view?.title ?? ""}
+        size="lg"
+        onClose={() => setView(null)}
+        footer={view && (
+          <>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => copyEvent(view)}><Icon name="copy" size={15} /> Copy details</button>
+            {canManage && <button type="button" className="btn btn-outline btn-sm" onClick={() => { setDraft({ id: view.id, title: view.title, event_date: view.event_date, audience: view.audience, description: view.description }); setView(null); }}><Icon name="edit" size={15} /> Edit</button>}
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => downloadText(`${view.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.ics`, eventToIcs(view))}><Icon name="calendar" size={15} /> Add to calendar</button>
+          </>
+        )}
+      >
+        {view && (() => {
+          const d = new Date(view.event_date + "T00:00:00");
+          const diff = Math.round((d.getTime() - new Date(today + "T00:00:00").getTime()) / 86_400_000);
+          const when = diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : diff > 1 ? `In ${diff} days` : diff === -1 ? "Yesterday" : `${-diff} days ago`;
+          return (
+            <div className="dv">
+              <div className="dv-date">
+                <span className="dv-date-box"><b>{d.getDate()}</b><small>{d.toLocaleString("en-IN", { month: "short" })}</small></span>
+                <span className="dv-date-text"><strong>{d.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</strong><span>{when}</span></span>
+              </div>
+              <div className="dv-chips"><span className="dv-chip">{view.audience || "Everyone"}</span><span className={`dv-chip ${diff >= 0 ? "good" : "soft"}`}>{diff >= 0 ? "Upcoming" : "Past"}</span></div>
+              {view.description ? <p className="dv-body"><Linkified text={view.description} /></p> : <p className="dv-meta">No extra details were added for this event.</p>}
+            </div>
+          );
+        })()}
+      </Modal>
+
       <Modal open={draft !== null} title={draft?.id ? "Edit event" : "Add event"} onClose={() => setDraft(null)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setDraft(null)}>Cancel</button><button type="submit" form="event-form" className="btn btn-primary btn-sm" disabled={saving || !draft?.title.trim()}>{saving ? "Saving…" : "Save"}</button></>}>
         {draft && (
           <form id="event-form" onSubmit={save} className="stack" style={{ gap: 14 }}>

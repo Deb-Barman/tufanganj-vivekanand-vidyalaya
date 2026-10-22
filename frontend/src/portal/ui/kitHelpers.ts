@@ -46,7 +46,8 @@ export function useDebounced<T>(value: T, ms = 250): T {
 }
 
 /** Animates a number from 0 up to `target` once. Respects reduced-motion. */
-export function useCountUp(target: number, ms = 900): number {
+export function useCountUp(target: number, ms = 900, decimals = 0): number {
+  const factor = 10 ** decimals;
   const [val, setVal] = useState(0);
   const reduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   useEffect(() => {
@@ -55,12 +56,12 @@ export function useCountUp(target: number, ms = 900): number {
     const start = performance.now();
     const tick = (now: number) => {
       const p = Math.min(1, (now - start) / ms);
-      setVal(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      setVal(Math.round(target * (1 - Math.pow(1 - p, 3)) * factor) / factor);
       if (p < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [target, ms, reduced]);
+  }, [target, ms, reduced, factor]);
   return reduced ? target : val;
 }
 

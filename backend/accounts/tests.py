@@ -58,7 +58,9 @@ class LoginTests(BaseAPITestCase):
         for _ in range(5):
             self.assertFalse(client.login(username="head@school.test", password="wrong"))
         self.assertFalse(Client().login(username="head@school.test", password=PASSWORD))  # right password, still locked
-        self.assertEqual(self.post("/api/auth/admin-login/", "head@school.test").status_code, 401)  # same counter as the portal
+        # Failures are counted per username AND network address (V15): this guesser is blocked, but the real owner
+        # signing in from somewhere else is not — so a stranger can no longer lock the Super Admin out.
+        self.assertEqual(self.post("/api/auth/admin-login/", "head@school.test").status_code, 200)
 
     def test_admin_page_url_is_configurable(self):
         from django.conf import settings

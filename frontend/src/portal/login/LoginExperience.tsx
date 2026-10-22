@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { ScreenLoader } from "../../components/loading/Loading";
+import { ForgotPassword } from "./ForgotPassword";
 import type { LoginViewProps } from "./types";
 
 // Each design is its own chunk: a visitor downloads only the one they see.
@@ -37,6 +38,7 @@ export function LoginExperience(props: LoginViewProps) {
   return (
     <Suspense fallback={<ScreenLoader />}>
       <Design {...props} />
+      {props.portal === "staff" && <ForgotPassword />}
     </Suspense>
   );
 }

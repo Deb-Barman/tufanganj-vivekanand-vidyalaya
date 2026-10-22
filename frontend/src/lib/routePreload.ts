@@ -43,6 +43,7 @@ function loadersFor(pathname: string): Loader[] {
   if (p.startsWith("/notices/")) return [L.NoticeDetailPage];
   if (p.startsWith("/blog/")) return [L.BlogPostPage];
   if (p.startsWith("/profile/")) return [L.PublicProfilePage];
+  if (p.startsWith("/find-profile")) return [L.FindProfilePage];
   return PUBLIC[p] ?? [];
 }
 

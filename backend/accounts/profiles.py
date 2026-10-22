@@ -360,6 +360,44 @@ class MyProfilePhotoView(APIView):
         return Response({"photo": None})
 
 
+class PublicProfileFindView(APIView):
+    """
+    GET /api/auth/profiles/find/?u=<username> — the website's "Profile Finder". Anyone can look a person up by their
+    exact username; only PUBLISHED profiles are ever returned (the owner opted in), with the same few fields the public
+    profile page itself shows. No partial matching and no listing, so the people list cannot be harvested.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes: list = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "profile_view"
+
+    def get(self, request):
+        name = (request.query_params.get("u") or "").strip().lstrip("@")[:150]
+        user = (
+            User.objects.filter(username__iexact=name, role__in=[Role.STUDENT, Role.TEACHER], is_active_account=True, is_active=True)
+            .select_related("public_profile")
+            .first()
+            if len(name) >= 2
+            else None
+        )
+        profile = getattr(user, "public_profile", None) if user else None
+        if not profile or not profile.is_public:
+            return Response({"found": False})
+        resp = Response({
+            "found": True,
+            "role": "teacher" if user.role == Role.TEACHER else "student",
+            "username": user.username,
+            "full_name": user.full_name,
+            "headline": profile.headline,
+            "photo": _photo_url(profile, request),
+            "photo_adjust": profile.photo_adjust,
+            "path": _public_path(user),
+        })
+        resp["Cache-Control"] = "no-store"
+        return resp
+
+
 class PublicProfileView(APIView):
     """GET /api/auth/profiles/<student|teacher>/<username>/ — anyone, no sign-in."""
 

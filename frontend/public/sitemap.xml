@@ -3,6 +3,7 @@
   <url><loc>https://tufanganj-vivekanand-vidyalaya.vercel.app/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
   <url><loc>https://tufanganj-vivekanand-vidyalaya.vercel.app/about</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://tufanganj-vivekanand-vidyalaya.vercel.app/academics</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://tufanganj-vivekanand-vidyalaya.vercel.app/find-profile</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
   <url><loc>https://tufanganj-vivekanand-vidyalaya.vercel.app/faculty</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://tufanganj-vivekanand-vidyalaya.vercel.app/achievements</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://tufanganj-vivekanand-vidyalaya.vercel.app/campus</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>

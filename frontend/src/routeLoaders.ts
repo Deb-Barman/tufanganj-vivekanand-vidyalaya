@@ -32,6 +32,7 @@ export const L = {
   GalleryPage: track(() => import("./pages/GalleryPage")),
   DeveloperPage: track(() => import("./pages/DeveloperPage")),
   PublicProfilePage: track(() => import("./pages/PublicProfilePage")),
+  FindProfilePage: track(() => import("./pages/FindProfilePage")),
   LoginPage: track(() => import("./portal/pages/LoginPage")),
   AdminLoginPage: track(() => import("./portal/pages/AdminLoginPage")),
   DashboardShell: track(() => import("./portal/pages/DashboardShell")),

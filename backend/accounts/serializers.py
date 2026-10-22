@@ -7,6 +7,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.utils import get_md5_hash_password
 
+from .backends import lock_message
 from .models import Role, User
 
 
@@ -28,14 +29,10 @@ class RoleAwareTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         username = attrs.get(self.username_field)
-        candidate = User.objects.filter(username=username).first()
-
-        if candidate and candidate.locked_until and candidate.locked_until > timezone.now():
-            minutes_left = max(1, int((candidate.locked_until - timezone.now()).total_seconds() // 60) + 1)
-            raise AuthenticationFailed(
-                f"Too many failed attempts. Try again in {minutes_left} minute(s), "
-                "or contact the school office."
-            )
+        # Same answer for real and made-up usernames (see accounts/backends.py), so this can't be used to find accounts.
+        blocked = lock_message(self.context.get("request"), username)
+        if blocked:
+            raise AuthenticationFailed(blocked)
 
         # Failed-attempt counting and lockout happen in
         # accounts.backends.LockoutModelBackend (shared with Django admin).

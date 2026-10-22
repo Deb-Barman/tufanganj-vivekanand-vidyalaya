@@ -46,6 +46,7 @@ const TermsPage = lazyNamed(L.TermsPage, "TermsPage");
 const GalleryPage = lazyNamed(L.GalleryPage, "GalleryPage");
 const DeveloperPage = lazyNamed(L.DeveloperPage, "DeveloperPage");
 const PublicProfilePage = lazyNamed(L.PublicProfilePage, "PublicProfilePage");
+const FindProfilePage = lazyNamed(L.FindProfilePage, "FindProfilePage");
 
 // portal
 const LoginPage = lazyNamed(L.LoginPage, "LoginPage");
@@ -104,6 +105,7 @@ export default function App() {
         <Route path="gallery" element={<GalleryPage />} />
         <Route path="developer" element={<DeveloperPage />} />
         <Route path="profile/:role/:username" element={<PublicProfilePage />} />
+        <Route path="find-profile" element={<FindProfilePage />} />
 
       </Route>
 
