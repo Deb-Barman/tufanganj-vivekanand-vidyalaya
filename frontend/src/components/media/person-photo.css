@@ -1,0 +1,7 @@
+.ph { display: inline-grid; place-items: center; flex: none; border-radius: 50%; overflow: hidden; padding: 0; border: 0; position: relative; background: var(--panel); box-shadow: var(--inset-sm), 0 0 0 2px rgba(var(--accent-glow), 0.3); font-weight: 800; }
+.ph-initials { color: var(--accent); }
+.ph-btn { cursor: zoom-in; transition: transform 0.25s var(--ease-out), box-shadow 0.25s; }
+.ph-btn:hover { transform: scale(1.04); box-shadow: var(--raise-sm), 0 0 0 3px rgba(var(--accent-glow), 0.5); }
+.ph-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.ph-btn::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 120%, rgba(0, 0, 0, 0.28), transparent 55%); opacity: 0; transition: opacity 0.25s; pointer-events: none; }
+.ph-btn:hover::after, .ph-btn:focus-visible::after { opacity: 1; }
