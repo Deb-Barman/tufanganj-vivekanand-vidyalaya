@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import type { AcademicSession, Attendance, Result, SchoolClass, StudentProfile, Subject } from "../../types/api";
+import { RESULT_TERMS, termLabel } from "../../types/api";
 import { EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, classLabel, errText, fmtDate, listAll, useDebounced, useUI, Select, DateField } from "../ui/kitExports";
 import { PageLoading } from "../ui/PageLoading";
 
@@ -134,6 +135,7 @@ export function ResultRecords() {
   const [sessionId, setSessionId] = useState("");
   const [classId, setClassId] = useState("");
   const [subjectId, setSubjectId] = useState("");
+  const [term, setTerm] = useState(""); // "" = every semester
   const [query, setQuery] = useState("");
   const q = useDebounced(query);
   const [students, setStudents] = useState<StudentProfile[]>([]);
@@ -151,14 +153,14 @@ export function ResultRecords() {
     if (!sid || !subId || !cid) { setRows([]); return; }
     setRows(null);
     try {
-      const [st, res] = await Promise.all([listAll<StudentProfile>(`/academics/students/?school_class=${cid}`), listAll<Result>(`/academics/results/?subject=${subId}&session=${sid}`)]);
+      const [st, res] = await Promise.all([listAll<StudentProfile>(`/academics/students/?school_class=${cid}`), listAll<Result>(`/academics/results/?subject=${subId}&session=${sid}${term ? `&term=${term}` : ""}`)]);
       setStudents(st);
       setRows(res);
     } catch (e) {
       toast("error", errText(e, "Could not load result records."));
       setRows([]);
     }
-  }, [sid, cid, subId, toast]);
+  }, [sid, cid, subId, term, toast]);
   useEffect(() => {
     // oxlint-disable-next-line react/set-state-in-effect
     load();
@@ -167,7 +169,7 @@ export function ResultRecords() {
   const nameOf = (id: string) => students.find((s) => s.user === id)?.full_name ?? "Student";
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return (rows ?? []).filter((r) => !s || nameOf(r.student).toLowerCase().includes(s)).sort((a, b) => nameOf(a.student).localeCompare(nameOf(b.student)));
+    return (rows ?? []).filter((r) => !s || nameOf(r.student).toLowerCase().includes(s)).sort((a, b) => nameOf(a.student).localeCompare(nameOf(b.student)) || a.term.localeCompare(b.term));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows, q, students]);
 
@@ -188,7 +190,7 @@ export function ResultRecords() {
   }
 
   async function remove(r: Result) {
-    if (!(await confirm({ title: "Delete this result?", message: `${nameOf(r.student)} — ${r.marks_obtained}/${r.full_marks} will be removed.`, confirmLabel: "Delete", danger: true }))) return;
+    if (!(await confirm({ title: "Delete this result?", message: `${nameOf(r.student)} (${termLabel(r.term)}) — ${r.marks_obtained}/${r.full_marks} will be removed.`, confirmLabel: "Delete", danger: true }))) return;
     try {
       await api.del(`/academics/results/${r.id}/`);
       setRows((p) => p?.filter((x) => x.id !== r.id) ?? p);
@@ -206,15 +208,17 @@ export function ResultRecords() {
         <div className="field-inline"><label htmlFor="rrSession">Session</label><Select id="rrSession" value={sid} onChange={(e) => setSessionId(e.target.value)}>{ref.sessions.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</Select></div>
         <div className="field-inline"><label htmlFor="rrClass">Class</label><Select id="rrClass" value={cid} onChange={(e) => setClassId(e.target.value)}>{classes.map((c) => <option key={c.id} value={c.id}>{classLabel(c, ref.sessions)}</option>)}</Select></div>
         <div className="field-inline"><label htmlFor="rrSubject">Subject</label><Select id="rrSubject" value={subId} onChange={(e) => setSubjectId(e.target.value)}>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></div>
+        <div className="field-inline"><label htmlFor="rrTerm">Semester</label><Select id="rrTerm" value={term} onChange={(e) => setTerm(e.target.value)}><option value="">All semesters</option>{RESULT_TERMS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</Select></div>
         <div className="search-box grow"><Icon name="search" size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search student" aria-label="Search student" /></div>
       </div>
       {rows === null ? <Skeleton rows={5} /> : shown.length === 0 ? (
-        <EmptyState icon="award" title="No results saved" text={subjects.length === 0 ? "This class has no subjects yet." : "No marks have been entered for this subject and session."} />
+        <EmptyState icon="award" title="No results saved" text={subjects.length === 0 ? "This class has no subjects yet." : "No marks have been entered for this subject, session and semester."} />
       ) : (
         <div className="list">
           {shown.map((r) => (
             <div key={r.id} className="row-link">
               <span className="row-main"><strong>{nameOf(r.student)}</strong><span>{Number(r.marks_obtained)} out of {Number(r.full_marks)}</span></span>
+              <StatusPill tone="info">{termLabel(r.term)}</StatusPill>
               <button type="button" className="icon-btn" onClick={() => setEdit(r)} aria-label="Edit result"><Icon name="edit" size={17} /></button>
               <button type="button" className="icon-btn danger" onClick={() => remove(r)} aria-label="Delete result"><Icon name="trash" size={17} /></button>
             </div>
@@ -224,7 +228,7 @@ export function ResultRecords() {
       <Modal open={edit !== null} title="Edit result" onClose={() => setEdit(null)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit(null)}>Cancel</button><button type="submit" form="res-rec-form" className="btn btn-primary btn-sm" disabled={saving}>{saving ? "Saving…" : "Save"}</button></>}>
         {edit && (
           <form id="res-rec-form" onSubmit={save} className="stack" style={{ gap: 14 }}>
-            <p className="modal-text">{nameOf(edit.student)}</p>
+            <p className="modal-text">{nameOf(edit.student)} · {termLabel(edit.term)}</p>
             <div className="form-grid">
               <div className="form-field"><label htmlFor="rrMarks">Marks obtained</label><input id="rrMarks" type="number" step="0.01" min={0} value={edit.marks_obtained} onChange={(e) => setEdit({ ...edit, marks_obtained: e.target.value })} required /></div>
               <div className="form-field"><label htmlFor="rrFull">Full marks</label><input id="rrFull" type="number" step="0.01" min={1} value={edit.full_marks} onChange={(e) => setEdit({ ...edit, full_marks: e.target.value })} required /></div>

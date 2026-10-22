@@ -8,8 +8,8 @@ import type { Achievement } from "../../types/api";
 import { EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, errText, listAll, useUI, Select } from "../ui/kitExports";
 
 const CATS: Record<Achievement["category"], string> = { ACADEMIC: "Academic", SPORTS: "Sports", ARTS: "Arts & culture", OTHER: "Other" };
-type Draft = { id?: string; title: string; year: string; category: Achievement["category"]; description: string; image: string | null; source?: Achievement["source"] };
-const blank = (): Draft => ({ title: "", year: String(new Date().getFullYear()), category: "ACADEMIC", description: "", image: null });
+type Draft = { id?: string; title: string; year: string; category: Achievement["category"]; description: string; image: string | null; source?: Achievement["source"]; adjust: string };
+const blank = (): Draft => ({ title: "", year: String(new Date().getFullYear()), category: "ACADEMIC", description: "", image: null, adjust: "" });
 
 export function AchievementsModule() {
   const { toast, confirm } = useUI();
@@ -38,6 +38,7 @@ export function AchievementsModule() {
       fd.append("description", draft.description);
       if (mediaInvalid("image", media)) { toast("error", "Fix the picture link first."); setSaving(false); return; }
       appendMedia(fd, media, "image", "image_link");
+      fd.append("image_adjust", draft.adjust);
       if (draft.id) await api.patch(`/content/achievements/${draft.id}/`, fd, { isMultipart: true });
       else await api.postForm("/content/achievements/", fd);
       toast("success", "Saved — it is now on the website's Achievements page.");
@@ -63,7 +64,7 @@ export function AchievementsModule() {
               <div className="rcard-head"><div className="row-main"><strong>{a.title}</strong><span>{a.year}</span></div><StatusPill tone="info">{CATS[a.category]}</StatusPill></div>
               {a.description && <p className="rcard-msg">{a.description}</p>}
               <div className="rcard-actions">
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => { setMedia(emptyMedia); setDraft({ id: a.id, title: a.title, year: String(a.year), category: a.category, description: a.description, image: a.image, source: a.source }); }}><Icon name="edit" size={15} /> Edit</button>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => { setMedia(emptyMedia); setDraft({ id: a.id, title: a.title, year: String(a.year), category: a.category, description: a.description, image: a.image, source: a.source, adjust: a.image_adjust ?? "" }); }}><Icon name="edit" size={15} /> Edit</button>
                 <button type="button" className="icon-btn danger" style={{ marginLeft: "auto" }} onClick={() => remove(a)} aria-label="Remove"><Icon name="trash" size={17} /></button>
               </div>
             </article>
@@ -79,7 +80,7 @@ export function AchievementsModule() {
               <div className="form-field"><label htmlFor="aCat">Category</label><Select id="aCat" value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value as Achievement["category"] })}>{Object.entries(CATS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></div>
             </div>
             <div className="form-field"><label htmlFor="aDesc">Details (optional)</label><textarea id="aDesc" rows={4} maxLength={1500} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} /></div>
-            <MediaSourceField kind="image" idPrefix="aImg" label={draft.id ? "Photo (optional — a new one replaces the current)" : "Photo (optional)"} accept="image/png,image/jpeg,image/webp" value={media} onChange={setMedia} current={draft.id ? { url: draft.image, source: draft.source ?? null } : undefined} />
+            <MediaSourceField kind="image" idPrefix="aImg" label={draft.id ? "Photo (optional — a new one replaces the current)" : "Photo (optional)"} accept="image/png,image/jpeg,image/webp" value={media} onChange={setMedia} current={draft.id ? { url: draft.image, source: draft.source ?? null } : undefined} adjust={{ value: draft.adjust, onChange: (v) => setDraft((d) => (d ? { ...d, adjust: v } : d)), shape: "photo" }} />
           </form>
         )}
       </Modal>

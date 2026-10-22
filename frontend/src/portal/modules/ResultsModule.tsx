@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
-import type { AcademicSession, Result, SchoolClass, StudentProfile, Subject } from "../../types/api";
+import type { AcademicSession, Result, ResultTerm, SchoolClass, StudentProfile, Subject } from "../../types/api";
+import { RESULT_TERMS, termLabel } from "../../types/api";
 import { ResultRecords } from "./RecordsManager";
 import { ImportButton } from "../ui/ImportButton";
 import { EmptyState, Icon, PageHeader, Ring, Segmented, Skeleton, classLabel, errText, listAll, useUI, Select } from "../ui/kitExports";
@@ -35,6 +36,7 @@ function StaffResults({ isAdmin }: { isAdmin: boolean }) {
   const [subjects, setSubjects] = useState<Subject[]>([]);
 
   const [sessionId, setSessionId] = useState("");
+  const [term, setTerm] = useState<ResultTerm>("SEM1");
   const [classPick, setClassPick] = useState("");
   const [subjectPick, setSubjectPick] = useState("");
   const [fullMarks, setFullMarks] = useState("100");
@@ -71,7 +73,7 @@ function StaffResults({ isAdmin }: { isAdmin: boolean }) {
     }
     setStudents(null);
     try {
-      const [st, res] = await Promise.all([listAll<StudentProfile>(`/academics/students/?school_class=${classId}`), listAll<Result>(`/academics/results/?subject=${subjectId}&session=${sessionId}`)]);
+      const [st, res] = await Promise.all([listAll<StudentProfile>(`/academics/students/?school_class=${classId}`), listAll<Result>(`/academics/results/?subject=${subjectId}&session=${sessionId}&term=${term}`)]);
       const existing: Record<string, string> = {};
       res.forEach((r) => (existing[r.student] = String(Number(r.marks_obtained))));
       if (res[0]) setFullMarks(String(Number(res[0].full_marks)));
@@ -82,7 +84,7 @@ function StaffResults({ isAdmin }: { isAdmin: boolean }) {
       toast("error", errText(e, "Could not load marks."));
       setStudents([]);
     }
-  }, [classId, subjectId, sessionId, toast]);
+  }, [classId, subjectId, sessionId, term, toast]);
 
   useEffect(() => {
     // Data fetch on mount / when a filter changes: state is set after the awaited request, not synchronously.
@@ -105,9 +107,9 @@ function StaffResults({ isAdmin }: { isAdmin: boolean }) {
       const records = Object.entries(values)
         .filter(([, v]) => v !== "")
         .map(([student, v]) => ({ student, marks_obtained: Number(v).toFixed(2) }));
-      await api.post("/academics/results/bulk/", { subject: subjectId, session: sessionId, full_marks: full.toFixed(2), records });
+      await api.post("/academics/results/bulk/", { subject: subjectId, session: sessionId, term, full_marks: full.toFixed(2), records });
       setInitial({ ...values });
-      toast("success", `Marks saved for ${records.length} ${records.length === 1 ? "student" : "students"}.`);
+      toast("success", `${termLabel(term)} marks saved for ${records.length} ${records.length === 1 ? "student" : "students"}.`);
     } catch (e) {
       toast("error", errText(e, "Could not save marks."));
     } finally {
@@ -132,7 +134,7 @@ function StaffResults({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <>
-      <PageHeader icon="award" title="Results" sub="Choose session, class and subject, then type each student's marks. Saving again simply updates them." />
+      <PageHeader icon="award" title="Results" sub="Choose session, semester, class and subject, then type each student's marks. Saving again simply updates them." />
 
       <div className="toolbar">
         <div className="field-inline" style={{ flex: "1 1 130px" }}>
@@ -144,6 +146,12 @@ function StaffResults({ isAdmin }: { isAdmin: boolean }) {
                 {s.is_current ? " (current)" : ""}
               </option>
             ))}
+          </Select>
+        </div>
+        <div className="field-inline" style={{ flex: "1 1 150px" }}>
+          <label htmlFor="rTerm">Semester</label>
+          <Select id="rTerm" value={term} onChange={(e) => setTerm(e.target.value as ResultTerm)}>
+            {RESULT_TERMS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </Select>
         </div>
         <div className="field-inline" style={{ flex: "2 1 180px" }}>
@@ -226,17 +234,21 @@ function StaffResults({ isAdmin }: { isAdmin: boolean }) {
 
 /* ───────────── Student: my results ───────────── */
 
+const TERM_ORDER = RESULT_TERMS.map((t) => t.value as string);
+
 function StudentResults() {
   const [results, setResults] = useState<Result[] | null>(null);
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [sessions, setSessions] = useState<AcademicSession[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([listAll<Result>("/academics/results/"), listAll<Subject>("/academics/subjects/"), listAll<AcademicSession>("/academics/sessions/")])
-      .then(([r, sub, s]) => {
+    Promise.all([listAll<Result>("/academics/results/"), listAll<Subject>("/academics/subjects/"), listAll<SchoolClass>("/academics/classes/"), listAll<AcademicSession>("/academics/sessions/")])
+      .then(([r, sub, cl, s]) => {
         setResults(r);
         setSubjects(sub);
+        setClasses(cl);
         setSessions(s);
       })
       .catch((e) => {
@@ -245,31 +257,46 @@ function StudentResults() {
       });
   }, []);
 
-  const bySession = useMemo(() => {
-    const groups = new Map<string, Result[]>();
-    results?.forEach((r) => groups.set(r.session, [...(groups.get(r.session) ?? []), r]));
-    return [...groups.entries()];
-  }, [results]);
+  /** One block per exam: "First Semester · Class VI", newest session first, semesters in order. */
+  const groups = useMemo(() => {
+    const m = new Map<string, { session: string; term: string; rows: Result[] }>();
+    results?.forEach((r) => {
+      const key = `${r.session}|${r.term}`;
+      const g = m.get(key) ?? { session: r.session, term: r.term, rows: [] };
+      g.rows.push(r);
+      m.set(key, g);
+    });
+    const sessionRank = (id: string) => sessions.findIndex((s) => s.id === id); // the API lists newest session first
+    return [...m.values()].sort((a, b) => sessionRank(a.session) - sessionRank(b.session) || TERM_ORDER.indexOf(a.term) - TERM_ORDER.indexOf(b.term));
+  }, [results, sessions]);
+
+  const classOf = (rows: Result[]) => {
+    const subject = subjects.find((s) => s.id === rows[0]?.subject);
+    const c = classes.find((x) => x.id === subject?.school_class);
+    return c ? `${c.name}${c.stream ? " " + c.stream : ""}` : "";
+  };
 
   return (
     <>
-      <PageHeader icon="award" title="My results" sub="Marks entered by your teachers." />
+      <PageHeader icon="award" title="My results" sub="Marks entered by your teachers, semester by semester." />
       {error && <p className="alert alert-error">{error}</p>}
       {results === null ? (
         <Skeleton rows={4} />
       ) : results.length === 0 ? (
         <EmptyState icon="award" title="No marks yet" text="Your marks will appear here once your teachers enter them." />
       ) : (
-        bySession.map(([sid, rows]) => {
+        groups.map(({ session, term, rows }) => {
           const got = rows.reduce((a, r) => a + Number(r.marks_obtained), 0);
           const full = rows.reduce((a, r) => a + Number(r.full_marks), 0);
           const pct = full ? Math.round((got / full) * 100) : 0;
+          const cls = classOf(rows);
           return (
-            <section className="panel" key={sid}>
+            <section className="panel" key={`${session}|${term}`}>
               <div className="panel-title">
                 <h2>
-                  <Icon name="calendar" size={18} /> Session {sessions.find((s) => s.id === sid)?.label ?? ""}
+                  <Icon name="award" size={18} /> {termLabel(term)}{cls ? ` · ${cls}` : ""}
                 </h2>
+                <span className="mini-meta">Session {sessions.find((s) => s.id === session)?.label ?? ""}</span>
               </div>
               <div className="split" style={{ marginBottom: 18 }}>
                 <Ring percent={pct} label={`${pct}%`} sub="overall" tone={pctTone(pct)} />
@@ -277,7 +304,7 @@ function StudentResults() {
                   <span>
                     <b>{got}</b> of {full} marks
                   </span>
-                  <span>{rows.length} subjects</span>
+                  <span>{rows.length} {rows.length === 1 ? "subject" : "subjects"}</span>
                 </div>
               </div>
               <div className="list">

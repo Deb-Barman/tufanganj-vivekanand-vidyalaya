@@ -3,7 +3,10 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { SchoolClass, Subject, TeacherProfile } from "../../types/api";
-import { Avatar, EmptyState, Icon, Modal, PageHeader, Skeleton, errText, listAll, useUI } from "../ui/kitExports";
+import { Link } from "react-router-dom";
+import { FacultyCard } from "../../components/faculty/FacultyCard";
+import { dashPath } from "../ui/nav";
+import { EmptyState, Icon, Modal, PageHeader, Skeleton, errText, listAll, useUI } from "../ui/kitExports";
 
 export function TeachersModule() {
   const { user } = useAuth();
@@ -71,13 +74,17 @@ export function TeachersModule() {
       <PageHeader
         icon="school"
         title="Faculty"
-        sub={isAdmin ? "Teachers' public profiles. Edit department, bio, experience and the subjects each one teaches." : isTeacher ? "Our teachers. You can edit your own profile — it appears on the school website." : "Our teachers."}
+        sub={isAdmin ? "Our teachers. Each card is built from the teacher's own profile; tap a card to open the full profile." : isTeacher ? "Our teachers. Your card is built from your own profile — update it in My profile and it changes here and on the website." : "Our teachers. Tap a card to read the full profile."}
         actions={
-          isTeacher &&
-          mine && (
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => openEdit(mine)}>
-              <Icon name="edit" size={15} /> Edit my profile
-            </button>
+          isTeacher && (
+            <>
+              <Link className="btn btn-primary btn-sm" to={dashPath("profile")}><Icon name="user" size={15} /> Edit my profile</Link>
+              {mine && (
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => openEdit(mine)}>
+                  <Icon name="edit" size={15} /> School details
+                </button>
+              )}
+            </>
           )
         }
       />
@@ -87,39 +94,25 @@ export function TeachersModule() {
       ) : teachers.length === 0 ? (
         <EmptyState icon="school" title="No teachers yet" text={isAdmin ? "Create Teacher accounts from the Accounts page and they will appear here." : "Teachers will appear here."} />
       ) : (
-        <div className="cards">
-          {teachers.map((t) => {
-            const taught = subjects.filter((s) => t.subjects_taught.includes(s.id));
+        <div className="fc-grid">
+          {teachers.map((t, i) => {
+            const taught = subjects.filter((s) => t.subjects_taught.includes(s.id)).map((s) => s.name);
             return (
-              <article className="rcard" key={t.user}>
-                <div className="rcard-head">
-                  <Avatar name={t.full_name} />
-                  <div className="row-main">
-                    <strong>{t.full_name}</strong>
-                    <span>
-                      {t.department || "Department not set"}
-                      {t.years_experience ? ` · ${t.years_experience} yrs` : ""}
-                    </span>
-                  </div>
-                </div>
-                {t.bio && <p className="rcard-msg">{t.bio}</p>}
-                {taught.length > 0 && (
-                  <div className="rcard-meta">
-                    {taught.map((s) => (
-                      <span key={s.id} className="status-pill tone-info">
-                        {s.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {isAdmin && (
-                  <div className="rcard-actions">
-                    <button type="button" className="btn btn-outline btn-sm" onClick={() => openEdit(t)}>
-                      <Icon name="edit" size={15} /> Edit
-                    </button>
-                  </div>
-                )}
-              </article>
+              <FacultyCard
+                key={t.user}
+                index={i}
+                name={t.full_name}
+                department={t.department}
+                years={t.years_experience}
+                bio={t.bio}
+                subjects={taught}
+                card={t.profile}
+                actions={isAdmin ? (
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => openEdit(t)}>
+                    <Icon name="edit" size={15} /> Edit
+                  </button>
+                ) : undefined}
+              />
             );
           })}
         </div>

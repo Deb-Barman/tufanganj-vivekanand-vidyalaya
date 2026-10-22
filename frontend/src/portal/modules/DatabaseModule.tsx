@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import type { DatabaseOverview } from "../../types/api";
 import { EmptyState, Icon, PageHeader, Ring, Skeleton, StatCard, StatusPill, errText, fmtBytes, fmtDateTime, useUI } from "../ui/kitExports";
-import { PageLoading } from "../ui/PageLoading";
+import { SkDatabase } from "../ui/Skeletons";
 import "../ui/admin-tools.css";
 
 const tone = (pct: number | null): "good" | "warn" | "bad" => (pct == null ? "good" : pct >= 90 ? "bad" : pct >= 70 ? "warn" : "good");
@@ -45,7 +45,7 @@ export function DatabaseModule() {
   );
   const sub = "How much of your Supabase plan the school is using — database size, file storage and every table. Read-only.";
 
-  if (!data && !failed) return <PageLoading icon="database" title="Database" sub={sub} toolbar={false} variant="cards" rows={3} />;
+  if (!data && !failed) return (<><PageHeader icon="database" title="Database" sub={sub} /><SkDatabase /></>);
   if (!data) return (<><PageHeader icon="database" title="Database" sub={sub} actions={actions} /><EmptyState icon="alert" title="Could not load" text="The server did not answer. Try again in a moment." action={<button type="button" className="btn btn-primary btn-sm" onClick={load}>Try again</button>} /></>);
 
   const { database: db, storage: st, server, tables } = data;

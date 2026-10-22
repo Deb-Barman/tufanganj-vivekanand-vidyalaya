@@ -6,9 +6,11 @@ import type { GalleryImage } from "../../types/api";
 import { MediaSourceField } from "../ui/MediaSourceField";
 import { appendMedia, emptyMedia, mediaChosen, mediaInvalid } from "../ui/mediaHelpers";
 import type { MediaValue } from "../ui/mediaHelpers";
+import { AdjustedImg } from "../../components/media/AdjustedImg";
+import { openLightbox } from "../../components/media/lightboxStore";
 import { EmptyState, Icon, Modal, PageHeader, Skeleton, errText, listAll, useDebounced, useUI } from "../ui/kitExports";
 
-type Draft = { id?: string; caption: string; image?: string; source?: GalleryImage["source"] };
+type Draft = { id?: string; caption: string; image?: string; source?: GalleryImage["source"]; adjust: string };
 
 export function GalleryModule() {
   const { user } = useAuth();
@@ -50,6 +52,7 @@ export function GalleryModule() {
       const fd = new FormData();
       fd.append("caption", draft.caption.trim());
       appendMedia(fd, media, "image", "image_link");
+      fd.append("image_adjust", draft.adjust);
       if (draft.id) await api.patch(`/content/gallery/${draft.id}/`, fd, { isMultipart: true });
       else await api.postForm("/content/gallery/", fd);
       toast("success", draft.id ? "Photo updated." : "Photo uploaded.");
@@ -76,21 +79,23 @@ export function GalleryModule() {
 
   return (
     <>
-      <PageHeader icon="image" title="Gallery" sub={canManage ? "Add school photos by upload (max 5 MB) or — to save storage — by pasting a Google Drive / picture link." : "School photo gallery."} actions={canManage && (<button type="button" className="btn btn-primary btn-sm" onClick={() => { setMedia(emptyMedia); setDraft({ caption: "" }); }}><Icon name="plus" size={16} /> Add photo</button>)} />
+      <PageHeader icon="image" title="Gallery" sub={canManage ? "Add school photos by upload (max 5 MB) or — to save storage — by pasting a Google Drive / picture link." : "School photo gallery."} actions={canManage && (<button type="button" className="btn btn-primary btn-sm" onClick={() => { setMedia(emptyMedia); setDraft({ caption: "", adjust: "" }); }}><Icon name="plus" size={16} /> Add photo</button>)} />
       <div className="toolbar">
         <div className="search-box grow"><Icon name="search" size={18} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search captions" aria-label="Search photos" /></div>
       </div>
       {items === null ? <Skeleton variant="grid" rows={3} /> : shown.length === 0 ? (
         <EmptyState icon="image" title={items.length === 0 ? "No photos yet" : "Nothing found"} text={items.length === 0 && canManage ? "Use “Upload photo” to add the first one." : undefined} />
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 14 }} className="gal-thumbs">
           {shown.map((img) => (
             <div key={img.id} className="stack" style={{ gap: 6 }}>
-              <img src={img.image} alt={img.caption || "Gallery photo"} loading="lazy" referrerPolicy="no-referrer" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 12, border: "1px solid var(--border)" }} />
+              <button type="button" className="gal-thumb" onClick={() => openLightbox(shown.map((g) => ({ src: g.image, alt: g.caption || "Gallery photo", caption: g.caption })), shown.indexOf(img))} aria-label={img.caption ? `Open photo: ${img.caption}` : "Open photo full screen"}>
+                <AdjustedImg src={img.image} adjust={img.image_adjust} alt={img.caption || "Gallery photo"} />
+              </button>
               {img.caption && <span className="mini-meta">{img.caption}</span>}
               {canManage && (
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button type="button" className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setMedia(emptyMedia); setDraft({ id: img.id, caption: img.caption, image: img.image, source: img.source }); }}><Icon name="edit" size={15} /> Edit</button>
+                  <button type="button" className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => { setMedia(emptyMedia); setDraft({ id: img.id, caption: img.caption, image: img.image, source: img.source, adjust: img.image_adjust ?? "" }); }}><Icon name="edit" size={15} /> Edit</button>
                   <button type="button" className="icon-btn danger" onClick={() => remove(img)} aria-label="Delete photo"><Icon name="trash" size={17} /></button>
                 </div>
               )}
@@ -101,7 +106,7 @@ export function GalleryModule() {
       <Modal open={draft !== null} title={draft?.id ? "Edit photo" : "Add photo"} onClose={() => setDraft(null)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setDraft(null)}>Cancel</button><button type="submit" form="gallery-form" className="btn btn-primary btn-sm" disabled={saving || (!draft?.id && !mediaChosen(media)) || mediaInvalid("image", media)}>{saving ? "Saving…" : draft?.id ? "Save changes" : "Add"}</button></>}>
         {draft && (
           <form id="gallery-form" onSubmit={save} className="stack" style={{ gap: 14 }}>
-            <MediaSourceField kind="image" idPrefix="g" label={draft.id ? "Replace picture (optional)" : "Picture"} accept="image/jpeg,image/png,image/webp" value={media} onChange={setMedia} current={draft.id ? { url: draft.image ?? null, source: draft.source ?? null } : undefined} />
+            <MediaSourceField kind="image" idPrefix="g" label={draft.id ? "Replace picture (optional)" : "Picture"} accept="image/jpeg,image/png,image/webp" value={media} onChange={setMedia} current={draft.id ? { url: draft.image ?? null, source: draft.source ?? null } : undefined} adjust={{ value: draft.adjust, onChange: (v) => setDraft((d) => (d ? { ...d, adjust: v } : d)), shape: "card" }} />
             <div className="form-field"><label htmlFor="gCaption">Caption (optional)</label><input id="gCaption" value={draft.caption} maxLength={200} onChange={(e) => setDraft({ ...draft, caption: e.target.value })} /></div>
           </form>
         )}
