@@ -1,12 +1,23 @@
 import { Link } from "react-router-dom";
 import { MORE, NAV, SITE } from "../config/site";
 import { DEVELOPER } from "../config/developer";
+import { ProfileFinderForm } from "./ProfileFinderForm";
+import "./ProfileFinderForm.css";
 import "./SiteFooter.css";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
   return (
     <footer className="site-footer">
+      <div className="wrap">
+        <section className="footer-finder" aria-labelledby="footer-finder-title">
+          <div className="footer-finder-text">
+            <h4 id="footer-finder-title">Profile Finder</h4>
+            <p>Find any teacher or student profile instantly — just type their username.</p>
+          </div>
+          <ProfileFinderForm id="footer-find" />
+        </section>
+      </div>
       <div className="wrap footer-grid">
         <div className="footer-brand">
           <p className="brand-name">
@@ -62,6 +73,7 @@ export function SiteFooter() {
         </div>
         <div className="footer-col">
           <h5>Help</h5>
+          <Link to="/find-profile">Profile Finder</Link>
           <Link to="/faq">FAQ</Link>
           <Link to="/downloads">Downloads</Link>
           <Link to="/portal">Student &amp; Staff Login</Link>
