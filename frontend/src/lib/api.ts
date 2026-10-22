@@ -28,11 +28,19 @@ function firstFieldError(body: ApiErrorShape): string | null {
   return null;
 }
 
-let refreshInFlight: Promise<string | null> | null = null;
+/**
+ * Getting a fresh access token. The result tells the caller WHY it failed:
+ * - sessionOver: the server said the sign-in is no longer valid (expired, password changed) → the person must sign in again.
+ * - otherwise it was only a hiccup (server waking up, busy, bad mobile signal) → keep the sign-in and let them retry.
+ * Before, ANY failure signed the person out, so a weak network could throw a student out mid-lesson.
+ */
+type RefreshResult = { ok: true; access: string } | { ok: false; sessionOver: boolean };
 
-async function refreshAccessToken(): Promise<string | null> {
+let refreshInFlight: Promise<RefreshResult> | null = null;
+
+async function refreshAccessToken(): Promise<RefreshResult> {
   const refresh = tokenStorage.getRefresh();
-  if (!refresh) return null;
+  if (!refresh) return { ok: false, sessionOver: true };
 
   if (!refreshInFlight) {
     refreshInFlight = fetch(`${API_BASE_URL}/auth/token/refresh/`, {
@@ -40,19 +48,19 @@ async function refreshAccessToken(): Promise<string | null> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh }),
     })
-      .then(async (res) => {
-        if (!res.ok) {
-          tokenStorage.clear();
-          return null;
+      .then(async (res): Promise<RefreshResult> => {
+        if (res.ok) {
+          const data = await res.json();
+          tokenStorage.setAccess(data.access);
+          return { ok: true, access: data.access as string };
         }
-        const data = await res.json();
-        tokenStorage.setAccess(data.access);
-        return data.access as string;
+        if (res.status === 400 || res.status === 401 || res.status === 403) {
+          tokenStorage.clear();
+          return { ok: false, sessionOver: true };
+        }
+        return { ok: false, sessionOver: false }; // 429 / 5xx / proxy errors: not the person's fault
       })
-      .catch(() => {
-        tokenStorage.clear();
-        return null;
-      })
+      .catch((): RefreshResult => ({ ok: false, sessionOver: false }))
       .finally(() => {
         refreshInFlight = null;
       });
@@ -124,8 +132,11 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
   }
 
   if (res.status === 401 && auth && !isRetry && tokenStorage.getRefresh()) {
-    const newAccess = await refreshAccessToken();
-    if (newAccess) return request<T>(path, options, true);
+    const fresh = await refreshAccessToken();
+    if (fresh.ok) return request<T>(path, options, true);
+    if (!fresh.sessionOver) {
+      throw new ApiError(0, { detail: "The school server is busy or your connection dropped for a moment. You are still signed in — please try again." });
+    }
   }
 
   if (res.status === 204) return undefined as T;
