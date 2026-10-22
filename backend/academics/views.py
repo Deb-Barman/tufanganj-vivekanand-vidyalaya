@@ -97,13 +97,13 @@ class SubjectDetailView(generics.RetrieveUpdateDestroyAPIView):
 class PublicTeacherListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = PublicTeacherSerializer
-    queryset = TeacherProfile.objects.select_related("user").all()
+    queryset = TeacherProfile.objects.select_related("user", "user__public_profile").prefetch_related("subjects_taught").all()
 
 
 class TeacherProfileListView(generics.ListAPIView):
     permission_classes = [IsAuthenticatedActiveUser]
     serializer_class = TeacherProfileSerializer
-    queryset = TeacherProfile.objects.select_related("user").all()
+    queryset = TeacherProfile.objects.select_related("user", "user__public_profile").all()
 
 
 class TeacherProfileDetailView(generics.RetrieveUpdateAPIView):
@@ -308,6 +308,8 @@ class ResultListCreateView(generics.ListCreateAPIView):
                 value = self.request.query_params.get(param)
                 if value:
                     qs = qs.filter(**{f"{param}_id": value})
+            if self.request.query_params.get("term"):
+                qs = qs.filter(term=self.request.query_params["term"])
             return qs
         return Result.objects.filter(student__user=user).select_related("subject")
 
@@ -409,7 +411,7 @@ class BulkResultView(APIView):
         saved = 0
         for rec in d["records"]:
             Result.objects.update_or_create(
-                student=rec["student"], subject=d["subject"], session=d["session"],
+                student=rec["student"], subject=d["subject"], session=d["session"], term=d["term"],
                 defaults={"marks_obtained": rec["marks_obtained"], "full_marks": d["full_marks"], "recorded_by": request.user},
             )
             saved += 1

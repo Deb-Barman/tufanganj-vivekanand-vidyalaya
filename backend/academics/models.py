@@ -121,10 +121,19 @@ class TeacherAttendance(models.Model):
 
 
 class Result(models.Model):
+    class Term(models.TextChoices):
+        SEM1 = "SEM1", "First Semester"
+        SEM2 = "SEM2", "Second Semester"
+        SEM3 = "SEM3", "Third Semester"
+        SEM4 = "SEM4", "Fourth Semester"
+        ANNUAL = "ANNUAL", "Annual / Final"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name="results")
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     session = models.ForeignKey(AcademicSession, on_delete=models.CASCADE)
+    #: Which exam the marks belong to. The class comes from the subject (a subject belongs to one class).
+    term = models.CharField(max_length=6, choices=Term.choices, default=Term.SEM1)
     marks_obtained = models.DecimalField(max_digits=5, decimal_places=2)
     full_marks = models.DecimalField(max_digits=5, decimal_places=2, default=100)
     recorded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
@@ -132,7 +141,7 @@ class Result(models.Model):
 
     class Meta:
         db_table = "results"
-        unique_together = ["student", "subject", "session"]
+        unique_together = ["student", "subject", "session", "term"]
         ordering = ["-created_at"]
 
 
@@ -141,6 +150,8 @@ class Marksheet(models.Model):
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name="marksheets")
     session = models.ForeignKey(AcademicSession, on_delete=models.CASCADE)
     file = models.FileField(upload_to="marksheets/%Y/", blank=True, null=True)
+    #: Instead of uploading: a share link to the marksheet (Google Drive "Anyone with the link", Dropbox, ...). Saves storage.
+    file_link = models.URLField(max_length=1000, blank=True)
     generated_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
