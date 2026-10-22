@@ -154,3 +154,45 @@ class PublicProfile(models.Model):
 
     def __str__(self):
         return f"Profile of {self.user.username}"
+
+
+class LoginFailure(models.Model):
+    """
+    Wrong-password counter for ONE username from ONE network address.
+
+    Counting per (username, address) means a stranger who types wrong passwords for a classmate's username only
+    blocks THEMSELVES — the real owner, signing in from home or school, is not locked out. (Before, anyone could lock
+    any student out just by knowing the username.) A much higher total across all addresses still locks the account
+    (see accounts/backends.py), so a spread-out guessing attack is stopped too.
+    """
+
+    username = models.CharField(max_length=150, db_index=True)  # lower-case; also stored for names that do not exist
+    ip = models.CharField(max_length=64)
+    count = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        db_table = "login_failures"
+        unique_together = [("username", "ip")]
+
+
+class PasswordResetRequest(models.Model):
+    """
+    "I forgot my password" — sent from the login page, answered by the Super Admin.
+
+    Passwords are stored only as one-way hashes, so nobody (not even the Super Admin) can read one; the school office
+    sets a new password instead. This model is simply the queue of who is waiting for that.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reset_requests")
+    note = models.CharField(max_length=200, blank=True)  # e.g. "Class 9, roll 12" so the office knows it is really them
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "password_reset_requests"
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["user"], condition=models.Q(resolved_at__isnull=True), name="one_open_reset_request_per_user"),
+        ]
