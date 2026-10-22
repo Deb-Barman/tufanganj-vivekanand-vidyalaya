@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Avatar } from "../components/site/Avatar";
+import { FacultyCard } from "../components/faculty/FacultyCard";
 import { EmptyPanel, PageHero, Section } from "../components/site/PageHero";
 import { SkTeachers } from "../components/loading/Loading";
 import { SITE } from "../config/site";
@@ -13,7 +12,7 @@ export function FacultyPage() {
   const { data, error } = usePaged<PublicTeacher>("/academics/teachers/public/", 60);
   return (
     <>
-      <PageHero crumb="Faculty" eyebrow="Our faculty" title="The teachers behind every classroom." lede="Each teacher keeps their own profile up to date from the school portal, so what you read here comes from them." />
+      <PageHero crumb="Faculty" eyebrow="Our faculty" title="The teachers behind every classroom." lede="Each teacher keeps their own profile up to date from the school portal, so what you read here comes from them. Tap a teacher to read their full profile." />
       <Section>
         {data === null ? (
           <SkTeachers count={6} />
@@ -24,33 +23,11 @@ export function FacultyPage() {
         ) : (
           <div className="card-grid">
             {data.map((t, i) => (
-              <TeacherCard key={`${t.full_name}-${i}`} teacher={t} index={i} />
+              <FacultyCard key={`${t.full_name}-${i}`} reveal index={i} name={t.full_name} department={t.department} years={t.years_experience} bio={t.bio} subjects={t.subjects} card={t.profile} />
             ))}
           </div>
         )}
       </Section>
     </>
-  );
-}
-
-const BIO_LIMIT = 170;
-
-/** One teacher. Long bios are folded so a single card never towers over the rest of the grid. */
-function TeacherCard({ teacher: t, index }: { teacher: PublicTeacher; index: number }) {
-  const [open, setOpen] = useState(false);
-  const long = !!t.bio && t.bio.length > BIO_LIMIT;
-  return (
-    <article className="feature teacher-feature" data-reveal style={{ ["--d" as string]: index % 4 }}>
-      <Avatar name={t.full_name} size={58} />
-      <h3>{t.full_name}</h3>
-      {t.department && <span className="pill">{t.department}</span>}
-      {t.years_experience ? <p className="t-exp">{t.years_experience} years of teaching experience</p> : null}
-      {t.bio && <p className={`t-bio${long && !open ? " clamped" : ""}`}>{t.bio}</p>}
-      {long && (
-        <button type="button" className="t-more" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-          {open ? "Show less" : "Read more"}
-        </button>
-      )}
-    </article>
   );
 }

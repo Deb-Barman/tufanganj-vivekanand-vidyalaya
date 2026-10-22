@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Avatar } from "../components/site/Avatar";
+import { PersonPhoto } from "../components/media/PersonPhoto";
 import { SocialIcon } from "../components/site/SocialIcon";
 import { Sk } from "../components/loading/Loading";
 import { SITE } from "../config/site";
@@ -94,7 +94,7 @@ export function PublicProfilePage() {
     <div className="pp wrap">
       <nav className="crumbs" aria-label="Breadcrumb"><Link to="/">Home</Link><span aria-hidden="true">/</span><span aria-current="page">{data.role === "student" ? "Student" : "Teacher"} profile</span></nav>
       <header className="pp-card">
-        {data.photo ? <img className="pp-photo" referrerPolicy="no-referrer" src={data.photo} alt={`Photo of ${data.full_name}`} width={120} height={120} /> : <Avatar name={data.full_name} size={120} />}
+        <PersonPhoto name={data.full_name} src={data.photo} adjust={data.photo_adjust} size={120} className="pp-photo" />
         <div className="pp-who">
           <span className="pp-role">{data.role === "student" ? "Student" : "Teacher"}</span>
           <h1>{data.full_name}</h1>

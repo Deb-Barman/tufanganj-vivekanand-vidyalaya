@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { AdjustedImg } from "../components/media/AdjustedImg";
 import { EmptyPanel, PageHero, Section } from "../components/site/PageHero";
 import { SkCards } from "../components/loading/Loading";
 import { SITE } from "../config/site";
@@ -30,7 +31,7 @@ export function GalleryPage() {
               {data.map((g, i) => (
                 <li key={g.id} data-reveal style={{ ["--d" as string]: i % 4 }}>
                   <button type="button" className="gal-tile" onClick={() => setOpen(i)} aria-label={g.caption ? `Open photo: ${g.caption}` : "Open photo"}>
-                    <img src={g.image} alt={g.caption || "School photo"} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+                    <AdjustedImg src={g.image} adjust={g.image_adjust} alt={g.caption || "School photo"} />
                     {g.caption && <span className="gal-cap">{g.caption}</span>}
                   </button>
                 </li>
