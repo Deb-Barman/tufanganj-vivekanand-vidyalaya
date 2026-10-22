@@ -191,6 +191,7 @@ export function StatCard({
   tone = "accent",
   to,
   suffix,
+  decimals = 0,
   loading,
   error,
 }: {
@@ -204,8 +205,10 @@ export function StatCard({
   tone?: "accent" | "good" | "warn" | "bad";
   to?: string;
   suffix?: string;
+  /** Digits after the point (e.g. 2.5 %). Default 0. */
+  decimals?: number;
 }) {
-  const shown = useCountUp(value);
+  const shown = useCountUp(value, 900, decimals);
   if (loading) {
     return (
       <div className="stat-card" aria-busy="true">
@@ -221,7 +224,7 @@ export function StatCard({
       <span className={`stat-icon tone-${error ? "warn" : tone}`}>
         <Icon name={error ? "alert" : icon} size={22} />
       </span>
-      <span className="stat-value">{error ? "—" : <>{shown.toLocaleString("en-IN")}{suffix}</>}</span>
+      <span className="stat-value">{error ? "—" : <>{shown.toLocaleString("en-IN", { maximumFractionDigits: decimals })}{suffix}</>}</span>
       <span className="stat-label">{label}</span>
       {(error || note) && <span className="stat-note">{error ? "Could not load" : note}</span>}
     </>
