@@ -3,6 +3,8 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { Notice } from "../../types/api";
+import { Linkified } from "../../lib/linkify";
+import "../ui/detail-view.css";
 import { EmptyState, Icon, Modal, PageHeader, Skeleton, errText, fmtDate, listAll, useDebounced, useUI } from "../ui/kitExports";
 
 type Draft = { id?: string; title: string; target_class: string; body: string };
@@ -18,7 +20,7 @@ export function NoticesModule() {
   const q = useDebounced(query);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
-  const [open, setOpen] = useState<string | null>(null);
+  const [view, setView] = useState<Notice | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -56,6 +58,15 @@ export function NoticesModule() {
     }
   }
 
+  async function copyNotice(n: Notice) {
+    try {
+      await navigator.clipboard.writeText(`${n.title}\n${n.target_class ? `For ${n.target_class}` : "For everyone"} · ${fmtDate(n.created_at)}\n\n${n.body}`);
+      toast("success", "Notice copied.");
+    } catch {
+      toast("error", "Could not copy — select the text and copy it by hand.");
+    }
+  }
+
   async function remove(n: Notice) {
     if (!(await confirm({ title: "Delete this notice?", message: `“${n.title}” will disappear from the website and the portal.`, confirmLabel: "Delete", danger: true }))) return;
     try {
@@ -83,13 +94,13 @@ export function NoticesModule() {
       ) : (
         <div className="cards">
           {shown.map((n) => (
-            <article className="rcard" key={n.id}>
+            <article className="rcard is-open" key={n.id} onClick={() => setView(n)}>
               <div className="rcard-head">
-                <div className="row-main"><strong>{n.title}</strong><span>{n.target_class ? `For ${n.target_class}` : "For everyone"} · {fmtDate(n.created_at)}{n.created_by_name ? ` · ${n.created_by_name}` : ""}</span></div>
+                <div className="row-main"><button type="button" className="rcard-title" onClick={(e) => { e.stopPropagation(); setView(n); }} aria-label={`Open notice: ${n.title}`}>{n.title}</button><span>{n.target_class ? `For ${n.target_class}` : "For everyone"} · {fmtDate(n.created_at)}{n.created_by_name ? ` · ${n.created_by_name}` : ""}</span></div>
               </div>
-              <p className="rcard-msg" style={open === n.id ? undefined : { display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{n.body}</p>
-              <div className="rcard-actions">
-                {n.body.length > 160 && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(open === n.id ? null : n.id)}>{open === n.id ? "Show less" : "Read all"}</button>}
+              <p className="rcard-msg" style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{n.body}</p>
+              <div className="rcard-actions" onClick={(e) => e.stopPropagation()}>
+                <span className="rcard-more" onClick={() => setView(n)}>Read the full notice →</span>
                 {canPublish && (
                   <>
                     <button type="button" className="btn btn-outline btn-sm" onClick={() => setDraft({ id: n.id, title: n.title, target_class: n.target_class, body: n.body })}><Icon name="edit" size={15} /> Edit</button>
@@ -101,6 +112,27 @@ export function NoticesModule() {
           ))}
         </div>
       )}
+      <Modal
+        open={view !== null}
+        title={view?.title ?? ""}
+        size="lg"
+        onClose={() => setView(null)}
+        footer={view && (
+          <>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => copyNotice(view)}><Icon name="copy" size={15} /> Copy text</button>
+            {canPublish && <button type="button" className="btn btn-outline btn-sm" onClick={() => { setDraft({ id: view.id, title: view.title, target_class: view.target_class, body: view.body }); setView(null); }}><Icon name="edit" size={15} /> Edit</button>}
+          </>
+        )}
+      >
+        {view && (
+          <div className="dv">
+            <div className="dv-chips"><span className="dv-chip">{view.target_class ? `For ${view.target_class}` : "For everyone"}</span><span className="dv-chip soft">{fmtDate(view.created_at)}</span></div>
+            {view.created_by_name && <p className="dv-meta">Published by {view.created_by_name}{view.updated_at && view.updated_at.slice(0, 10) !== view.created_at.slice(0, 10) ? ` · updated ${fmtDate(view.updated_at)}` : ""}</p>}
+            <p className="dv-body"><Linkified text={view.body} /></p>
+          </div>
+        )}
+      </Modal>
+
       <Modal open={draft !== null} title={draft?.id ? "Edit notice" : "New notice"} onClose={() => setDraft(null)} footer={<><button type="button" className="btn btn-ghost btn-sm" onClick={() => setDraft(null)}>Cancel</button><button type="submit" form="notice-form" className="btn btn-primary btn-sm" disabled={saving || !draft?.title.trim() || !draft?.body.trim()}>{saving ? "Saving…" : draft?.id ? "Save changes" : "Publish"}</button></>}>
         {draft && (
           <form id="notice-form" onSubmit={save} className="stack" style={{ gap: 14 }}>

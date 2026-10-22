@@ -3,11 +3,13 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import type { Role, User } from "../../types/api";
 import { ImportButton } from "../ui/ImportButton";
+import { printSlip, whatsappLink } from "../../lib/credentialSlip";
 import { Avatar, EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, StatusPill, errText, fmtDate, listAll, useDebounced, useUI, Select } from "../ui/kitExports";
 
 type Filter = "ALL" | "STUDENT" | "TEACHER" | "ISSUES";
-type Creds = { title: string; username: string; password: string; role?: Role };
+type Creds = { title: string; username: string; password: string; role?: Role; name?: string };
 type Reset = { id: string; name: string; username: string };
+type ResetRequest = { id: string; user: string; username: string; full_name: string; role: Role; note: string; created_at: string };
 type Draft = { id: string; username: string; full_name: string; phone: string; email: string };
 
 // Meets the backend validators (10+ chars, not common, not all numeric).
@@ -34,8 +36,10 @@ export function AccountsModule() {
   const [rPass, setRPass] = useState("");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
+  const [requests, setRequests] = useState<ResetRequest[]>([]);
 
   const load = useCallback(async () => {
+    api.get<ResetRequest[]>("/auth/admin/reset-requests/").then(setRequests).catch(() => setRequests([])); // a hiccup here must never hide the accounts
     try {
       setItems(await listAll<User>("/auth/admin/users/"));
     } catch (e) {
@@ -67,7 +71,7 @@ export function AccountsModule() {
     const password = cPass;
     try {
       await api.post<User>("/auth/admin/users/", { username: cUser.trim(), password, full_name: cName.trim(), role: cRole });
-      setCreds({ title: "Account created — share these with the person, the password won't be shown again", username: cUser.trim(), password, role: cRole });
+      setCreds({ title: "Account created — share these with the person, the password won't be shown again", username: cUser.trim(), password, role: cRole, name: cName.trim() });
       setCreateOpen(false);
       setCUser("");
       setCName("");
@@ -124,7 +128,7 @@ export function AccountsModule() {
     setSaving(true);
     try {
       await api.post(`/auth/admin/users/${reset.id}/reset-password/`, { new_password: rPass });
-      setCreds({ title: "Password changed — share it with the person, it won't be shown again", username: reset.username, password: rPass });
+      setCreds({ title: "Password changed — share it with the person, it won't be shown again", username: reset.username, password: rPass, name: reset.name });
       setReset(null);
       load();
     } catch (err) {
@@ -137,6 +141,15 @@ export function AccountsModule() {
   async function remove(u: User) {
     if (!(await confirm({ title: "Delete this account?", message: `${u.full_name} (${u.username}) and their profile, attendance, results, marksheets and homework records will be permanently deleted. To keep the records, disable the account instead.`, confirmLabel: "Delete permanently", danger: true }))) return;
     run(u, () => api.del(`/auth/admin/users/${u.id}/`), "Account deleted.");
+  }
+
+  async function dismissRequest(r: ResetRequest) {
+    try {
+      await api.post(`/auth/admin/reset-requests/${r.id}/dismiss/`, {});
+      setRequests((p) => p.filter((x) => x.id !== r.id));
+    } catch (e) {
+      toast("error", errText(e, "Could not dismiss the request."));
+    }
   }
 
   async function copy(text: string) {
@@ -158,10 +171,35 @@ export function AccountsModule() {
           <div style={{ marginTop: 8 }}>Username: <code>{creds.username}</code></div>
           <div>Password: <code>{creds.password}</code></div>
           <div className="rcard-actions" style={{ marginTop: 10 }}>
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => copy(`Username: ${creds.username}\nPassword: ${creds.password}`)}>Copy both</button>
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => copy(`Username: ${creds.username}\nPassword: ${creds.password}`)}><Icon name="copy" size={15} /> Copy both</button>
+            <a className="btn btn-outline btn-sm" href={whatsappLink(creds, location.origin)} target="_blank" rel="noopener noreferrer"><Icon name="send" size={15} /> Send on WhatsApp</a>
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => { if (!printSlip(creds, location.origin)) toast("error", "Allow pop-ups to print the slip."); }}><Icon name="printer" size={15} /> Print slip</button>
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCreds(null)}>I have saved it</button>
           </div>
         </div>
+      )}
+
+      {requests.length > 0 && (
+        <section className="panel" style={{ marginBottom: 16 }}>
+          <div className="panel-title">
+            <h2><Icon name="lock" size={18} /> Forgot-password requests</h2>
+            <StatusPill tone="warn">{requests.length} waiting</StatusPill>
+          </div>
+          <p className="modal-text" style={{ fontSize: 13, marginTop: 0 }}>Passwords are stored in a scrambled form nobody can read, so you set a <b>new</b> one and hand it over (WhatsApp or a printed slip). Check it is really them first — e.g. by class and roll number.</p>
+          <div className="list">
+            {requests.map((r) => {
+              const account = items?.find((u) => u.id === r.user);
+              return (
+                <div className="row-link" key={r.id}>
+                  <Avatar name={r.full_name} />
+                  <span className="row-main"><strong>{r.full_name}</strong><span>@{r.username} · {r.role === "TEACHER" ? "Teacher" : "Student"} · {fmtDate(r.created_at)}{r.note ? ` · “${r.note}”` : ""}</span></span>
+                  {account && <button type="button" className="btn btn-primary btn-sm" onClick={() => openReset(account)}>Set new password</button>}
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => dismissRequest(r)}>Dismiss</button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       <div className="toolbar">
