@@ -29,6 +29,8 @@ class Article(models.Model):
     cover_image = models.ImageField(upload_to=article_cover_path, blank=True, null=True)
     #: Instead of uploading: a public picture link (Google Drive "Anyone with the link", Imgur, …). Saves storage.
     cover_link = models.URLField(max_length=1000, blank=True)
+    #: How the cover sits in its frame ("x,y,zoom", see content/adjust.py). Blank = centred.
+    cover_adjust = models.CharField(max_length=24, blank=True)
     published = models.BooleanField(default=False)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -64,6 +66,7 @@ class GalleryImage(models.Model):
     caption = models.CharField(max_length=200, blank=True)
     image = models.ImageField(upload_to=gallery_path, blank=True, null=True)
     image_link = models.URLField(max_length=1000, blank=True)  # public picture link used instead of an upload
+    image_adjust = models.CharField(max_length=24, blank=True)  # "x,y,zoom" (see content/adjust.py)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -147,6 +150,7 @@ class Achievement(models.Model):
     category = models.CharField(max_length=10, choices=Category.choices, default=Category.ACADEMIC)
     image = models.ImageField(upload_to=achievement_path, blank=True, null=True)
     image_link = models.URLField(max_length=1000, blank=True)  # public picture link used instead of an upload
+    image_adjust = models.CharField(max_length=24, blank=True)  # "x,y,zoom" (see content/adjust.py)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
