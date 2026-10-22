@@ -131,6 +131,8 @@ class PublicProfile(models.Model):
     photo = models.ImageField(upload_to=profile_photo_path, blank=True, null=True)
     #: Instead of uploading a photo: a public picture link (Google Drive "Anyone with the link", …). Saves storage.
     photo_link = models.URLField(max_length=1000, blank=True)
+    #: How the photo sits in its round frame ("x,y,zoom", see content/adjust.py). Blank = centred.
+    photo_adjust = models.CharField(max_length=24, blank=True)
     # --- more about me (none of this is sensitive; age and gender stay hidden unless the owner switches them on)
     age = models.PositiveSmallIntegerField(null=True, blank=True)
     show_age = models.BooleanField(default=False)
