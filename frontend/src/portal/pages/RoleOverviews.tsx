@@ -201,10 +201,17 @@ export function StudentOverview({ name }: { name: string }) {
   }
 
   const present = att?.filter((a) => a.status === "PRESENT").length ?? 0;
-  const attPct = att && att.length ? Math.round((present / att.length) * 100) : 0;
+  const held = att?.length ?? 0;
+  const heldPct = held ? Math.round((present / held) * 100) : 0; // of the days held so far
   // The Super Admin sets the working days of the whole session (e.g. 200): show "5 of 200", not "5 of 6 days held so far".
   const sessionDays = sessionsQ.data?.find((s) => s.is_current)?.working_days ?? null;
-  const attNote = att ? (sessionDays ? `${present} of ${sessionDays} days${att.length ? ` · ${att.length} held so far` : ""}` : `${present} of ${att.length} days`) : "";
+  // "6 of 200 days" must read as 3 %, not 86 %: the main figure is days present out of ALL the session's working days.
+  // Only when the office has not set the session length do we fall back to "of the days held so far".
+  const attPctRaw = sessionDays ? Math.min(100, (present / sessionDays) * 100) : heldPct;
+  const attPct = Math.round(attPctRaw * 10) / 10;
+  const attDecimals = attPct < 10 && !Number.isInteger(attPct) ? 1 : 0;
+  const attLabel = `${attDecimals ? attPct.toFixed(1) : Math.round(attPct)}%`;
+  const attNote = att ? (sessionDays ? `${present} of ${sessionDays} days${held ? ` · ${heldPct}% of the ${held} held so far` : ""}` : `${present} of ${held} days`) : "";
   const today = (tt ?? []).filter((r) => r.weekday === weekdayIndex()).sort((a, b) => a.period - b.period);
   const hwList = (hw ?? []).map((h) => ({ ...h, done: hwLocal[h.id] ?? h.done }));
   const pending = hwList.filter((h) => !h.done);
@@ -233,14 +240,14 @@ export function StudentOverview({ name }: { name: string }) {
               <Link className="chip" to={dashPath("results")}><Icon name="award" size={16} /> My results</Link>
             </div>
           </div>
-          {ready && att && att.length > 0 && <Ring percent={attPct} label={`${attPct}%`} sub="attendance" tone={attPct >= 75 ? "good" : attPct >= 60 ? "warn" : "bad"} />}
+          {ready && att && att.length > 0 && <Ring percent={attPct} label={attLabel} sub={sessionDays ? "of the session" : "attendance"} tone={heldPct >= 75 ? "good" : heldPct >= 60 ? "warn" : "bad"} />}
         </div>
       </section>
 
       {!ready ? <MemberOverviewSkeleton /> : (
       <div className="ov-in">
       <div className="kpi-grid">
-        <StatCard loading={attQ.status === "loading"} error={attQ.status === "error"} icon="checkCircle" label="Attendance" suffix="%" value={attPct} note={attNote} tone={attPct >= 75 ? "good" : "warn"} to={dashPath("attendance")} />
+        <StatCard loading={attQ.status === "loading"} error={attQ.status === "error"} icon="checkCircle" label="Attendance" suffix="%" value={attPct} decimals={attDecimals} note={attNote} tone={heldPct >= 75 ? "good" : "warn"} to={dashPath("attendance")} />
         <StatCard loading={hwQ.status === "loading"} error={hwQ.status === "error"} icon="clipboard" label="Homework to do" value={pending.length} note="Due soon" tone={pending.length ? "warn" : "good"} to={dashPath("homework")} />
         <StatCard loading={examsQ.status === "loading"} error={examsQ.status === "error"} icon="calendar" label="Upcoming exams" value={exams?.length ?? 0} note={nextExam ? `Next: ${nextExam.subject_name}` : "None scheduled"} to={dashPath("exams")} />
         <StatCard loading={resultsQ.status === "loading"} error={resultsQ.status === "error"} icon="award" label="Average" suffix="%" value={avg} note={`${bySubject.length} subjects`} tone="good" to={dashPath("results")} />
