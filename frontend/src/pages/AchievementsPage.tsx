@@ -1,3 +1,5 @@
+import { AdjustedImg } from "../components/media/AdjustedImg";
+import { openLightbox } from "../components/media/lightboxStore";
 import { useMemo, useState } from "react";
 import { EmptyPanel, PageHero, Section } from "../components/site/PageHero";
 import { SkCards } from "../components/loading/Loading";
@@ -51,7 +53,11 @@ export function AchievementsPage() {
                 <div className="card-grid">
                   {items.map((a, i) => (
                     <article className="ach-card" key={a.id} data-reveal style={{ ["--d" as string]: i % 3 }}>
-                      {a.image && <img src={a.image} alt="" loading="lazy" referrerPolicy="no-referrer" />}
+                      {a.image && (
+                        <button type="button" className="ach-pic" onClick={() => openLightbox({ src: a.image!, alt: a.title, caption: a.title })} aria-label={`View photo: ${a.title}`}>
+                          <AdjustedImg src={a.image} adjust={a.image_adjust} alt="" />
+                        </button>
+                      )}
                       <span className="pill">{CATS.find((c) => c.v === a.category)?.l}</span>
                       <h3>{a.title}</h3>
                       {a.description && <p>{a.description}</p>}

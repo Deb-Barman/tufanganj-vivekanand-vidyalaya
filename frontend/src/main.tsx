@@ -8,6 +8,7 @@ import { AuthProvider } from "./lib/AuthContext";
 import { ThemeProvider } from "./lib/theme";
 import { RevealController } from "./lib/useReveal";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { LightboxRoot } from "./components/media/Lightbox";
 import { API_BASE_URL } from "./lib/config";
 import { installLinkPrefetch, preloadPath, preloadPublicPages } from "./lib/routePreload";
 
@@ -27,6 +28,7 @@ function mount() {
         <BrowserRouter>
           <AuthProvider>
             <RevealController />
+            <LightboxRoot />
             <ErrorBoundary>
               <App />
             </ErrorBoundary>

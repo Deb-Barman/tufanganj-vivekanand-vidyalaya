@@ -5,7 +5,8 @@ import { useAuth } from "../../lib/AuthContext";
 import { SOCIAL_SITES } from "../../lib/mediaLinks";
 import type { MyProfile } from "../../types/api";
 import { SocialIcon } from "../../components/site/SocialIcon";
-import { Avatar, EmptyState, Icon, PageHeader, Select, Skeleton, StatusPill, errText, useUI } from "../ui/kitExports";
+import { PersonPhoto } from "../../components/media/PersonPhoto";
+import { EmptyState, Icon, PageHeader, Select, Skeleton, StatusPill, errText, useUI } from "../ui/kitExports";
 import { MediaSourceField } from "../ui/MediaSourceField";
 import { emptyMedia, mediaChosen, mediaInvalid } from "../ui/mediaHelpers";
 import type { MediaValue } from "../ui/mediaHelpers";
@@ -57,6 +58,7 @@ export function ProfileModule() {
   const [photoOpen, setPhotoOpen] = useState(false);
   const [photo, setPhoto] = useState<MediaValue>(emptyMedia);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoAdjust, setPhotoAdjust] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -110,16 +112,10 @@ export function ProfileModule() {
   async function savePhoto() {
     setPhotoBusy(true);
     try {
-      if (photo.file) {
-        const f = photo.file;
-        if (!/^image\/(jpeg|png|webp)$/.test(f.type)) throw new Error("Please choose a JPEG, PNG or WebP photo.");
-        if (f.size > 5 * 1024 * 1024) throw new Error("That photo is larger than 5 MB.");
-        const fd = new FormData();
-        fd.append("photo", f);
-        await api.postForm("/auth/me/profile/photo/", fd);
-      } else {
-        await api.patch("/auth/me/profile/", { photo_link: photo.link.trim() });
-      }
+      // Profile pictures are never uploaded: the person pastes a link (e.g. from their own Google Drive) and positions it.
+      const body: Record<string, string> = { photo_adjust: photoAdjust };
+      if (photo.link.trim()) body.photo_link = photo.link.trim();
+      await api.patch("/auth/me/profile/", body);
       const fresh = await api.get<MyProfile>("/auth/me/profile/");
       setProfile(fresh); // photo only — leave unsaved text edits alone
       setPhoto(emptyMedia);
@@ -135,7 +131,7 @@ export function ProfileModule() {
   async function removePhoto() {
     try {
       await api.del("/auth/me/profile/photo/");
-      setProfile((p) => (p ? { ...p, photo: null, photo_source: null } : p));
+      setProfile((p) => (p ? { ...p, photo: null, photo_source: null, photo_adjust: "" } : p));
     } catch (e) {
       toast("error", errText(e, "Could not remove the photo."));
     }
@@ -158,9 +154,9 @@ export function ProfileModule() {
 
       <section className="panel pf-head">
         <div className="pf-photo">
-          {profile.photo ? <img src={profile.photo} alt="Your profile photo" referrerPolicy="no-referrer" /> : <Avatar name={profile.full_name} size={96} />}
+          <PersonPhoto name={profile.full_name} src={profile.photo} adjust={profile.photo_adjust} size={96} />
           <div className="pf-photo-actions">
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => setPhotoOpen((o) => !o)}>{profile.photo ? "Change photo" : "Add photo"}</button>
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => { setPhotoAdjust(profile.photo_adjust ?? ""); setPhoto(emptyMedia); setPhotoOpen((o) => !o); }}>{profile.photo ? "Change photo" : "Add photo"}</button>
             {profile.photo && <button type="button" className="link-btn" onClick={removePhoto}>Remove</button>}
           </div>
         </div>
@@ -171,10 +167,19 @@ export function ProfileModule() {
         </div>
         {photoOpen && (
           <div className="pf-photo-edit">
-            <MediaSourceField kind="image" idPrefix="pfPhoto" label="Profile photo" accept="image/jpeg,image/png,image/webp" value={photo} onChange={setPhoto} />
+            <MediaSourceField
+              kind="image"
+              idPrefix="pfPhoto"
+              label="Profile photo — paste a picture link"
+              linkOnly
+              value={photo}
+              onChange={setPhoto}
+              current={profile.photo ? { url: profile.photo, source: profile.photo_source } : undefined}
+              adjust={{ value: photoAdjust, onChange: setPhotoAdjust, shape: "circle" }}
+            />
             <div className="pf-photo-go">
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setPhotoOpen(false); setPhoto(emptyMedia); }}>Cancel</button>
-              <button type="button" className="btn btn-primary btn-sm" onClick={savePhoto} disabled={photoBusy || !mediaChosen(photo) || mediaInvalid("image", photo)}>{photoBusy ? "Saving…" : "Use this photo"}</button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={savePhoto} disabled={photoBusy || mediaInvalid("image", photo) || (!mediaChosen(photo) && photoAdjust === (profile.photo_adjust ?? ""))}>{photoBusy ? "Saving…" : mediaChosen(photo) ? "Use this photo" : "Save position"}</button>
             </div>
           </div>
         )}

@@ -24,6 +24,7 @@ from rest_framework.views import APIView
 
 from urllib.parse import urlparse, urlunparse
 
+from content.adjust import clean_adjust
 from content.links import LinkError, normalize_image_link
 from content.serializers import validate_image_upload
 from notices.serializers import sanitize
@@ -115,13 +116,14 @@ class MyProfileSerializer(serializers.ModelSerializer):
 
     photo = serializers.ImageField(read_only=True)
     photo_link = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+    photo_adjust = serializers.CharField(required=False, allow_blank=True, max_length=24)
     languages = serializers.ListField(child=serializers.CharField(max_length=MAX_ITEM_LEN), required=False, max_length=MAX_LIST_ITEMS)
     social_links = serializers.DictField(child=serializers.CharField(allow_blank=True, max_length=300), required=False)
 
     class Meta:
         model = PublicProfile
         fields = [
-            "headline", "about", "background", "talents", "interests", "achievements", "website", "photo", "photo_link", "is_public", "updated_at",
+            "headline", "about", "background", "talents", "interests", "achievements", "website", "photo", "photo_link", "photo_adjust", "is_public", "updated_at",
             "age", "show_age", "gender", "show_gender", "city", "languages", "favorite_subject", "career_goal", "qualification", "quote", "projects", "social_links",
         ]
         read_only_fields = ["photo", "updated_at"]
@@ -190,6 +192,12 @@ class MyProfileSerializer(serializers.ModelSerializer):
         except LinkError as exc:
             raise serializers.ValidationError(str(exc)) from None
 
+    def validate_photo_adjust(self, v):
+        try:
+            return clean_adjust(v)
+        except ValueError as exc:
+            raise serializers.ValidationError(str(exc)) from None
+
     def validate_social_links(self, v):
         out = {}
         for platform, value in v.items():
@@ -205,6 +213,8 @@ class MyProfileSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         link = validated_data.get("photo_link")
+        if link is not None and "photo_adjust" not in validated_data and link != instance.photo_link:
+            validated_data["photo_adjust"] = ""  # a different picture starts centred
         if link and instance.photo:  # a pasted link replaces the uploaded photo, so its file is deleted
             instance.photo.delete(save=False)
             instance.photo = None
@@ -241,6 +251,32 @@ def _photo_url(profile, request):
     except Exception:  # noqa: BLE001 - a storage hiccup must never break the whole profile
         return None
     return request.build_absolute_uri(url) if url.startswith("/") else url
+
+
+def faculty_card(user: User, request):
+    """
+    The short, professional card shown on the Faculty pages (public website AND the school portal).
+
+    It is built from the teacher's own "My profile" and exists ONLY when that profile is published (opt-in) and the
+    account is active — otherwise None, so a private profile never leaks through the faculty list. Same fields the
+    public profile page already shows; nothing private (phone, e-mail, marks…) is ever included.
+    """
+    profile = getattr(user, "public_profile", None) if user else None
+    if not profile or not profile.is_public or not user.is_active_account or not user.is_active:
+        return None
+    path = _public_path(user)
+    return {
+        "username": user.username,
+        "path": path,
+        "photo": _photo_url(profile, request) if request is not None else (profile.photo_link or None),
+        "photo_adjust": profile.photo_adjust,
+        "headline": profile.headline,
+        "qualification": profile.qualification,
+        "city": profile.city,
+        "languages": (profile.languages or [])[:4],
+        "talents": (profile.talents or [])[:4],
+        "about": (profile.about or "")[:220],
+    }
 
 
 class MyProfileView(APIView):
@@ -308,6 +344,7 @@ class MyProfilePhotoView(APIView):
             profile.photo.delete(save=False)
         profile.photo = ser.validated_data["photo"]
         profile.photo_link = ""
+        profile.photo_adjust = ""
         profile.save()
         return Response({"photo": _photo_url(profile, request)}, status=status.HTTP_200_OK)
 
@@ -318,6 +355,7 @@ class MyProfilePhotoView(APIView):
                 profile.photo.delete(save=False)
             profile.photo = None
             profile.photo_link = ""
+            profile.photo_adjust = ""
             profile.save()
         return Response({"photo": None})
 
@@ -354,6 +392,7 @@ class PublicProfileView(APIView):
             "achievements": profile.achievements,
             "website": profile.website,
             "photo": _photo_url(profile, request),
+            "photo_adjust": profile.photo_adjust,
             "updated_at": profile.updated_at,
             "city": profile.city,
             "languages": profile.languages or [],

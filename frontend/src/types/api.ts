@@ -49,6 +49,8 @@ export interface Article {
   cover_image: string | null;
   /** "upload" | "link" — where the cover picture comes from (cover_image always holds the address to show). */
   source?: "upload" | "link" | null;
+  /** How the cover sits in its frame: "x,y,zoom" (empty = centred). */
+  cover_adjust?: string;
   published: boolean;
   created_by: string | null;
   created_at: string;
@@ -70,6 +72,8 @@ export interface GalleryImage {
   caption: string;
   image: string;
   source?: "upload" | "link" | null;
+  /** How the picture sits in its frame: "x,y,zoom" (empty = centred). */
+  image_adjust?: string;
   uploaded_by: string | null;
   created_at: string;
 }
@@ -120,6 +124,21 @@ export interface Subject {
   school_class: string;
 }
 
+/** The teacher's own published "My profile", as shown on a Faculty card (null while the profile is private). */
+export interface FacultyCard {
+  username: string;
+  /** e.g. /profile/teacher/ranjan — the full page. */
+  path: string | null;
+  photo: string | null;
+  photo_adjust: string;
+  headline: string;
+  qualification: string;
+  city: string;
+  languages: string[];
+  talents: string[];
+  about: string;
+}
+
 export interface TeacherProfile {
   user: string;
   full_name: string;
@@ -127,6 +146,7 @@ export interface TeacherProfile {
   bio: string;
   years_experience: number | null;
   subjects_taught: string[];
+  profile: FacultyCard | null;
 }
 
 export interface PublicTeacher {
@@ -134,6 +154,8 @@ export interface PublicTeacher {
   department: string;
   bio: string;
   years_experience: number | null;
+  subjects: string[];
+  profile: FacultyCard | null;
 }
 
 export interface StudentProfile {
@@ -179,17 +201,31 @@ export interface Result {
   student: string;
   subject: string;
   session: string;
+  /** Which exam: SEM1…SEM4 or ANNUAL. */
+  term: ResultTerm;
   marks_obtained: string;
   full_marks: string;
   recorded_by: string | null;
   created_at: string;
 }
 
+export type ResultTerm = "SEM1" | "SEM2" | "SEM3" | "SEM4" | "ANNUAL";
+export const RESULT_TERMS: { value: ResultTerm; label: string }[] = [
+  { value: "SEM1", label: "First Semester" },
+  { value: "SEM2", label: "Second Semester" },
+  { value: "SEM3", label: "Third Semester" },
+  { value: "SEM4", label: "Fourth Semester" },
+  { value: "ANNUAL", label: "Annual / Final" },
+];
+export const termLabel = (t: string) => RESULT_TERMS.find((x) => x.value === t)?.label ?? t;
+
 export interface Marksheet {
   id: string;
   student: string;
   session: string;
+  /** Address to open: the uploaded file or the pasted link. */
   file: string | null;
+  source?: "upload" | "link" | null;
   generated_at: string;
 }
 
@@ -214,6 +250,7 @@ export interface Achievement {
   category: "ACADEMIC" | "SPORTS" | "ARTS" | "OTHER";
   image: string | null;
   source?: "upload" | "link" | null;
+  image_adjust?: string;
 }
 
 export interface ContactMessage {
@@ -349,6 +386,8 @@ export interface MyProfile {
   website: string;
   photo: string | null;
   photo_source: "upload" | "link" | null;
+  /** How the photo sits in its round frame: "x,y,zoom" (empty = centred). */
+  photo_adjust: string;
   is_public: boolean;
   updated_at: string;
   age: number | null;
@@ -387,6 +426,7 @@ export interface PublicProfile {
   achievements: string;
   website: string;
   photo: string | null;
+  photo_adjust?: string;
   updated_at: string;
   city: string;
   languages: string[];

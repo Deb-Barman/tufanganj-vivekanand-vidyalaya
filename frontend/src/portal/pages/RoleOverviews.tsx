@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
-import type { Attendance, Exam, Homework, Notice, Result, SchoolClass, Subject, TimetableEntry } from "../../types/api";
+import type { AcademicSession, Attendance, Exam, Homework, Notice, Result, SchoolClass, Subject, TimetableEntry } from "../../types/api";
 import { EmptyState, Icon, Ring, Skeleton, StatCard, fmtTime, firstName, greeting, listAll, todayISO, todayLong, useUI } from "../ui/kitExports";
 import { useLoad } from "../ui/useLoad";
 import { MemberOverviewSkeleton } from "../ui/Skeletons";
@@ -177,6 +177,7 @@ function MonthCalendar({ records }: { records: Attendance[] }) {
 export function StudentOverview({ name }: { name: string }) {
   const { toast } = useUI();
   const attQ = useLoad(() => listAll<Attendance>("/academics/attendance/"));
+  const sessionsQ = useLoad(() => listAll<AcademicSession>("/academics/sessions/"));
   const resultsQ = useLoad(() => listAll<Result>("/academics/results/"));
   const subjectsQ = useLoad(() => listAll<Subject>("/academics/subjects/"));
   const ttQ = useLoad(() => listAll<TimetableEntry>("/academics/timetable/"));
@@ -201,6 +202,9 @@ export function StudentOverview({ name }: { name: string }) {
 
   const present = att?.filter((a) => a.status === "PRESENT").length ?? 0;
   const attPct = att && att.length ? Math.round((present / att.length) * 100) : 0;
+  // The Super Admin sets the working days of the whole session (e.g. 200): show "5 of 200", not "5 of 6 days held so far".
+  const sessionDays = sessionsQ.data?.find((s) => s.is_current)?.working_days ?? null;
+  const attNote = att ? (sessionDays ? `${present} of ${sessionDays} days${att.length ? ` · ${att.length} held so far` : ""}` : `${present} of ${att.length} days`) : "";
   const today = (tt ?? []).filter((r) => r.weekday === weekdayIndex()).sort((a, b) => a.period - b.period);
   const hwList = (hw ?? []).map((h) => ({ ...h, done: hwLocal[h.id] ?? h.done }));
   const pending = hwList.filter((h) => !h.done);
@@ -236,7 +240,7 @@ export function StudentOverview({ name }: { name: string }) {
       {!ready ? <MemberOverviewSkeleton /> : (
       <div className="ov-in">
       <div className="kpi-grid">
-        <StatCard loading={attQ.status === "loading"} error={attQ.status === "error"} icon="checkCircle" label="Attendance" suffix="%" value={attPct} note={att ? `${present} of ${att.length} days` : ""} tone={attPct >= 75 ? "good" : "warn"} to={dashPath("attendance")} />
+        <StatCard loading={attQ.status === "loading"} error={attQ.status === "error"} icon="checkCircle" label="Attendance" suffix="%" value={attPct} note={attNote} tone={attPct >= 75 ? "good" : "warn"} to={dashPath("attendance")} />
         <StatCard loading={hwQ.status === "loading"} error={hwQ.status === "error"} icon="clipboard" label="Homework to do" value={pending.length} note="Due soon" tone={pending.length ? "warn" : "good"} to={dashPath("homework")} />
         <StatCard loading={examsQ.status === "loading"} error={examsQ.status === "error"} icon="calendar" label="Upcoming exams" value={exams?.length ?? 0} note={nextExam ? `Next: ${nextExam.subject_name}` : "None scheduled"} to={dashPath("exams")} />
         <StatCard loading={resultsQ.status === "loading"} error={resultsQ.status === "error"} icon="award" label="Average" suffix="%" value={avg} note={`${bySubject.length} subjects`} tone="good" to={dashPath("results")} />

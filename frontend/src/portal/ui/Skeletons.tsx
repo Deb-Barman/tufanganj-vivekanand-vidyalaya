@@ -62,10 +62,12 @@ function CardSk({ i }: { i: number }) {
   );
 }
 
-export type SkeletonVariant = "list" | "cards" | "grid";
+export type SkeletonVariant = "list" | "cards" | "grid" | "database" | "blog";
 
 /** Drop-in loading state. Pick the variant that matches the page: list rows, cards or a photo grid. */
 export function Skeleton({ rows = 4, variant = "list" }: { rows?: number; variant?: SkeletonVariant }) {
+  if (variant === "database") return <SkDatabase />;
+  if (variant === "blog") return <SkBlog />;
   return (
     <div className="sk-wrap" role="status" aria-busy="true" aria-label="Loading">
       {variant === "cards" ? (
@@ -271,6 +273,75 @@ export function ShellSkeleton() {
       <div className="shs-tabs">
         {[0, 1, 2, 3, 4].map((i) => <div key={i}><Bone w={24} h={24} r={8} /><Bone w={34} h={8} /></div>)}
       </div>
+    </div>
+  );
+}
+
+/** Blog & Articles while loading: the same cover-on-top cards the page shows a moment later. */
+export function SkBlog({ count = 4 }: { count?: number }) {
+  return (
+    <div className="sk-wrap" role="status" aria-busy="true" aria-label="Loading">
+      <div className="bl-grid">
+        {Array.from({ length: count }, (_, i) => (
+          <article className="bl-card" key={i}>
+            <Bone h={0} r={0} style={{ aspectRatio: "16 / 9", height: "auto", width: "100%" }} />
+            <div className="bl-body">
+              <Bone w={`${78 - (i % 3) * 10}%`} h={18} />
+              <Bone h={11} />
+              <Bone w="82%" h={11} />
+              <Bone w="40%" h={10} style={{ marginTop: 8 }} />
+            </div>
+          </article>
+        ))}
+      </div>
+      <SlowHint />
+    </div>
+  );
+}
+
+function DbRowSk({ i }: { i: number }) {
+  return (
+    <div className="db-row">
+      <span className="row-main"><Bone w={`${52 - (i % 3) * 8}%`} h={13} /><Bone w={`${70 - (i % 2) * 14}%`} h={10} /></span>
+      <Bone w={54} h={13} />
+      <Bone h={7} r={999} style={{ gridColumn: "1 / -1" }} />
+    </div>
+  );
+}
+
+/** The Database page while loading — the SAME layout as the real page: two usage rings, four tiles, two panels, the table list. */
+export function SkDatabase() {
+  return (
+    <div className="sk-wrap" role="status" aria-busy="true" aria-label="Loading" style={{ gap: 0 }}>
+      <div className="db-meters">
+        {[0, 1].map((i) => (
+          <section className="panel db-meter" key={i}>
+            <Bone w={150} h={150} circle style={{ flex: "none" }} />
+            <div className="db-meter-text" style={{ flex: 1, minWidth: 0, width: "100%" }}>
+              <Bone w={96} h={13} />
+              <Bone w="62%" h={28} />
+              <Bone h={11} />
+              <Bone w="76%" h={11} />
+            </div>
+          </section>
+        ))}
+      </div>
+      <StatsSkeleton />
+      <div className="grid-2">
+        <section className="panel">
+          <div className="panel-title"><Bone w={140} h={16} /></div>
+          <div className="list">{[0, 1, 2].map((i) => <DbRowSk key={i} i={i} />)}</div>
+        </section>
+        <section className="panel">
+          <div className="panel-title"><Bone w={90} h={16} /></div>
+          <div className="db-facts">{[0, 1, 2, 3].map((i) => <div key={i}><Bone w={90} h={12} /><Bone w={110} h={12} /></div>)}</div>
+        </section>
+      </div>
+      <section className="panel" style={{ marginTop: 20 }}>
+        <div className="panel-title"><Bone w={80} h={16} /><Bone w={70} h={11} /></div>
+        <div className="list">{[0, 1, 2, 3, 4, 5].map((i) => <DbRowSk key={i} i={i} />)}</div>
+      </section>
+      <SlowHint />
     </div>
   );
 }

@@ -3,6 +3,9 @@ import { linkSource } from "../../lib/mediaLinks";
 import { Icon } from "./icons";
 import { checkLink, emptyMedia, mediaChosen } from "./mediaHelpers";
 import type { MediaValue } from "./mediaHelpers";
+import { downscaleImage } from "../../lib/downscale";
+import type { AdjustShape } from "../../lib/imageAdjust";
+import { ImageAdjuster } from "./ImageAdjuster";
 import "./media-source.css";
 
 function LinkPreview({ url }: { url: string }) {
@@ -26,11 +29,29 @@ export interface MediaSourceFieldProps {
   /** When editing: what is saved now, so the person knows leaving this empty keeps it. */
   current?: { url: string | null; source: "upload" | "link" | null };
   idPrefix?: string;
+  /** Profile pictures: pasting a link is the only way (nothing is uploaded to the school's storage). */
+  linkOnly?: boolean;
+  /** Show the "Position & zoom" tool for the picture. `value` is the saved "x,y,zoom" text. */
+  adjust?: { value: string; onChange: (v: string) => void; shape: AdjustShape };
 }
 
 /** "Upload" or "Paste a link" — the link option keeps the school's free storage empty. */
-export function MediaSourceField({ kind, value, onChange, label, accept, current, idPrefix = "ms" }: MediaSourceFieldProps) {
-  const [mode, setMode] = useState<"upload" | "link">(value.link ? "link" : "upload");
+export function MediaSourceField({ kind, value, onChange: rawChange, label, accept, current, idPrefix = "ms", linkOnly = false, adjust }: MediaSourceFieldProps) {
+  const [mode, setMode] = useState<"upload" | "link">(value.link || linkOnly ? "link" : "upload");
+  const [shrinking, setShrinking] = useState(false);
+  // A different picture starts centred: the old picture's position must not carry over.
+  const onChange = (v: MediaValue) => {
+    if (adjust && (v.file !== value.file || v.link !== value.link)) adjust.onChange("");
+    rawChange(v);
+  };
+  async function pickFile(f: File | null) {
+    if (!f) return onChange({ file: null, link: "" });
+    if (kind !== "image") return onChange({ file: f, link: "" });
+    setShrinking(true);
+    const small = await downscaleImage(f);
+    setShrinking(false);
+    onChange({ file: small, link: "" });
+  }
   const fileInput = useRef<HTMLInputElement>(null);
   const preview = useMemo(() => (value.file && kind === "image" ? URL.createObjectURL(value.file) : null), [value.file, kind]);
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
@@ -45,16 +66,20 @@ export function MediaSourceField({ kind, value, onChange, label, accept, current
   return (
     <div className="ms form-field">
       <span className="ms-label" id={`${idPrefix}-label`}>{label}</span>
-      <div className="ms-tabs" role="tablist" aria-labelledby={`${idPrefix}-label`}>
-        <button type="button" role="tab" aria-selected={mode === "upload"} className={mode === "upload" ? "on" : ""} onClick={() => switchTo("upload")}>Upload</button>
-        <button type="button" role="tab" aria-selected={mode === "link"} className={mode === "link" ? "on" : ""} onClick={() => switchTo("link")}>Paste a link</button>
-      </div>
+      {!linkOnly && (
+        <div className="ms-tabs" role="tablist" aria-labelledby={`${idPrefix}-label`}>
+          <button type="button" role="tab" aria-selected={mode === "upload"} className={mode === "upload" ? "on" : ""} onClick={() => switchTo("upload")}>Upload</button>
+          <button type="button" role="tab" aria-selected={mode === "link"} className={mode === "link" ? "on" : ""} onClick={() => switchTo("link")}>Paste a link</button>
+        </div>
+      )}
 
       {mode === "upload" ? (
         <div className="ms-body">
-          <input ref={fileInput} id={`${idPrefix}-file`} type="file" accept={accept} onChange={(e) => onChange({ file: e.target.files?.[0] ?? null, link: "" })} aria-labelledby={`${idPrefix}-label`} />
-          {preview && <div className="ms-preview"><img src={preview} alt="Selected picture" /></div>}
-          <p className="ms-hint">Uploads use the school's storage space. To save space, use <button type="button" className="ms-link" onClick={() => switchTo("link")}>a link</button> instead.</p>
+          <input ref={fileInput} id={`${idPrefix}-file`} type="file" accept={accept} onChange={(e) => void pickFile(e.target.files?.[0] ?? null)} aria-labelledby={`${idPrefix}-label`} />
+          {shrinking && <p className="ms-hint">Preparing the picture…</p>}
+          {preview && !adjust && <div className="ms-preview"><img src={preview} alt="Selected picture" /></div>}
+          {preview && adjust && <ImageAdjuster src={preview} value={adjust.value} onChange={adjust.onChange} shape={adjust.shape} />}
+          <p className="ms-hint">Uploads use the school's storage space (big photos are shrunk for you). To save space, use <button type="button" className="ms-link" onClick={() => switchTo("link")}>a link</button> instead.</p>
         </div>
       ) : (
         <div className="ms-body">
@@ -63,7 +88,8 @@ export function MediaSourceField({ kind, value, onChange, label, accept, current
           {result?.ok && (
             <p className="ms-msg good"><Icon name="checkCircle" size={15} /> Link accepted · {linkSource(result.url)}{result.note ? ` — ${result.note}` : ""}</p>
           )}
-          {result?.ok && kind === "image" && <LinkPreview key={result.url} url={result.url} />}
+          {result?.ok && kind === "image" && !adjust && <LinkPreview key={result.url} url={result.url} />}
+          {result?.ok && kind === "image" && adjust && <ImageAdjuster key={result.url} src={result.url} value={adjust.value} onChange={adjust.onChange} shape={adjust.shape} />}
           {result?.ok && kind === "file" && <a className="ms-test" href={result.url} target="_blank" rel="noopener noreferrer"><Icon name="external" size={14} /> Test the link</a>}
         </div>
       )}
@@ -73,6 +99,13 @@ export function MediaSourceField({ kind, value, onChange, label, accept, current
           {kind === "image" && current.source && <img src={current.url} alt="" referrerPolicy="no-referrer" />}
           <span>Saved now: {current.source === "link" ? `a link (${linkSource(current.url)})` : `an uploaded ${noun}`}. Leave this empty to keep it.</span>
         </p>
+      )}
+
+      {adjust && kind === "image" && current?.url && !mediaChosen(value) && (
+        <details className="ms-adjust-saved">
+          <summary>Move &amp; zoom the saved picture</summary>
+          <ImageAdjuster src={current.url} value={adjust.value} onChange={adjust.onChange} shape={adjust.shape} />
+        </details>
       )}
 
       <details className="ms-help">

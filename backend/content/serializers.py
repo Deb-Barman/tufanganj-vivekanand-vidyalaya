@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from notices.serializers import sanitize
 
+from .adjust import clean_adjust
 from .links import LinkError, drive_download_url, normalize_file_link, normalize_image_link
 from .models import Achievement, ContactMessage, Admission, Article, Event, GalleryImage, SchoolForm
 
@@ -40,6 +41,14 @@ def validate_doc_upload(file):
         raise serializers.ValidationError("This file does not look like a real PDF or Word document.")
 
 
+def validate_adjust_value(value):
+    """Shared check for the picture position ("x,y,zoom") fields."""
+    try:
+        return clean_adjust(value)
+    except ValueError as exc:
+        raise serializers.ValidationError(str(exc)) from None
+
+
 class LinkOrUploadMixin:
     """
     An image/file can be UPLOADED or a pasted public LINK (Google Drive "Anyone with the link", Imgur, …).
@@ -52,6 +61,7 @@ class LinkOrUploadMixin:
     link_field = ""
     link_kind = "image"  # "image" or "file"
     media_required = False
+    adjust_field = ""  # optional "x,y,zoom" field; reset when the picture itself is replaced
 
     def _normalize(self, link):
         try:
@@ -73,6 +83,8 @@ class LinkOrUploadMixin:
             attrs[up] = None  # a link replaces any earlier upload (its file is deleted after saving)
         elif new_upload:
             attrs[ln] = ""
+        if self.adjust_field and (new_upload or attrs.get(ln)) and self.adjust_field not in attrs:
+            attrs[self.adjust_field] = ""  # a different picture starts centred, not with the old picture's position
         if self.media_required:
             inst = self.instance
             keeps_upload = inst is not None and bool(getattr(inst, up)) and up not in attrs
@@ -103,12 +115,13 @@ class LinkOrUploadMixin:
 
 
 class ArticleSerializer(LinkOrUploadMixin, serializers.ModelSerializer):
-    upload_field, link_field = "cover_image", "cover_link"
+    upload_field, link_field, adjust_field = "cover_image", "cover_link", "cover_adjust"
     cover_link = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+    cover_adjust = serializers.CharField(required=False, allow_blank=True, max_length=24)
 
     class Meta:
         model = Article
-        fields = ["id", "title", "slug", "excerpt", "body", "cover_image", "cover_link", "published", "created_by", "created_at", "updated_at"]
+        fields = ["id", "title", "slug", "excerpt", "body", "cover_image", "cover_link", "cover_adjust", "published", "created_by", "created_at", "updated_at"]
         read_only_fields = ["id", "slug", "created_by", "created_at", "updated_at"]
 
     def validate_title(self, value):
@@ -130,6 +143,9 @@ class ArticleSerializer(LinkOrUploadMixin, serializers.ModelSerializer):
         if value:
             validate_image_upload(value)
         return value
+
+    def validate_cover_adjust(self, value):
+        return validate_adjust_value(value)
 
     def create(self, validated_data):
         # allow_unicode keeps Bengali titles readable; the fallback stops a
@@ -162,17 +178,22 @@ class EventSerializer(serializers.ModelSerializer):
 
 class GalleryImageSerializer(LinkOrUploadMixin, serializers.ModelSerializer):
     upload_field, link_field, media_required = "image", "image_link", True
+    adjust_field = "image_adjust"
     image_link = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+    image_adjust = serializers.CharField(required=False, allow_blank=True, max_length=24)
 
     class Meta:
         model = GalleryImage
-        fields = ["id", "caption", "image", "image_link", "uploaded_by", "created_at"]
+        fields = ["id", "caption", "image", "image_link", "image_adjust", "uploaded_by", "created_at"]
         read_only_fields = ["id", "uploaded_by", "created_at"]
 
     def validate_image(self, value):
         if value:
             validate_image_upload(value)
         return value
+
+    def validate_image_adjust(self, value):
+        return validate_adjust_value(value)
 
     def validate_caption(self, value):
         return sanitize(value.strip())
@@ -236,7 +257,7 @@ class AdmissionAdminSerializer(AdmissionSerializer):
 
 class PublicArticleSerializer(ArticleSerializer):
     class Meta(ArticleSerializer.Meta):
-        fields = ["id", "title", "slug", "excerpt", "body", "cover_image", "created_at", "updated_at"]
+        fields = ["id", "title", "slug", "excerpt", "body", "cover_image", "cover_adjust", "created_at", "updated_at"]
         read_only_fields = fields
 
 
@@ -248,7 +269,7 @@ class PublicEventSerializer(EventSerializer):
 
 class PublicGalleryImageSerializer(GalleryImageSerializer):
     class Meta(GalleryImageSerializer.Meta):
-        fields = ["id", "caption", "image", "created_at"]
+        fields = ["id", "caption", "image", "image_adjust", "created_at"]
         read_only_fields = fields
 
 
@@ -305,11 +326,13 @@ class ContactMessageAdminSerializer(ContactMessageSerializer):
 
 class AchievementSerializer(LinkOrUploadMixin, serializers.ModelSerializer):
     upload_field, link_field = "image", "image_link"
+    adjust_field = "image_adjust"
     image_link = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+    image_adjust = serializers.CharField(required=False, allow_blank=True, max_length=24)
 
     class Meta:
         model = Achievement
-        fields = ["id", "title", "description", "year", "category", "image", "image_link", "created_by", "created_at"]
+        fields = ["id", "title", "description", "year", "category", "image", "image_link", "image_adjust", "created_by", "created_at"]
         read_only_fields = ["id", "created_by", "created_at"]
 
     def validate_title(self, value):
@@ -333,8 +356,11 @@ class AchievementSerializer(LinkOrUploadMixin, serializers.ModelSerializer):
             validate_image_upload(file)
         return file
 
+    def validate_image_adjust(self, value):
+        return validate_adjust_value(value)
+
 
 class PublicAchievementSerializer(AchievementSerializer):
     class Meta(AchievementSerializer.Meta):
-        fields = ["id", "title", "description", "year", "category", "image"]
+        fields = ["id", "title", "description", "year", "category", "image", "image_adjust"]
         read_only_fields = fields

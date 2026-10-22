@@ -3,6 +3,9 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { AcademicSession, Marksheet, StudentProfile } from "../../types/api";
+import { MediaSourceField } from "../ui/MediaSourceField";
+import { appendMedia, emptyMedia, mediaChosen, mediaInvalid } from "../ui/mediaHelpers";
+import type { MediaValue } from "../ui/mediaHelpers";
 import { Avatar, EmptyState, Icon, Modal, PageHeader, Skeleton, errText, fmtDate, listAll, useUI, Select } from "../ui/kitExports";
 
 export function MarksheetsModule() {
@@ -19,7 +22,7 @@ export function MarksheetsModule() {
   const [editId, setEditId] = useState<string | null>(null);
   const [studentId, setStudentId] = useState("");
   const [sessionId, setSessionId] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [media, setMedia] = useState<MediaValue>(emptyMedia);
   const [saving, setSaving] = useState(false);
 
   async function load() {
@@ -47,7 +50,7 @@ export function MarksheetsModule() {
     setEditId(m.id);
     setStudentId(m.student);
     setSessionId(m.session);
-    setFile(null);
+    setMedia(emptyMedia);
     setOpen(true);
   }
 
@@ -55,19 +58,20 @@ export function MarksheetsModule() {
     setEditId(null);
     setStudentId(students[0]?.user ?? "");
     setSessionId((sessions.find((s) => s.is_current) ?? sessions[0])?.id ?? "");
-    setFile(null);
+    setMedia(emptyMedia);
     setOpen(true);
   }
 
   async function upload(e: FormEvent) {
     e.preventDefault();
-    if (!file && !editId) return;
+    if (!mediaChosen(media) && !editId) return;
+    if (mediaInvalid("file", media)) { toast("error", "Fix the marksheet link first."); return; }
     setSaving(true);
     try {
       const fd = new FormData();
       fd.append("student", studentId);
       fd.append("session", sessionId);
-      if (file) fd.append("file", file);
+      appendMedia(fd, media, "file", "file_link");
       if (editId) await api.patch(`/academics/marksheets/${editId}/`, fd, { isMultipart: true });
       else await api.postForm("/academics/marksheets/create/", fd);
       toast("success", editId ? "Marksheet updated." : "Marksheet uploaded.");
@@ -163,7 +167,7 @@ export function MarksheetsModule() {
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>
               Cancel
             </button>
-            <button type="submit" form="marksheet-form" className="btn btn-primary btn-sm" disabled={saving || (!file && !editId) || !studentId || !sessionId}>
+            <button type="submit" form="marksheet-form" className="btn btn-primary btn-sm" disabled={saving || (!mediaChosen(media) && !editId) || mediaInvalid("file", media) || !studentId || !sessionId}>
               {saving ? "Saving…" : editId ? "Save changes" : "Upload"}
             </button>
           </>
@@ -191,10 +195,15 @@ export function MarksheetsModule() {
               ))}
             </Select>
           </div>
-          <div className="form-field">
-            <label htmlFor="msFile">{editId ? "Replace file (optional) — " : "File — "}PDF, PNG, JPEG or WebP, up to 10 MB</label>
-            <input id="msFile" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" onChange={(e) => setFile(e.target.files?.[0] ?? null)} required={!editId} />
-          </div>
+          <MediaSourceField
+            kind="file"
+            idPrefix="ms"
+            label={editId ? "Replace marksheet (optional)" : "Marksheet — PDF, PNG, JPEG or WebP, up to 10 MB"}
+            accept="application/pdf,image/png,image/jpeg,image/webp"
+            value={media}
+            onChange={setMedia}
+            current={editId ? { url: sheets?.find((x) => x.id === editId)?.file ?? null, source: sheets?.find((x) => x.id === editId)?.source ?? null } : undefined}
+          />
         </form>
       </Modal>
     </>

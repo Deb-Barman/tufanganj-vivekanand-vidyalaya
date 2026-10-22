@@ -3,6 +3,8 @@ from decimal import Decimal
 from rest_framework import serializers
 
 from accounts.models import Role, User
+from accounts.profiles import faculty_card
+from content.serializers import LinkOrUploadMixin
 
 from .models import (
     AcademicSession,
@@ -57,22 +59,35 @@ class SubjectSerializer(serializers.ModelSerializer):
 
 class TeacherProfileSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source="user.full_name", read_only=True)
+    #: The teacher's own "My profile" (photo, headline, qualification…) when they have published it, else null.
+    profile = serializers.SerializerMethodField()
 
     class Meta:
         model = TeacherProfile
-        fields = ["user", "full_name", "department", "bio", "years_experience", "subjects_taught"]
+        fields = ["user", "full_name", "department", "bio", "years_experience", "subjects_taught", "profile"]
         read_only_fields = ["user"]
+
+    def get_profile(self, obj):
+        return faculty_card(obj.user, self.context.get("request"))
 
 
 class PublicTeacherSerializer(serializers.ModelSerializer):
     """Faculty page on the open website: no internal user ID."""
 
     full_name = serializers.CharField(source="user.full_name", read_only=True)
+    subjects = serializers.SerializerMethodField()
+    profile = serializers.SerializerMethodField()
 
     class Meta:
         model = TeacherProfile
-        fields = ["full_name", "department", "bio", "years_experience"]
+        fields = ["full_name", "department", "bio", "years_experience", "subjects", "profile"]
         read_only_fields = fields
+
+    def get_subjects(self, obj):
+        return sorted({s.name for s in obj.subjects_taught.all()})
+
+    def get_profile(self, obj):
+        return faculty_card(obj.user, self.context.get("request"))
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
@@ -105,7 +120,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
 class ResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = Result
-        fields = ["id", "student", "subject", "session", "marks_obtained", "full_marks", "recorded_by", "created_at"]
+        fields = ["id", "student", "subject", "session", "term", "marks_obtained", "full_marks", "recorded_by", "created_at"]
         read_only_fields = ["id", "recorded_by", "created_at"]
 
     def validate(self, attrs):
@@ -126,10 +141,15 @@ MAX_MARKSHEET_SIZE = 10 * 1024 * 1024  # 10 MB
 _MARKSHEET_SIGNATURES = (b"%PDF-", b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff")
 
 
-class MarksheetSerializer(serializers.ModelSerializer):
+class MarksheetSerializer(LinkOrUploadMixin, serializers.ModelSerializer):
+    """A marksheet is an uploaded PDF/photo OR a pasted share link (Google Drive, Dropbox…). `file` always holds the address to open."""
+
+    upload_field, link_field, link_kind = "file", "file_link", "file"
+    file_link = serializers.CharField(required=False, allow_blank=True, max_length=1000)
+
     class Meta:
         model = Marksheet
-        fields = ["id", "student", "session", "file", "generated_at"]
+        fields = ["id", "student", "session", "file", "file_link", "generated_at"]
         read_only_fields = ["id", "generated_at"]
 
     def validate_file(self, file):
@@ -211,6 +231,7 @@ class _ResultRecord(serializers.Serializer):
 class BulkResultSerializer(serializers.Serializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all())
     session = serializers.PrimaryKeyRelatedField(queryset=AcademicSession.objects.all())
+    term = serializers.ChoiceField(choices=Result.Term.choices, default=Result.Term.SEM1)
     full_marks = serializers.DecimalField(max_digits=5, decimal_places=2, min_value=Decimal("1"), default=Decimal("100"))
     records = _ResultRecord(many=True, allow_empty=False, max_length=300)
 

@@ -95,3 +95,9 @@ a.row-card:hover { transform: translateX(6px); box-shadow: var(--raise); }
 .teacher-feature .t-more { align-self: flex-start; background: none; border: 0; padding: 4px 0; font-size: 13px; font-weight: 700; color: var(--accent); cursor: pointer; }
 .teacher-feature .t-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 .sk-teacher { gap: 12px; }
+
+/* pictures that open full screen when tapped */
+.detail-cover-btn { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.detail-cover-btn:focus-visible, .ach-pic:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 14px; }
+.ach-pic { display: block; width: 100%; padding: 0; border: 0; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 14px; background: var(--panel); cursor: zoom-in; }
+.ach-card .ach-pic img { aspect-ratio: auto; border-radius: 0; }

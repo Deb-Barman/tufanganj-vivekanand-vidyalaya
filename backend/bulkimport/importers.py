@@ -474,6 +474,23 @@ class SubjectsImporter(Importer):
 
 
 # ───────────────────────── results ─────────────────────────
+_TERM_WORDS = {
+    "1": "SEM1", "i": "SEM1", "first": "SEM1", "sem1": "SEM1", "semester1": "SEM1", "firstsemester": "SEM1", "firstsem": "SEM1", "1stsemester": "SEM1",
+    "2": "SEM2", "ii": "SEM2", "second": "SEM2", "sem2": "SEM2", "semester2": "SEM2", "secondsemester": "SEM2", "secondsem": "SEM2", "2ndsemester": "SEM2",
+    "3": "SEM3", "iii": "SEM3", "third": "SEM3", "sem3": "SEM3", "semester3": "SEM3", "thirdsemester": "SEM3", "thirdsem": "SEM3", "3rdsemester": "SEM3",
+    "4": "SEM4", "iv": "SEM4", "fourth": "SEM4", "sem4": "SEM4", "semester4": "SEM4", "fourthsemester": "SEM4", "fourthsem": "SEM4", "4thsemester": "SEM4",
+    "annual": "ANNUAL", "final": "ANNUAL", "annualfinal": "ANNUAL", "yearly": "ANNUAL",
+}
+
+
+def parse_term(text: str):
+    """“First Semester”, “sem 2”, “3”, “Annual”… -> Result.Term value, or None when not recognised. Blank = First Semester."""
+    key = re.sub(r"[^a-z0-9]", "", (text or "").lower())
+    if not key:
+        return "SEM1"
+    return _TERM_WORDS.get(key)
+
+
 class ResultsImporter(Importer):
     key = "results"
     title = "Results (marks)"
@@ -484,17 +501,18 @@ class ResultsImporter(Importer):
         Column("marks", "Marks obtained", True, "A number, e.g. 78 or 78.5.", ("marksobtained", "obtained")),
         Column("full_marks", "Full marks", False, "Default 100.", ("outof", "total", "maxmarks")),
         Column("session", "Session", False, "Leave empty to use the current session."),
+        Column("term", "Semester", False, "First Semester, Second Semester, Third Semester, Fourth Semester or Annual. Empty = First Semester.", ("term", "exam", "examterm")),
     )
     samples = (
-        {"username": "aarav.sen", "subject": "Physics", "marks": "78", "full_marks": "100", "session": ""},
-        {"username": "aarav.sen", "subject": "Chemistry", "marks": "84.5", "full_marks": "100", "session": ""},
-        {"username": "diya.das", "subject": "Physics", "marks": "91", "full_marks": "100", "session": ""},
+        {"username": "aarav.sen", "subject": "Physics", "marks": "78", "full_marks": "100", "session": "", "term": "First Semester"},
+        {"username": "aarav.sen", "subject": "Chemistry", "marks": "84.5", "full_marks": "100", "session": "", "term": "First Semester"},
+        {"username": "diya.das", "subject": "Physics", "marks": "91", "full_marks": "100", "session": "", "term": "Second Semester"},
     )
-    notes = ("The student must have a class, and the subject must belong to that class.", "If marks already exist for that student + subject + session they are updated.")
+    notes = ("The student must have a class, and the subject must belong to that class.", "If marks already exist for that student + subject + session + semester they are updated.")
 
     def prepare(self, rows):
         self._seen = set()
-        self._existing = set(Result.objects.values_list("student_id", "subject_id", "session_id"))
+        self._existing = set(Result.objects.values_list("student_id", "subject_id", "session_id", "term"))
 
     def validate(self, row_no, raw):
         r = self.new(row_no, raw)
@@ -512,6 +530,9 @@ class ResultsImporter(Importer):
         session, err = self.L.session_for(raw.get("session", ""))
         if err:
             r.errors.append(err)
+        term = parse_term(raw.get("term", ""))
+        if term is None:
+            r.errors.append(f"Semester “{raw.get('term')}” is not recognised. Use First Semester, Second Semester, Third Semester, Fourth Semester or Annual.")
         marks, full = parse_decimal(raw["marks"]), parse_decimal(raw.get("full_marks") or "100")
         if marks is None or full is None:
             r.errors.append("Marks and full marks must be numbers.")
@@ -524,16 +545,16 @@ class ResultsImporter(Importer):
                 r.errors.append("Use at most 2 decimal places.")
         if r.errors:
             return r
-        token = (sp.pk, subject.pk, session.pk)
+        token = (sp.pk, subject.pk, session.pk, term)
         if token in self._seen:
-            r.errors.append("This student + subject appears twice in the file.")
+            r.errors.append("This student + subject + semester appears twice in the file.")
             return r
         self._seen.add(token)
         if token in self._existing:
             r.action = "update"
             r.warnings.append("Marks already exist — they will be replaced.")
-        r.data.update(student=sp, subject=subject, session=session, marks=marks, full=full)
-        r.display.update(subject=subject.name, full_marks=str(full))
+        r.data.update(student=sp, subject=subject, session=session, term=term, marks=marks, full=full)
+        r.display.update(subject=subject.name, full_marks=str(full), term=dict(Result.Term.choices)[term])
         return r
 
     def commit(self, results):
@@ -541,7 +562,7 @@ class ResultsImporter(Importer):
         for r in results:
             d = r.data
             _, created = Result.objects.update_or_create(
-                student=d["student"], subject=d["subject"], session=d["session"],
+                student=d["student"], subject=d["subject"], session=d["session"], term=d["term"],
                 defaults={"marks_obtained": d["marks"], "full_marks": d["full"], "recorded_by": self.user},
             )
             made, upd = made + created, upd + (not created)
