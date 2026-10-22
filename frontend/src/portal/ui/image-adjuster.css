@@ -1,0 +1,21 @@
+.ia { display: grid; gap: 10px; justify-items: start; padding: 12px; border-radius: var(--radius); background: var(--panel); box-shadow: var(--inset-sm); min-width: 0; }
+.ia-title { margin: 0; font-size: 13px; font-weight: 800; color: var(--fg-soft); }
+.ia-frame { position: relative; overflow: hidden; width: 100%; background: var(--surface); box-shadow: var(--raise-sm); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; outline-offset: 3px; }
+.ia-frame:focus-visible { outline: 2px solid var(--accent); }
+.ia-frame.dragging { cursor: grabbing; }
+.ia-frame img { pointer-events: none; }
+.ia-circle { width: min(240px, 100%); aspect-ratio: 1; border-radius: 50%; }
+.ia-square { width: min(260px, 100%); aspect-ratio: 1; border-radius: 14px; }
+.ia-wide { max-width: 420px; aspect-ratio: 16 / 9; border-radius: 14px; }
+.ia-card { max-width: 380px; aspect-ratio: 4 / 3; border-radius: 14px; }
+.ia-photo { max-width: 380px; aspect-ratio: 16 / 10; border-radius: 14px; }
+/* rule-of-thirds guide, only while moving */
+.ia-grid { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s; background:
+  linear-gradient(to right, transparent calc(33.33% - 0.5px), rgba(255, 255, 255, 0.7) calc(33.33% - 0.5px), rgba(255, 255, 255, 0.7) calc(33.33% + 0.5px), transparent calc(33.33% + 0.5px), transparent calc(66.66% - 0.5px), rgba(255, 255, 255, 0.7) calc(66.66% - 0.5px), rgba(255, 255, 255, 0.7) calc(66.66% + 0.5px), transparent calc(66.66% + 0.5px)),
+  linear-gradient(to bottom, transparent calc(33.33% - 0.5px), rgba(255, 255, 255, 0.7) calc(33.33% - 0.5px), rgba(255, 255, 255, 0.7) calc(33.33% + 0.5px), transparent calc(33.33% + 0.5px), transparent calc(66.66% - 0.5px), rgba(255, 255, 255, 0.7) calc(66.66% - 0.5px), rgba(255, 255, 255, 0.7) calc(66.66% + 0.5px), transparent calc(66.66% + 0.5px)); }
+.ia-frame.dragging .ia-grid { opacity: 0.55; }
+.ia-broken { display: grid; place-items: center; height: 100%; font-size: 12.5px; color: var(--danger); text-align: center; padding: 10px; }
+.ia-controls { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 420px; }
+.ia-zoom { flex: 1; display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 700; color: var(--fg-soft); min-width: 0; }
+.ia-zoom input { flex: 1; min-width: 0; width: 100%; accent-color: var(--accent); height: 28px; }
+.ia-hint { margin: 0; font-size: 12px; color: var(--fg-faint); line-height: 1.55; }

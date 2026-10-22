@@ -2,8 +2,9 @@
 
 /* ── Database ── */
 .db-meters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-bottom: 20px; }
-.db-meter { display: flex; align-items: center; gap: 22px; }
-.db-meter-text { min-width: 0; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.db-meter { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 22px; }
+.db-meter > .ring, .db-meter > .bone { flex: none; max-width: 100%; }
+.db-meter-text { min-width: 0; flex: 1 1 200px; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
 .db-meter-text h2 { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-soft); }
 .db-meter-text h2 svg { color: var(--accent); }
 .db-big { font-family: var(--serif); font-size: clamp(24px, 3vw, 32px); line-height: 1.1; color: var(--fg); }
@@ -20,7 +21,7 @@
 .db-facts dd { margin: 0; font-size: 13.5px; font-weight: 700; color: var(--fg); text-align: right; }
 .db-chips { display: flex; flex-wrap: wrap; gap: 10px; }
 @media (max-width: 900px) { .db-meters { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 480px) { .db-meter { flex-direction: column; text-align: center; } .db-meter-text { align-items: center; } }
+@media (max-width: 560px) { .db-meter { flex-direction: column; text-align: center; } .db-meter-text { align-items: center; } }
 
 /* ── Data view ── */
 .data-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 14px; }
@@ -47,3 +48,5 @@
 .kv dt { font-size: 11.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--fg-faint); }
 .kv dd { margin: 0; font-size: 13.5px; color: var(--fg); overflow-wrap: anywhere; white-space: pre-wrap; }
 @media (max-width: 560px) { .kv > div { grid-template-columns: minmax(0, 1fr); } }
+
+.db-row, .db-facts div, .db-chips span { min-width: 0; overflow-wrap: anywhere; }
