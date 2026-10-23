@@ -1,23 +1,13 @@
 import { Link } from "react-router-dom";
 import { MORE, NAV, SITE } from "../config/site";
 import { DEVELOPER } from "../config/developer";
-import { ProfileFinderForm } from "./ProfileFinderForm";
-import "./ProfileFinderForm.css";
+import { SocialIcons } from "./SocialIcons";
 import "./SiteFooter.css";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
   return (
     <footer className="site-footer">
-      <div className="wrap">
-        <section className="footer-finder" aria-labelledby="footer-finder-title">
-          <div className="footer-finder-text">
-            <h4 id="footer-finder-title">Profile Finder</h4>
-            <p>Find any teacher or student profile instantly — just type their username.</p>
-          </div>
-          <ProfileFinderForm id="footer-find" />
-        </section>
-      </div>
       <div className="wrap footer-grid">
         <div className="footer-brand">
           <p className="brand-name">
@@ -52,6 +42,10 @@ export function SiteFooter() {
           <Link to="/contact" className="footer-cta">
             Contact the school office <span aria-hidden="true">→</span>
           </Link>
+          <div className="footer-social">
+            <h5>Follow us</h5>
+            <SocialIcons />
+          </div>
         </div>
         <div className="footer-col">
           <h5>Explore</h5>
@@ -77,11 +71,6 @@ export function SiteFooter() {
           <Link to="/faq">FAQ</Link>
           <Link to="/downloads">Downloads</Link>
           <Link to="/portal">Student &amp; Staff Login</Link>
-          {SITE.facebook && (
-            <a href={SITE.facebook} target="_blank" rel="noopener noreferrer">
-              Facebook
-            </a>
-          )}
           <Link to="/developer">Developer</Link>
         </div>
       </div>
