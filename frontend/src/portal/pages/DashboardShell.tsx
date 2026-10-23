@@ -56,7 +56,7 @@ export function DashboardShell() {
     let alive = true;
     const pull = () => {
       if (document.visibilityState === "hidden") return;
-      api.get<AdminStats>("/auth/admin/stats/").then((s) => alive && setBadges({ admissions: s.admissions.pending }), () => undefined);
+      api.get<AdminStats>("/auth/admin/stats/").then((s) => alive && setBadges({ admissions: s.admissions.pending, accounts: s.password_requests ?? 0 }), () => undefined);
     };
     pull();
     const t = setInterval(pull, 120000);
