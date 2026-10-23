@@ -96,10 +96,28 @@ class ForgotPasswordTests(V15Base):
         self.assertEqual([r["username"] for r in rows], ["riju"])
         self.assertEqual(rows[0]["note"], "Class 9, roll 12")
 
-    def test_unknown_names_and_the_super_admin_create_nothing(self):
-        self.ask("does-not-exist")
+    def test_the_super_admin_never_gets_a_request_but_a_mistyped_name_is_kept_for_the_office(self):
         self.ask(self.admin.username)
         self.assertEqual(PasswordResetRequest.objects.count(), 0)
+        self.ask("@Riju-typo", "Class 9")
+        self.ask("riju-typo")  # same typo again -> still one entry
+        rows = self.login(self.admin).get("/api/auth/admin/reset-requests/").data
+        self.assertEqual([(r["username"], r["known"], r["user"]) for r in rows], [("Riju-typo", False, None)])
+
+    def test_stats_show_how_many_people_are_waiting(self):
+        self.ask("riju")
+        self.ask("typo-name")
+        self.assertEqual(self.login(self.admin).get("/api/auth/admin/stats/").data["password_requests"], 2)
+
+    def test_unknown_name_requests_are_capped_so_the_office_cannot_be_flooded(self):
+        PasswordResetRequest.objects.bulk_create([PasswordResetRequest(user=None, username=f"nobody{i}") for i in range(50)])
+        self.assertEqual(self.ask("one-more").status_code, 202)  # the answer never changes...
+        self.assertEqual(PasswordResetRequest.objects.filter(user__isnull=True).count(), 50)  # ...but the queue stops growing
+
+    def test_one_address_can_only_send_a_few_requests_per_hour(self):
+        codes = [self.ask(f"spam{i}").status_code for i in range(13)]
+        self.assertEqual(codes[:10], [202] * 10)
+        self.assertEqual(codes[10], 429)
 
     def test_setting_a_new_password_closes_the_request(self):
         self.ask("riju")

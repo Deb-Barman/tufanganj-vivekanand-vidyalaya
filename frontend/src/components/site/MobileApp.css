@@ -1,0 +1,40 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   PHONE APP MODE — public pages except the landing page.
+   Same phone definition as styles/mobile.css. Outside it NOTHING here applies: the back button and tab bar stay
+   hidden and the header/footer stay exactly as they are on desktop and laptop.
+   ───────────────────────────────────────────────────────────────────────────── */
+.m-tabs, .m-back, .m-sheet-back { display: none; }
+
+@media (max-width: 768px), (hover: none) and (pointer: coarse) and (max-width: 1024px) {
+  .shell-app .site-header, .shell-app .site-footer { display: none !important; }
+  .shell-app main { padding-top: calc(60px + env(safe-area-inset-top, 0px)); padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); min-height: 100dvh; }
+
+  /* round back button */
+  .shell-app .m-back { display: grid; place-items: center; position: fixed; z-index: 55; top: max(10px, env(safe-area-inset-top, 0px)); left: 12px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; color: var(--fg); background: var(--surface); box-shadow: var(--raise); transition: transform 0.2s var(--ease-out), box-shadow 0.2s; -webkit-tap-highlight-color: transparent; }
+  .shell-app .m-back:active { transform: scale(0.92); box-shadow: var(--inset-sm); }
+
+  /* bottom tab bar */
+  .shell-app .m-tabs { display: flex; align-items: stretch; gap: 4px; position: fixed; z-index: 60; left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom, 0px)); height: 68px; padding: 7px; border-radius: 26px; background: var(--surface); box-shadow: var(--raise); }
+  .m-tab { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0; border: 0; border-radius: 19px; background: none; font: inherit; font-size: 11px; font-weight: 700; color: var(--fg-faint); text-decoration: none; cursor: pointer; transition: color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.15s; -webkit-tap-highlight-color: transparent; }
+  .m-tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-tab:active { transform: scale(0.94); }
+  .m-tab.active { color: var(--accent); background: var(--panel); box-shadow: var(--inset-sm); }
+  .m-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  /* "More" sheet */
+  .shell-app .m-sheet-back { display: flex; align-items: flex-end; position: fixed; inset: 0; z-index: 80; background: rgba(6, 7, 14, 0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); animation: m-fade 0.2s ease both; }
+  .m-sheet { width: 100%; max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain; padding: 10px 16px calc(24px + env(safe-area-inset-bottom, 0px)); border-radius: 28px 28px 0 0; background: var(--bg, var(--surface)); box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.35); animation: m-rise 0.32s var(--ease-out) both; display: grid; gap: 14px; }
+  .m-sheet-handle { justify-self: center; width: 44px; height: 5px; border-radius: 99px; background: color-mix(in srgb, var(--fg) 22%, transparent); }
+  .m-sheet-cta { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 18px; font-weight: 800; font-size: 15px; text-decoration: none; color: #fff; background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 62%, #6d4bff)); box-shadow: var(--raise-sm); }
+  .m-sheet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .m-sheet-grid a { display: grid; gap: 2px; align-content: center; min-height: 64px; padding: 10px 14px; border-radius: 16px; text-decoration: none; color: var(--fg); background: var(--surface); box-shadow: var(--raise-sm); }
+  .m-sheet-grid a strong { font-size: 14.5px; }
+  .m-sheet-grid a span { font-size: 11.5px; line-height: 1.35; color: var(--fg-faint); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .m-sheet-grid a.on { box-shadow: var(--inset-sm); color: var(--accent); }
+  .m-sheet-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 14px; padding-top: 4px; }
+  .m-sheet-foot .soc-list { padding-top: 0; gap: 12px; }
+  .m-sheet-foot .soc { width: 44px; height: 44px; }
+  @keyframes m-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes m-rise { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+}
+@media (prefers-reduced-motion: reduce) { .m-sheet, .m-sheet-back { animation: none !important; } }

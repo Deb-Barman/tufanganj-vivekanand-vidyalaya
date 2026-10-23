@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import "./ProfileFinderForm.css";
 
 /** "@username" search box used in the footer and on the Profile Finder page. Goes to /find-profile?u=… */
 export function ProfileFinderForm({ initial = "", id = "pf-find", autoFocus = false, className = "" }: { initial?: string; id?: string; autoFocus?: boolean; className?: string }) {

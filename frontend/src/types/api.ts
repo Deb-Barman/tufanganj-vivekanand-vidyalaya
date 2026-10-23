@@ -232,6 +232,8 @@ export interface Marksheet {
 export interface AdminStats {
   people: { students: number; teachers: number; disabled: number; students_without_class: number };
   admissions: { total: number; pending: number; contacted: number; closed: number };
+  /** People waiting for the office to set them a new password. */
+  password_requests: number;
   content: { notices: number; articles_published: number; articles_drafts: number; events_upcoming: number; gallery: number; forms: number; achievements?: number };
   academics: { sessions: number; classes: number; subjects: number; current_session: string | null };
   attendance: {

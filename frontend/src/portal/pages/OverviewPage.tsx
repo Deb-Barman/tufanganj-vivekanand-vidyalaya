@@ -32,6 +32,7 @@ function AdminOverview({ name }: { name: string }) {
   const attention: { icon: IconName; tone: string; title: string; text: string; to: string }[] = [];
   if (stats) {
     if (stats.admissions.pending > 0) attention.push({ icon: "inbox", tone: "warn", title: `${stats.admissions.pending} new admission ${stats.admissions.pending === 1 ? "enquiry" : "enquiries"}`, text: "Waiting for a reply from the office", to: "admissions" });
+    if (stats.password_requests > 0) attention.push({ icon: "lock", tone: "bad", title: `${stats.password_requests} forgot-password ${stats.password_requests === 1 ? "request" : "requests"}`, text: "Someone cannot sign in — set them a new password", to: "accounts" });
     if (stats.people.students_without_class > 0) attention.push({ icon: "cap", tone: "bad", title: `${stats.people.students_without_class} ${stats.people.students_without_class === 1 ? "student has" : "students have"} no class`, text: "Assign a class so attendance and marks work", to: "students" });
     if (stats.content.articles_drafts > 0) attention.push({ icon: "book", tone: "accent", title: `${stats.content.articles_drafts} draft ${stats.content.articles_drafts === 1 ? "article" : "articles"}`, text: "Unpublished — not visible on the website", to: "blog" });
     if (stats.academics.classes === 0) attention.push({ icon: "layers", tone: "warn", title: "No classes set up yet", text: "Create a session, classes and subjects first", to: "academics" });

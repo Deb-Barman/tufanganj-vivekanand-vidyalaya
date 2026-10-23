@@ -176,16 +176,24 @@ class ForgotPasswordView(APIView):
     throttle_classes = [ForgotPasswordThrottle]
 
     def post(self, request):
-        username = str(request.data.get("username", "")).strip()[:150]
+        username = str(request.data.get("username", "")).strip().lstrip("@")[:150]
         note = str(request.data.get("note", "")).strip()[:200]
-        user = User.objects.exclude(role="SUPER_ADMIN").filter(username__iexact=username, is_active_account=True, is_active=True).first() if username else None
-        if user is not None:
-            req = PasswordResetRequest.objects.filter(user=user, resolved_at__isnull=True).first()
-            if req is None:
-                PasswordResetRequest.objects.create(user=user, note=note)
-            elif note:
-                req.note = note
-                req.save(update_fields=["note"])
+        if username:
+            user = User.objects.exclude(role="SUPER_ADMIN").filter(username__iexact=username, is_active_account=True, is_active=True).first()
+            open_requests = PasswordResetRequest.objects.filter(resolved_at__isnull=True)
+            if user is not None:
+                req = open_requests.filter(user=user).first()
+                if req is None:
+                    PasswordResetRequest.objects.create(user=user, username=user.username, note=note)
+                elif note:
+                    req.note = note
+                    req.save(update_fields=["note"])
+            elif not User.objects.filter(username__iexact=username).exists():
+                # No such account. Keep the request anyway (limited, so it cannot be used to flood the office): the
+                # person probably mistyped their username and the office can help. The person sees the same answer.
+                unknown = open_requests.filter(user__isnull=True)
+                if not unknown.filter(username__iexact=username).exists() and unknown.count() < 50:
+                    PasswordResetRequest.objects.create(user=None, username=username, note=note)
         return Response({"detail": "If that username exists, the school office has been told. They will set a new password and share it with you."}, status=status.HTTP_202_ACCEPTED)
 
 
@@ -197,7 +205,16 @@ class AdminResetRequestListView(APIView):
     def get(self, request):
         rows = PasswordResetRequest.objects.filter(resolved_at__isnull=True).select_related("user")[:100]
         return Response([
-            {"id": str(r.id), "user": str(r.user_id), "username": r.user.username, "full_name": r.user.full_name, "role": r.user.role, "note": r.note, "created_at": r.created_at}
+            {
+                "id": str(r.id),
+                "user": str(r.user_id) if r.user_id else None,
+                "known": r.user_id is not None,  # false = nobody has this username (probably mistyped)
+                "username": r.user.username if r.user_id else r.username,
+                "full_name": r.user.full_name if r.user_id else "",
+                "role": r.user.role if r.user_id else "",
+                "note": r.note,
+                "created_at": r.created_at,
+            }
             for r in rows
         ])
 
@@ -273,6 +290,7 @@ class AdminStatsView(APIView):
                 "students_without_class": StudentProfile.objects.filter(school_class__isnull=True, user__is_active_account=True).count(),
             },
             "admissions": adm,
+            "password_requests": PasswordResetRequest.objects.filter(resolved_at__isnull=True).count(),
             "content": {
                 "notices": Notice.objects.count(),
                 "articles_published": arts["n_pub"],

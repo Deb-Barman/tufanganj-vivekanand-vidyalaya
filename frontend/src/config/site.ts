@@ -15,6 +15,9 @@ export const SITE = {
   /** Absolute site address, used for canonical links and the sitemap. */
   url: "https://tufanganj-vivekanand-vidyalaya.vercel.app",
   facebook: "https://facebook.com/TufanganjVivekanandaVidyalaya",
+  instagram: "https://www.instagram.com/tufanganjvivekanandavidyalay",
+  /** Paste the school's YouTube channel link here when it is ready — the icon turns into a link automatically. */
+  youtube: "",
   /** Leave empty until confirmed by the school office. Shown on /contact only when filled in. */
   phone: "",
   email: "",

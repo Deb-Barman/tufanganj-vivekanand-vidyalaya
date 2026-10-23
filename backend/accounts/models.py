@@ -185,7 +185,10 @@ class PasswordResetRequest(models.Model):
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reset_requests")
+    #: null when the typed username matches no account (a typo, or a full name / e-mail typed by mistake): the office
+    #: still sees it, so the person is not silently ignored.
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name="reset_requests")
+    username = models.CharField(max_length=150, blank=True)  # exactly what the person typed
     note = models.CharField(max_length=200, blank=True)  # e.g. "Class 9, roll 12" so the office knows it is really them
     created_at = models.DateTimeField(auto_now_add=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
