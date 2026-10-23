@@ -9,7 +9,7 @@ import { Avatar, EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, Statu
 type Filter = "ALL" | "STUDENT" | "TEACHER" | "ISSUES";
 type Creds = { title: string; username: string; password: string; role?: Role; name?: string };
 type Reset = { id: string; name: string; username: string };
-type ResetRequest = { id: string; user: string; username: string; full_name: string; role: Role; note: string; created_at: string };
+type ResetRequest = { id: string; user: string | null; known: boolean; username: string; full_name: string; role: Role | ""; note: string; created_at: string };
 type Draft = { id: string; username: string; full_name: string; phone: string; email: string };
 
 // Meets the backend validators (10+ chars, not common, not all numeric).
@@ -188,12 +188,17 @@ export function AccountsModule() {
           <p className="modal-text" style={{ fontSize: 13, marginTop: 0 }}>Passwords are stored in a scrambled form nobody can read, so you set a <b>new</b> one and hand it over (WhatsApp or a printed slip). Check it is really them first — e.g. by class and roll number.</p>
           <div className="list">
             {requests.map((r) => {
-              const account = items?.find((u) => u.id === r.user);
+              const account = r.known ? items?.find((u) => u.id === r.user) : undefined;
               return (
                 <div className="row-link" key={r.id}>
-                  <Avatar name={r.full_name} />
-                  <span className="row-main"><strong>{r.full_name}</strong><span>@{r.username} · {r.role === "TEACHER" ? "Teacher" : "Student"} · {fmtDate(r.created_at)}{r.note ? ` · “${r.note}”` : ""}</span></span>
+                  <Avatar name={r.known ? r.full_name : r.username} />
+                  {r.known ? (
+                    <span className="row-main"><strong>{r.full_name}</strong><span>@{r.username} · {r.role === "TEACHER" ? "Teacher" : "Student"} · {fmtDate(r.created_at)}{r.note ? ` · “${r.note}”` : ""}</span></span>
+                  ) : (
+                    <span className="row-main"><strong>“{r.username}”</strong><span>No account has this username — it was probably mistyped · {fmtDate(r.created_at)}{r.note ? ` · “${r.note}”` : ""}</span></span>
+                  )}
                   {account && <button type="button" className="btn btn-primary btn-sm" onClick={() => openReset(account)}>Set new password</button>}
+                  {!r.known && <button type="button" className="btn btn-outline btn-sm" onClick={() => { setQuery(r.note || r.username); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Search accounts</button>}
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => dismissRequest(r)}>Dismiss</button>
                 </div>
               );
