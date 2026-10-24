@@ -7,7 +7,14 @@ import { MORE, NAV, SITE } from "../config/site";
 import { fmtDay, usePaged } from "../lib/usePaged";
 import { usePageMeta } from "../lib/usePageMeta";
 import type { Notice } from "../types/api";
-import { ICONS } from "../components/site/icons";
+import { HorizontalShowcase } from "../components/home/HorizontalShowcase";
+import { Magnetic } from "../components/home/Magnetic";
+import { Marquee } from "../components/home/Marquee";
+import { PortalShowcase } from "../components/home/PortalShowcase";
+import { ScrollProgressBar } from "../components/home/ScrollProgressBar";
+import { Stats } from "../components/home/Stats";
+import { Story } from "../components/home/Story";
+import "../components/home/home.css";
 
 const EXPLORE = [...NAV.filter((n) => n.to !== "/admissions" && n.to !== "/contact"), MORE[0], MORE[2]];
 
@@ -17,26 +24,15 @@ export function HomePage() {
 
   return (
     <>
+      <ScrollProgressBar />
       <Hero />
       <TrustBar />
 
-      <Section>
-        <div className="section-head" data-reveal>
-          <div className="eyebrow">Explore the school</div>
-          <h2>Everything in one place.</h2>
-          <p className="lede">Each page has its own address, so you can bookmark and share exactly what you need.</p>
-        </div>
-        <div className="explore-grid">
-          {EXPLORE.map((n, i) => (
-            <Link key={n.to} to={n.to} className="feature" data-reveal style={{ ["--d" as string]: i % 4 }}>
-              <span className="f-icon">{ICONS[n.to] ?? ICONS["/about"]}</span>
-              <h3>{n.label}</h3>
-              <p>{n.desc}</p>
-              <span className="go">Open →</span>
-            </Link>
-          ))}
-        </div>
-      </Section>
+      <Marquee />
+      <Story />
+      <HorizontalShowcase items={EXPLORE} />
+      <Stats />
+      <PortalShowcase />
 
       <Section>
         <div className="split-2" style={{ alignItems: "end", marginBottom: 22 }}>
@@ -83,12 +79,8 @@ export function HomePage() {
             <p>Send an admission enquiry in two minutes, or write to the school office with any question.</p>
           </div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <Link to="/admissions" className="btn btn-primary">
-              Start admission enquiry
-            </Link>
-            <Link to="/contact" className="btn btn-outline">
-              Contact the office
-            </Link>
+            <Magnetic><Link to="/admissions" className="btn btn-primary">Start admission enquiry</Link></Magnetic>
+            <Magnetic><Link to="/contact" className="btn btn-outline">Contact the office</Link></Magnetic>
           </div>
         </div>
       </Section>
