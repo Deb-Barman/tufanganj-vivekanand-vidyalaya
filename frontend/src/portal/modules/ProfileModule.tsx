@@ -10,9 +10,11 @@ import { EmptyState, Icon, PageHeader, Select, Skeleton, StatusPill, errText, us
 import { MediaSourceField } from "../ui/MediaSourceField";
 import { emptyMedia, mediaChosen, mediaInvalid } from "../ui/mediaHelpers";
 import type { MediaValue } from "../ui/mediaHelpers";
+import { AchievementsEditor, ProjectsEditor, SkillsEditor, VisibilityPanel } from "./ProfilePortfolio";
+import { strength } from "./profileStrength";
 import "./profile.css";
 
-const FIELDS = ["headline", "about", "background", "talents", "interests", "achievements", "website", "age", "show_age", "gender", "show_gender", "city", "languages", "favorite_subject", "career_goal", "qualification", "quote", "projects", "social_links"] as const;
+const FIELDS = ["headline", "about", "background", "talents", "interests", "achievements", "website", "age", "show_age", "gender", "show_gender", "city", "languages", "favorite_subject", "career_goal", "qualification", "quote", "projects", "social_links", "skills", "project_list", "achievement_items", "learning", "visibility", "results_mode"] as const;
 type Draft = Pick<MyProfile, (typeof FIELDS)[number]>;
 const pick = (p: MyProfile): Draft => Object.fromEntries(FIELDS.map((k) => [k, p[k]])) as Draft;
 const ROLE_WORD = { SUPER_ADMIN: "Super Admin", TEACHER: "Teacher", STUDENT: "Student" } as const;
@@ -100,7 +102,7 @@ export function ProfileModule() {
   async function togglePublic() {
     if (!profile) return;
     const next = !profile.is_public;
-    if (next && !(await confirm({ title: "Make your profile public?", message: "Anyone on the internet with your link will be able to read the page below: your name, class or department, photo and everything you wrote here. Your phone, e-mail, marks and attendance are never shown, and age and gender stay hidden unless you switch them on. You can switch it off at any time.", confirmLabel: "Make public" }))) return;
+    if (next && !(await confirm({ title: "Make your profile public?", message: "Anyone on the internet with your link will be able to read the page below: your name, class or department, photo and everything you wrote here. Your phone, e-mail and guardian details are never shown. Your marks and attendance stay hidden unless you switch them on under “Who can see what”, and age and gender stay hidden unless you tick them. You can switch it off at any time.", confirmLabel: "Make public" }))) return;
     try {
       setProfile(await api.patch<MyProfile>("/auth/me/profile/", { is_public: next }));
       toast("success", next ? "Your profile is now public." : "Your profile is now private.");
@@ -185,6 +187,17 @@ export function ProfileModule() {
         )}
       </section>
 
+      {canPublish && (() => {
+        const st = strength(draft, !!profile.photo);
+        return (
+          <section className="panel pf-strength" aria-label="Portfolio strength">
+            <div className="pf-strength-top"><b>Portfolio strength</b><span>{st.percent}%</span></div>
+            <div className="pf-meter" role="progressbar" aria-valuenow={st.percent} aria-valuemin={0} aria-valuemax={100}><i style={{ width: `${st.percent}%` }} /></div>
+            <p>{st.missing.length === 0 ? "Complete! Your page tells a full story." : `Add ${st.missing.slice(0, 3).join(", ")}${st.missing.length > 3 ? " and more" : ""} to make it stronger.`}</p>
+          </section>
+        );
+      })()}
+
       {canPublish ? (
         <section className="panel pf-publish">
           <div>
@@ -242,13 +255,26 @@ export function ProfileModule() {
       </section>
 
       <section className="panel">
-        <div className="panel-title"><h3>Talents &amp; achievements</h3></div>
-        <div className="stack" style={{ gap: 14 }}>
-          <ChipInput id="pfTal" label="Talents & skills" hint="e.g. Python, Drawing, Singing — press Enter" value={draft.talents} onChange={(v) => set("talents", v)} />
+        <div className="panel-title"><h3>Skills &amp; interests</h3></div>
+        <div className="stack" style={{ gap: 16 }}>
+          <SkillsEditor value={draft.skills} onChange={(v) => set("skills", v)} />
+          <ChipInput id="pfTal" label="Talents (short tags)" hint="e.g. Drawing, Singing — press Enter" value={draft.talents} onChange={(v) => set("talents", v)} />
           <ChipInput id="pfInt" label="Interests & hobbies" hint="e.g. Robotics, Cricket — press Enter" value={draft.interests} onChange={(v) => set("interests", v)} />
-          <div className="form-field"><label htmlFor="pfProj">Projects &amp; work <small className="pf-count">{draft.projects.length}/1500</small></label><textarea id="pfProj" rows={4} value={draft.projects} maxLength={1500} placeholder="Things you have built or done" onChange={(e) => set("projects", e.target.value)} /></div>
-          <div className="form-field"><label htmlFor="pfAch">Achievements <small className="pf-count">{draft.achievements.length}/1500</small></label><textarea id="pfAch" rows={4} value={draft.achievements} maxLength={1500} placeholder="Prizes, competitions, publications…" onChange={(e) => set("achievements", e.target.value)} /></div>
+          <ChipInput id="pfLearn" label="Currently learning" hint="e.g. Machine learning — press Enter" value={draft.learning} onChange={(v) => set("learning", v)} />
         </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title"><h3>Projects</h3></div>
+        <p className="pf-note">Show what you have built. Add a GitHub link or a page that explains the project — visitors can open it from your profile.</p>
+        <ProjectsEditor value={draft.project_list} onChange={(v) => set("project_list", v)} />
+        <div className="form-field" style={{ marginTop: 14 }}><label htmlFor="pfProj">Other work (optional) <small className="pf-count">{draft.projects.length}/1500</small></label><textarea id="pfProj" rows={3} value={draft.projects} maxLength={1500} placeholder="Anything that does not fit a project card" onChange={(e) => set("projects", e.target.value)} /></div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title"><h3>Achievements &amp; certificates</h3></div>
+        <AchievementsEditor value={draft.achievement_items} onChange={(v) => set("achievement_items", v)} />
+        <div className="form-field" style={{ marginTop: 14 }}><label htmlFor="pfAch">Other achievements (optional) <small className="pf-count">{draft.achievements.length}/1500</small></label><textarea id="pfAch" rows={3} value={draft.achievements} maxLength={1500} placeholder="Anything else you are proud of" onChange={(e) => set("achievements", e.target.value)} /></div>
       </section>
 
       <section className="panel">
@@ -263,6 +289,18 @@ export function ProfileModule() {
           ))}
         </div>
       </section>
+
+      {canPublish && (
+        <section className="panel">
+          <div className="panel-title"><h3>Who can see what</h3></div>
+          <VisibilityPanel
+            draft={draft}
+            isStudent={isStudent}
+            onVisibility={(key, on) => setDraft({ ...draft, visibility: { ...draft.visibility, [key]: on } })}
+            onMode={(m) => set("results_mode", m)}
+          />
+        </section>
+      )}
 
       <div className="sticky-save">
         <button type="button" className="btn btn-primary" onClick={save} disabled={!dirty || saving}>{saving ? "Saving…" : dirty ? "Save changes" : "All saved"}</button>

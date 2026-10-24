@@ -1,0 +1,61 @@
+/* ───────── Results explorer (class → semesters → subjects) ───────── */
+.rx { display: grid; gap: 14px; min-width: 0; }
+.rx .tone-good { --t: var(--good); } .rx .tone-warn { --t: var(--warn); } .rx .tone-bad { --t: var(--danger); }
+.rx-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.rx-overall { display: flex; align-items: center; gap: 12px; }
+.rx-ring { --p: 0; position: relative; display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; background: conic-gradient(var(--t) calc(var(--p) * 1%), color-mix(in srgb, var(--fg) 10%, transparent) 0); }
+.rx-ring::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--surface); box-shadow: var(--inset-sm); }
+.rx-ring b { position: relative; font-size: 14px; font-weight: 800; color: var(--fg); }
+.rx-overall-text { display: grid; gap: 1px; } .rx-overall-text b { font-size: 15px; color: var(--fg); } .rx-overall-text small { font-size: 12px; color: var(--fg-faint); }
+.rx-top-subjects { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.rx-top-subjects li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: var(--fg-soft); background: var(--panel); box-shadow: var(--raise-sm); }
+
+.rx-tabs { display: flex; gap: 10px; overflow-x: auto; padding: 4px 4px 10px; margin: 0 -4px; scrollbar-width: thin; }
+.rx-tabs button { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 0; border-radius: 14px; font: inherit; font-size: 13.5px; font-weight: 800; color: var(--fg-soft); cursor: pointer; background: var(--surface); box-shadow: var(--raise-sm); transition: color .2s, box-shadow .25s, transform .25s; }
+.rx-tabs button small { font-size: 11px; font-weight: 600; color: var(--fg-faint); }
+.rx-tabs button.on { color: var(--accent); background: var(--panel); box-shadow: var(--inset-sm); }
+.rx-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.rx-panel { min-width: 0; }
+.rx-scroll { overflow-x: auto; border-radius: var(--radius-sm); background: var(--panel); box-shadow: var(--inset-sm); scrollbar-width: thin; }
+.rx-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rx-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13.5px; }
+.rx-table th, .rx-table td { padding: 10px 14px; text-align: left; white-space: nowrap; border-bottom: 1px solid color-mix(in srgb, var(--fg) 7%, transparent); }
+.rx-table thead th { position: sticky; top: 0; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-faint); }
+.rx-table tbody th, .rx-table tfoot th { position: sticky; left: 0; z-index: 1; font-weight: 700; color: var(--fg); background: var(--panel); }
+.rx-table tfoot th, .rx-table tfoot td { border-bottom: 0; border-top: 2px solid color-mix(in srgb, var(--fg) 12%, transparent); font-weight: 800; }
+.rx-table tr:last-child td { border-bottom: 0; }
+.rx-cell { display: grid; gap: 5px; min-width: 76px; }
+.rx-cell b { font-size: 14px; color: var(--fg); } .rx-cell b small { font-size: 11px; font-weight: 600; color: var(--fg-faint); }
+.rx-total { font-size: 11px; font-weight: 600; color: var(--fg-faint); }
+.rx-none { color: var(--fg-faint); }
+.rx-bar { display: block; height: 6px; border-radius: 99px; background: color-mix(in srgb, var(--fg) 10%, transparent); overflow: hidden; min-width: 56px; }
+.rx-bar i { display: block; height: 100%; border-radius: inherit; background: var(--t); transition: width .8s var(--ease-out); }
+.rx-pct { font-weight: 800; color: var(--t); } .rx-pct.strong { font-size: 15px; }
+.rx-summary { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.rx-summary li { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(70px, 2fr) 48px; align-items: center; gap: 14px; padding: 12px 16px; border-radius: var(--radius-sm); background: var(--panel); box-shadow: var(--inset-sm); }
+.rx-sem { display: grid; font-weight: 700; color: var(--fg); } .rx-sem small { font-size: 11.5px; font-weight: 500; color: var(--fg-faint); }
+.rx-summary .rx-pct { text-align: right; }
+.rx-empty { margin: 0; color: var(--fg-faint); font-size: 14px; }
+@media (max-width: 560px) { .rx-table th, .rx-table td { padding: 9px 11px; } .rx-summary li { grid-template-columns: 1fr 48px; } .rx-summary .rx-bar { grid-column: 1 / -1; grid-row: 2; } }
+
+/* ───────── Attendance calendar (GitHub-style) ───────── */
+.hm { margin: 0; display: grid; gap: 10px; min-width: 0; container-type: inline-size; }
+.hm-scroll { overflow-x: auto; padding: 4px 2px 8px; scrollbar-width: thin; }
+.hm-grid { --cell: 13px; --gap: 4px; display: grid; grid-template-columns: 30px auto; grid-template-rows: 16px auto; column-gap: 8px; width: max-content; }
+.hm-months { grid-column: 2; display: grid; grid-template-columns: repeat(var(--weeks), var(--cell)); column-gap: var(--gap); font-size: 11px; color: var(--fg-faint); }
+.hm-months span { white-space: nowrap; }
+.hm-days { grid-row: 2; position: sticky; left: 0; z-index: 1; background: var(--surface); display: grid; grid-template-rows: repeat(7, var(--cell)); row-gap: var(--gap); font-size: 10.5px; line-height: var(--cell); color: var(--fg-faint); }
+.hm-cells { grid-column: 2; grid-row: 2; display: flex; gap: var(--gap); }
+.hm-week { display: grid; grid-template-rows: repeat(7, var(--cell)); gap: var(--gap); }
+.hm-cell { display: inline-block; width: var(--cell); height: var(--cell); border-radius: 4px; background: color-mix(in srgb, var(--fg) 9%, transparent); transition: transform .15s; }
+.hm-cell.out { background: transparent; }
+.hm-cell.p { background: var(--good); box-shadow: 0 0 8px -2px var(--good); }
+.hm-cell.a { background: var(--danger); box-shadow: 0 0 8px -2px var(--danger); }
+.hm-week .hm-cell:not(.out):hover { transform: scale(1.5); position: relative; z-index: 2; }
+.hm-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--fg-faint); }
+.hm-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.hm-legend .hm-cell { --cell: 11px; }
+/* Wide enough: shrink the squares so the whole year fits the card. Phones: fixed readable squares, swipe sideways. */
+@supports (width: 1cqw) { .hm-grid { --gap: 2.5px; --cell: clamp(7px, calc((100cqw - 48px) / var(--weeks) - var(--gap)), 14px); } }
+@media (max-width: 560px) { .hm-grid { --cell: 12px; --gap: 3px; } }

@@ -115,7 +115,8 @@ class PublicProfile(models.Model):
     The "About me" page a student or teacher writes for themselves (shown at /profile/<role>/<username>).
 
     Kept in its own table ON PURPOSE: everything in here is allowed to be public, and nothing private
-    (phone, e-mail, guardian, roll number, marks, attendance) is ever stored here. The public API
+    (phone, e-mail, guardian, roll number) is ever stored here. Marks and attendance are NOT stored here either: they are read
+    from the school's records at request time, and only when the student switched that section on. The public API
     serialises only this table plus the class / department name, so private data cannot leak by accident.
     It is hidden until the owner switches `is_public` on (opt-in), and the Super Admin can switch it off.
     """
@@ -146,6 +147,20 @@ class PublicProfile(models.Model):
     quote = models.CharField(max_length=200, blank=True)
     projects = models.TextField(max_length=1500, blank=True)
     social_links = models.JSONField(default=dict, blank=True)
+    # --- portfolio (students mainly): all of it is written by the owner and is allowed to be public
+    #: [{"name": "Python", "level": 1..5}]
+    skills = models.JSONField(default=list, blank=True)
+    #: [{"title", "summary", "link" (https), "tags": []}]
+    project_list = models.JSONField(default=list, blank=True)
+    #: [{"title", "year", "kind": award|certificate|competition|activity|other, "detail"}]
+    achievement_items = models.JSONField(default=list, blank=True)
+    #: "Currently learning" tags
+    learning = models.JSONField(default=list, blank=True)
+    #: Which sections a visitor may see, e.g. {"results": true, "attendance": false}. Missing keys use the defaults in
+    #: accounts/portfolio.py (everything on except marks and attendance, which the student must switch on).
+    visibility = models.JSONField(default=dict, blank=True)
+    #: How much of the school's marks a visitor sees IF results are switched on: "summary" (percentages) or "full" (every subject).
+    results_mode = models.CharField(max_length=8, default="summary")
     is_public = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 

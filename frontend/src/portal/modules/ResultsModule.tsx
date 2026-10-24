@@ -6,7 +6,9 @@ import type { AcademicSession, Result, ResultTerm, SchoolClass, StudentProfile, 
 import { RESULT_TERMS, termLabel } from "../../types/api";
 import { ResultRecords } from "./RecordsManager";
 import { ImportButton } from "../ui/ImportButton";
-import { EmptyState, Icon, PageHeader, Ring, Segmented, Skeleton, classLabel, errText, listAll, useUI, Select } from "../ui/kitExports";
+import { EmptyState, PageHeader, Segmented, Skeleton, classLabel, errText, listAll, useUI, Select } from "../ui/kitExports";
+import { ResultsExplorer } from "../../components/portfolio/ResultsExplorer";
+import type { PortfolioClass, PortfolioSemester } from "../../types/api";
 import { PageLoading } from "../ui/PageLoading";
 import { dashPath } from "../ui/nav";
 
@@ -25,7 +27,6 @@ export function ResultsModule() {
   );
 }
 
-const pctTone = (p: number) => (p >= 60 ? "good" : p >= 40 ? "warn" : "bad");
 
 /* ───────────── Staff: enter a whole class's marks for one subject ───────────── */
 
@@ -235,6 +236,7 @@ function StaffResults({ isAdmin }: { isAdmin: boolean }) {
 /* ───────────── Student: my results ───────────── */
 
 const TERM_ORDER = RESULT_TERMS.map((t) => t.value as string);
+const pctOf = (got: number, full: number) => (full ? Math.round((got / full) * 100) : 0);
 
 function StudentResults() {
   const [results, setResults] = useState<Result[] | null>(null);
@@ -257,78 +259,55 @@ function StudentResults() {
       });
   }, []);
 
-  /** One block per exam: "First Semester · Class VI", newest session first, semesters in order. */
-  const groups = useMemo(() => {
-    const m = new Map<string, { session: string; term: string; rows: Result[] }>();
+  /** Class → semesters → subjects (the same shape the public profile uses), oldest class first. */
+  const { grouped, overall } = useMemo(() => {
+    const byClass = new Map<string, Map<string, Result[]>>();
+    let got = 0;
+    let full = 0;
     results?.forEach((r) => {
-      const key = `${r.session}|${r.term}`;
-      const g = m.get(key) ?? { session: r.session, term: r.term, rows: [] };
-      g.rows.push(r);
-      m.set(key, g);
+      const classId = subjects.find((s) => s.id === r.subject)?.school_class ?? "?";
+      const terms = byClass.get(classId) ?? new Map<string, Result[]>();
+      terms.set(r.term, [...(terms.get(r.term) ?? []), r]);
+      byClass.set(classId, terms);
+      got += Number(r.marks_obtained);
+      full += Number(r.full_marks);
     });
-    const sessionRank = (id: string) => sessions.findIndex((s) => s.id === id); // the API lists newest session first
-    return [...m.values()].sort((a, b) => sessionRank(a.session) - sessionRank(b.session) || TERM_ORDER.indexOf(a.term) - TERM_ORDER.indexOf(b.term));
-  }, [results, sessions]);
-
-  const classOf = (rows: Result[]) => {
-    const subject = subjects.find((s) => s.id === rows[0]?.subject);
-    const c = classes.find((x) => x.id === subject?.school_class);
-    return c ? `${c.name}${c.stream ? " " + c.stream : ""}` : "";
-  };
+    const out: PortfolioClass[] = [...byClass.entries()].map(([classId, terms]) => {
+      const c = classes.find((x) => x.id === classId);
+      let cGot = 0;
+      let cFull = 0;
+      const semesters: PortfolioSemester[] = [...terms.entries()]
+        .sort(([a], [b]) => TERM_ORDER.indexOf(a) - TERM_ORDER.indexOf(b))
+        .map(([term, rows]) => {
+          const g = rows.reduce((a, r) => a + Number(r.marks_obtained), 0);
+          const f = rows.reduce((a, r) => a + Number(r.full_marks), 0);
+          cGot += g;
+          cFull += f;
+          return {
+            term, label: termLabel(term), percent: pctOf(g, f), subject_count: rows.length, got: g, full: f,
+            subjects: rows
+              .map((r) => ({ name: subjects.find((s) => s.id === r.subject)?.name ?? "Subject", got: Number(r.marks_obtained), full: Number(r.full_marks), percent: pctOf(Number(r.marks_obtained), Number(r.full_marks)) }))
+              .sort((a, b) => a.name.localeCompare(b.name)),
+          };
+        });
+      return { class_label: c ? `${c.name}${c.stream ? " " + c.stream : ""}` : "Class", session: sessions.find((s) => s.id === c?.session)?.label ?? "", percent: pctOf(cGot, cFull), semesters };
+    });
+    out.sort((a, b) => a.session.localeCompare(b.session) || a.class_label.localeCompare(b.class_label));
+    return { grouped: out, overall: pctOf(got, full) };
+  }, [results, subjects, classes, sessions]);
 
   return (
     <>
-      <PageHeader icon="award" title="My results" sub="Marks entered by your teachers, semester by semester." />
+      <PageHeader icon="award" title="My results" sub="Every class, every semester, every subject — in one place." />
       {error && <p className="alert alert-error">{error}</p>}
       {results === null ? (
         <Skeleton rows={4} />
       ) : results.length === 0 ? (
         <EmptyState icon="award" title="No marks yet" text="Your marks will appear here once your teachers enter them." />
       ) : (
-        groups.map(({ session, term, rows }) => {
-          const got = rows.reduce((a, r) => a + Number(r.marks_obtained), 0);
-          const full = rows.reduce((a, r) => a + Number(r.full_marks), 0);
-          const pct = full ? Math.round((got / full) * 100) : 0;
-          const cls = classOf(rows);
-          return (
-            <section className="panel" key={`${session}|${term}`}>
-              <div className="panel-title">
-                <h2>
-                  <Icon name="award" size={18} /> {termLabel(term)}{cls ? ` · ${cls}` : ""}
-                </h2>
-                <span className="mini-meta">Session {sessions.find((s) => s.id === session)?.label ?? ""}</span>
-              </div>
-              <div className="split" style={{ marginBottom: 18 }}>
-                <Ring percent={pct} label={`${pct}%`} sub="overall" tone={pctTone(pct)} />
-                <div className="split-text">
-                  <span>
-                    <b>{got}</b> of {full} marks
-                  </span>
-                  <span>{rows.length} {rows.length === 1 ? "subject" : "subjects"}</span>
-                </div>
-              </div>
-              <div className="list">
-                {rows.map((r) => {
-                  const p = Number(r.full_marks) ? Math.round((Number(r.marks_obtained) / Number(r.full_marks)) * 100) : 0;
-                  return (
-                    <div className="row-link" key={r.id}>
-                      <span className="row-main">
-                        <strong>{subjects.find((s) => s.id === r.subject)?.name ?? "Subject"}</strong>
-                        <span>
-                          {Number(r.marks_obtained)} / {Number(r.full_marks)}
-                        </span>
-                      </span>
-                      <div className={`pct-bar tone-${pctTone(p)}`} style={{ flex: "0 0 38%" }} aria-hidden="true">
-                        <i style={{ width: `${p}%` }} />
-                      </div>
-                      <b style={{ minWidth: 42, textAlign: "right", color: "var(--fg)" }}>{p}%</b>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })
+        <section className="panel">
+          <ResultsExplorer classes={grouped} overall={overall} />
+        </section>
       )}
     </>
   );

@@ -22,17 +22,17 @@ const still = () => typeof matchMedia === "function" && matchMedia("(prefers-red
  * pops up and (on a mouse) the button is gently pulled towards the pointer. A network with no link yet (see SITE in
  * config/site.ts) shows the same icon greyed out with a "coming soon" label instead of a dead link.
  */
-export function SocialIcons({ className = "", labels = false }: { className?: string; /** Footer style: the network's name sits under each round button (no hover tooltip needed). */ labels?: boolean }) {
+export function SocialIcons({ className = "" }: { className?: string }) {
   return (
-    <ul className={`soc-list${labels ? " soc-tiles" : ""} ${className}`} aria-label="Follow the school on social media">
+    <ul className={`soc-list ${className}`} aria-label="Follow the school on social media">
       {ITEMS.map((it) => (
-        <Item key={it.key} label={it.label} url={it.url} bg={it.bg} glow={it.glow} named={labels} />
+        <Item key={it.key} label={it.label} url={it.url} bg={it.bg} glow={it.glow} />
       ))}
     </ul>
   );
 }
 
-function Item({ label, url, bg, glow, named }: { label: string; url: string; bg: string; glow: string; named: boolean }) {
+function Item({ label, url, bg, glow }: { label: string; url: string; bg: string; glow: string }) {
   const ref = useRef<HTMLAnchorElement & HTMLSpanElement>(null);
   const icon = label.toLowerCase() as keyof typeof PATHS;
   const style = { ["--b" as string]: bg, ["--b1" as string]: glow };
@@ -57,14 +57,7 @@ function Item({ label, url, bg, glow, named }: { label: string; url: string; bg:
       ) : (
         <span ref={ref} className="soc soc-off" role="img" aria-label={`${label} — link coming soon`} tabIndex={0} style={style}>{glyph}</span>
       )}
-      {named ? (
-        <span className="soc-name" aria-hidden="true">
-          {label}
-          {!url && <em>Soon</em>}
-        </span>
-      ) : (
-        <span className="soc-tip" aria-hidden="true">{url ? label : `${label} · coming soon`}</span>
-      )}
+      <span className="soc-tip" aria-hidden="true">{url ? label : `${label} · coming soon`}</span>
     </li>
   );
 }
