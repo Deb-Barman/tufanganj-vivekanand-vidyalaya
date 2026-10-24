@@ -4,7 +4,8 @@ public page at /profile/student/<username> or /profile/teacher/<username>.
 
 Privacy rules enforced here (not in the browser):
   * the public API serialises ONLY the PublicProfile table + class/department name + full name — never phone,
-    e-mail, guardian details, roll number, marks or attendance;
+    e-mail, guardian details or roll number. Marks and attendance are included ONLY when a student switched those
+    sections on (see accounts/portfolio.py), and each owner switch is applied here on the server;
   * a profile is hidden until its owner opts in, a disabled account is hidden, and a missing/private/disabled
     profile all answer with the SAME 404, so the endpoint cannot be used to find out which usernames exist;
   * phone numbers and e-mail addresses typed into the text fields are refused (the page is public);
@@ -29,6 +30,7 @@ from content.links import LinkError, normalize_image_link
 from content.serializers import validate_image_upload
 from notices.serializers import sanitize
 
+from . import portfolio
 from .models import PublicProfile, Role, User
 from .permissions import IsAuthenticatedActiveUser
 
@@ -125,6 +127,7 @@ class MyProfileSerializer(serializers.ModelSerializer):
         fields = [
             "headline", "about", "background", "talents", "interests", "achievements", "website", "photo", "photo_link", "photo_adjust", "is_public", "updated_at",
             "age", "show_age", "gender", "show_gender", "city", "languages", "favorite_subject", "career_goal", "qualification", "quote", "projects", "social_links",
+            "skills", "project_list", "achievement_items", "learning", "visibility", "results_mode",
         ]
         read_only_fields = ["photo", "updated_at"]
         extra_kwargs = {
@@ -211,6 +214,98 @@ class MyProfileSerializer(serializers.ModelSerializer):
                 out[platform] = link
         return out
 
+    # ── portfolio: skills, project cards, achievement cards, "currently learning", section switches
+    def validate_skills(self, v):
+        if not isinstance(v, list) or len(v) > MAX_LIST_ITEMS:
+            raise serializers.ValidationError(f"Skills: a list of at most {MAX_LIST_ITEMS}.")
+        out, seen = [], set()
+        for it in v:
+            if not isinstance(it, dict):
+                raise serializers.ValidationError("Skills: each skill needs a name and a level.")
+            name = _public_text(str(it.get("name", "")), "Skill")
+            try:
+                level = int(it.get("level", 3))
+            except (TypeError, ValueError):
+                raise serializers.ValidationError("Skills: the level must be a number from 1 to 5.") from None
+            if not name:
+                continue
+            if len(name) > MAX_ITEM_LEN or not 1 <= level <= 5:
+                raise serializers.ValidationError(f"Skills: names up to {MAX_ITEM_LEN} characters, level 1 to 5.")
+            if name.lower() not in seen:
+                seen.add(name.lower())
+                out.append({"name": name, "level": level})
+        return out
+
+    def validate_project_list(self, v):
+        if not isinstance(v, list) or len(v) > 8:
+            raise serializers.ValidationError("Projects: at most 8.")
+        out = []
+        for it in v:
+            if not isinstance(it, dict):
+                raise serializers.ValidationError("Projects: each project needs a title.")
+            title = _public_text(str(it.get("title", "")), "Project title")
+            if not title:
+                continue
+            summary = _public_text(str(it.get("summary", "")), "Project summary")
+            if len(title) > 80 or len(summary) > 400:
+                raise serializers.ValidationError("Projects: title up to 80 and description up to 400 characters.")
+            try:
+                link = portfolio.clean_https_link(str(it.get("link", "")))
+            except ValueError as exc:
+                raise serializers.ValidationError(f"Project “{title}”: {exc}") from None
+            tags = it.get("tags", [])
+            if not isinstance(tags, list) or len(tags) > 5:
+                raise serializers.ValidationError("Projects: at most 5 tags each.")
+            clean_tags = []
+            for t in tags:
+                t = _public_text(str(t), "Project tag")
+                if t and len(t) <= 24 and t.lower() not in [x.lower() for x in clean_tags]:
+                    clean_tags.append(t)
+            out.append({"title": title, "summary": summary, "link": link, "tags": clean_tags})
+        return out
+
+    def validate_achievement_items(self, v):
+        if not isinstance(v, list) or len(v) > 15:
+            raise serializers.ValidationError("Achievements: at most 15.")
+        out = []
+        for it in v:
+            if not isinstance(it, dict):
+                raise serializers.ValidationError("Achievements: each one needs a title.")
+            title = _public_text(str(it.get("title", "")), "Achievement title")
+            if not title:
+                continue
+            detail = _public_text(str(it.get("detail", "")), "Achievement details")
+            year = str(it.get("year", "") or "").strip()
+            kind = str(it.get("kind", "other") or "other").lower()
+            if len(title) > 100 or len(detail) > 300:
+                raise serializers.ValidationError("Achievements: title up to 100 and details up to 300 characters.")
+            if year and not (year.isdigit() and 1990 <= int(year) <= 2100):
+                raise serializers.ValidationError("Achievements: the year must look like 2026.")
+            if kind not in portfolio.ACHIEVEMENT_KINDS:
+                raise serializers.ValidationError("Achievements: choose award, certificate, competition, activity or other.")
+            out.append({"title": title, "year": year, "kind": kind, "detail": detail})
+        return out
+
+    def validate_learning(self, v):
+        return _public_list(v, "Currently learning")
+
+    def validate_visibility(self, v):
+        if not isinstance(v, dict):
+            raise serializers.ValidationError("Visibility must be a set of on/off switches.")
+        out = {}
+        for key, val in v.items():
+            if key not in portfolio.SECTIONS:
+                raise serializers.ValidationError(f"“{key}” is not a section you can switch.")
+            if not isinstance(val, bool):
+                raise serializers.ValidationError("Each switch must be on or off.")
+            out[key] = val
+        return out
+
+    def validate_results_mode(self, v):
+        if v not in portfolio.RESULTS_MODES:
+            raise serializers.ValidationError("Choose summary or full.")
+        return v
+
     def update(self, instance, validated_data):
         link = validated_data.get("photo_link")
         if link is not None and "photo_adjust" not in validated_data and link != instance.photo_link:
@@ -295,6 +390,7 @@ class MyProfileView(APIView):
             "full_name": user.full_name,
             "role": user.role,
             "public_path": _public_path(user),  # None for the Super Admin: no public page for that account
+            "visibility": portfolio.effective_visibility(profile),  # every section -> on/off (defaults filled in)
             **_facts(user),
         }
 
@@ -418,32 +514,45 @@ class PublicProfileView(APIView):
         profile = getattr(user, "public_profile", None) if user else None
         if not profile or not profile.is_public:
             return Response(NOT_FOUND, status=status.HTTP_404_NOT_FOUND)
-        resp = Response({
+        vis = portfolio.effective_visibility(profile)
+        show = lambda key, value, empty="": value if vis[key] else empty  # noqa: E731 - a hidden section is simply emptied
+        data = {
             "role": role,
             "username": user.username,
             "full_name": user.full_name,
             "headline": profile.headline,
-            "about": profile.about,
-            "background": profile.background,
-            "talents": profile.talents or [],
-            "interests": profile.interests or [],
-            "achievements": profile.achievements,
-            "website": profile.website,
+            "about": show("about", profile.about),
+            "background": show("background", profile.background),
+            "talents": show("skills", profile.talents or [], []),
+            "interests": show("skills", profile.interests or [], []),
+            "skills": show("skills", profile.skills or [], []),
+            "learning": show("skills", profile.learning or [], []),
+            "achievements": show("achievements", profile.achievements),
+            "achievement_items": show("achievements", profile.achievement_items or [], []),
+            "website": show("social", profile.website),
             "photo": _photo_url(profile, request),
             "photo_adjust": profile.photo_adjust,
             "updated_at": profile.updated_at,
-            "city": profile.city,
-            "languages": profile.languages or [],
-            "favorite_subject": profile.favorite_subject,
-            "career_goal": profile.career_goal,
+            "city": show("quick_facts", profile.city),
+            "languages": show("quick_facts", profile.languages or [], []),
+            "favorite_subject": show("quick_facts", profile.favorite_subject),
+            "career_goal": show("quick_facts", profile.career_goal),
             "qualification": profile.qualification,
-            "quote": profile.quote,
-            "projects": profile.projects,
-            "social_links": profile.social_links or {},
+            "quote": show("about", profile.quote),
+            "projects": show("projects", profile.projects),
+            "project_list": show("projects", profile.project_list or [], []),
+            "social_links": show("social", profile.social_links or {}, {}),
             # age and gender are shown ONLY when the owner switched them on
-            "age": profile.age if profile.show_age else None,
-            "gender": profile.gender if profile.show_gender else "",
+            "age": profile.age if (profile.show_age and vis["quick_facts"]) else None,
+            "gender": profile.gender if (profile.show_gender and vis["quick_facts"]) else "",
             **_facts(user),
-        })
+        }
+        # Marks and attendance come from the school's records, and only when the STUDENT switched them on.
+        sp = getattr(user, "student_profile", None) if role == "student" else None
+        if sp is not None and vis["results"]:
+            data["results"] = portfolio.build_results(sp, profile.results_mode)
+        if sp is not None and vis["attendance"]:
+            data["attendance"] = portfolio.build_attendance(sp)
+        resp = Response(data)
         resp["Cache-Control"] = "public, max-age=60"
         return resp
