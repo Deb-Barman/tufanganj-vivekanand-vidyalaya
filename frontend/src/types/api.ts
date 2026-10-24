@@ -405,6 +405,13 @@ export interface MyProfile {
   projects: string;
   /** site key (instagram, github, …) -> clean https link */
   social_links: Record<string, string>;
+  skills: PortfolioSkill[];
+  project_list: PortfolioProject[];
+  achievement_items: PortfolioAchievement[];
+  learning: string[];
+  /** every section -> shown to visitors? (defaults filled in by the server) */
+  visibility: Record<SectionKey, boolean>;
+  results_mode: "summary" | "full";
   username: string;
   full_name: string;
   role: Role;
@@ -413,6 +420,26 @@ export interface MyProfile {
   class_label: string | null;
   department: string | null;
   years_experience: number | null;
+}
+
+/* ───────────── portfolio (student profile) ───────────── */
+
+export type SectionKey = "about" | "quick_facts" | "skills" | "projects" | "achievements" | "background" | "social" | "results" | "attendance";
+export interface PortfolioSkill { name: string; level: number }
+export interface PortfolioProject { title: string; summary: string; link: string; tags: string[] }
+export type AchievementKind = "award" | "certificate" | "competition" | "activity" | "other";
+export interface PortfolioAchievement { title: string; year: string; kind: AchievementKind; detail: string }
+export interface PortfolioSubjectMark { name: string; got: number; full: number; percent: number }
+export interface PortfolioSemester { term: string; label: string; percent: number; subject_count: number; got?: number; full?: number; subjects?: PortfolioSubjectMark[] }
+export interface PortfolioClass { class_label: string; session: string; percent: number; semesters: PortfolioSemester[] }
+export interface PortfolioResults { mode: "summary" | "full"; overall_percent: number; classes: PortfolioClass[]; top_subjects?: { name: string; percent: number }[] }
+export interface PortfolioAttendance {
+  from: string; to: string;
+  /** [ISO date, "P" present | "A" absent] for days the school marked attendance */
+  days: [string, "P" | "A"][];
+  present: number; absent: number; total: number; percent: number | null;
+  current_streak: number; longest_streak: number;
+  homework?: { done: number; total: number; percent: number };
 }
 
 /** What anyone on the internet can read at /profile/<role>/<username>. */
@@ -438,6 +465,14 @@ export interface PublicProfile {
   quote: string;
   projects: string;
   social_links: Record<string, string>;
+  skills: PortfolioSkill[];
+  learning: string[];
+  project_list: PortfolioProject[];
+  achievement_items: PortfolioAchievement[];
+  /** present ONLY when the student switched "Results" on */
+  results?: PortfolioResults;
+  /** present ONLY when the student switched "Attendance" on */
+  attendance?: PortfolioAttendance;
   /** only present when the owner chose to show them */
   age: number | null;
   gender: string;
