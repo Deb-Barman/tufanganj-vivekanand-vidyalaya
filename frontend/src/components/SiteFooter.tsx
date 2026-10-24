@@ -43,11 +43,8 @@ export function SiteFooter() {
             Contact the school office <span aria-hidden="true">→</span>
           </Link>
           <div className="footer-social">
-            <div className="footer-social-head">
-              <h5>Follow us</h5>
-              <p>School news, events and notices — also on social media.</p>
-            </div>
-            <SocialIcons labels />
+            <h5>Follow us</h5>
+            <SocialIcons />
           </div>
         </div>
         <div className="footer-col">
