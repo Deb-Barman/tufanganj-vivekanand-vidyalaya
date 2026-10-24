@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Icon } from "./icons";
 import type { IconName } from "./icons";
 import { UIContext, initials, useCountUp } from "./kitHelpers";
+import { pushNote } from "../../lib/notifications";
 import type { Toast, ConfirmOptions } from "./kitHelpers";
 import "./console.css";
 import { Bone } from "./Skeletons";
@@ -13,16 +14,38 @@ export { Skeleton } from "./Skeletons";
 
 /* ───────────── toasts + confirm ───────────── */
 
-export function UIProvider({ children }: { children: ReactNode }) {
+const TOAST_TITLE = { success: "Done", error: "Something went wrong", info: "Notice" } as const;
+/** Same breakpoint the dashboard uses for its desktop layout. Phones keep the original pop-up. */
+const isDesktop = () => typeof window !== "undefined" && window.matchMedia("(min-width: 981px)").matches;
+
+export function UIProvider({ children, notifyKey }: { children: ReactNode; /** Account the message history (bell) is kept for, in this browser only. */ notifyKey?: string }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [pending, setPending] = useState<(ConfirmOptions & { resolve: (v: boolean) => void }) | null>(null);
   const seq = useRef(0);
+  const notifyRef = useRef(notifyKey);
+  useEffect(() => {
+    notifyRef.current = notifyKey;
+  }, [notifyKey]);
 
   const toast = useCallback((kind: Toast["kind"], text: string) => {
     const id = ++seq.current;
     setToasts((t) => [...t.slice(-3), { id, kind, text }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === "error" ? 6500 : 3800);
+    if (notifyRef.current) pushNote(notifyRef.current, kind, text); // browser-only history for the bell
+    const life = kind === "error" ? 6500 : 3800;
+    if (isDesktop()) {
+      // Desktop: the box drops away like it fell off the shelf, then is removed.
+      setTimeout(() => setToasts((t) => t.map((x) => (x.id === id ? { ...x, leaving: true } : x))), life);
+      setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), life + 700);
+    } else {
+      setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), life);
+    }
   }, []);
+
+  /** Desktop: click a box to let it fall. */
+  const dismissToast = (id: number) => {
+    if (!isDesktop()) return;
+    setToasts((t) => t.map((x) => (x.id === id ? { ...x, leaving: true } : x)));
+  };
 
   const confirm = useCallback(
     (opts: ConfirmOptions) => new Promise<boolean>((resolve) => setPending({ ...opts, resolve })),
@@ -42,9 +65,18 @@ export function UIProvider({ children }: { children: ReactNode }) {
       {createPortal(
         <div className="toast-stack" role="status" aria-live="polite">
           {toasts.map((t) => (
-            <div key={t.id} className={`toast toast-${t.kind}`}>
+            <div
+              key={t.id}
+              className={`toast toast-${t.kind}${t.leaving ? " leaving" : ""}`}
+              style={{ ["--life" as string]: `${t.kind === "error" ? 6500 : 3800}ms` }}
+              onClick={() => dismissToast(t.id)}
+            >
               <Icon name={t.kind === "success" ? "checkCircle" : t.kind === "error" ? "alert" : "sparkle"} size={18} />
-              <span>{t.text}</span>
+              <div className="toast-body">
+                <b className="toast-title">{TOAST_TITLE[t.kind]}</b>
+                <span>{t.text}</span>
+              </div>
+              <i className="toast-bar" aria-hidden="true" />
             </div>
           ))}
         </div>,

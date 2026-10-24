@@ -207,6 +207,54 @@ a.row-link:hover { transform: translateX(4px); box-shadow: var(--inset-sm), 0 0 
 .toast-success { --tone: var(--good); } .toast-error { --tone: var(--danger); } .toast-info { --tone: var(--accent); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(16px) scale(0.96); } to { opacity: 1; transform: none; } }
 
+/* Phones / tablets keep the simple pill above: the extra parts below are hidden there. */
+.toast-body { display: contents; }
+.toast-title, .toast-bar { display: none; }
+
+/* ── Desktop only: the message is a box that DROPS in with gravity, bounces, settles in the bottom-right corner, then
+      falls away. Newest box lands on top of the pile. ── */
+@media (min-width: 981px) {
+  .toast-stack { left: auto; right: 28px; bottom: 28px; transform: none; width: 340px; flex-direction: column-reverse; gap: 10px; }
+  .toast {
+    position: relative; display: grid; grid-template-columns: 38px minmax(0, 1fr); align-items: center; gap: 4px 14px; overflow: hidden;
+    padding: 14px 16px 17px; border-radius: 16px; cursor: pointer; transform-origin: 50% 100%;
+    background: var(--surface); box-shadow: var(--raise-lg), inset 4px 0 0 var(--tone);
+    animation: toast-drop 1s both;
+  }
+  .toast > svg { width: 38px; height: 38px; padding: 9px; border-radius: 12px; color: var(--tone); background: color-mix(in srgb, var(--tone) 14%, var(--surface)); box-shadow: var(--raise-sm); }
+  .toast-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .toast-title { display: block; font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tone); }
+  .toast-body > span { font-size: 13.5px; font-weight: 600; line-height: 1.45; color: var(--fg); overflow-wrap: anywhere; }
+  .toast-bar { display: block; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--tone); opacity: 0.8; transform-origin: left center; animation: toast-life var(--life, 3800ms) linear both; }
+  .toast.leaving { animation: toast-fall 0.7s both; pointer-events: none; }
+}
+/* Free fall (ease-in = speeding up), then bounce with a little squash on every landing. */
+@keyframes toast-drop {
+  0%   { opacity: 0; transform: translateY(-80vh) rotate(-5deg); animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+  8%   { opacity: 1; }
+  46%  { opacity: 1; transform: translateY(0) rotate(1.2deg) scale(1.05, 0.9); animation-timing-function: cubic-bezier(0, 0.55, 0.45, 1); }
+  60%  { transform: translateY(-26px) rotate(-1.4deg) scale(0.98, 1.03); animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+  72%  { transform: translateY(0) rotate(0.7deg) scale(1.025, 0.96); animation-timing-function: cubic-bezier(0, 0.55, 0.45, 1); }
+  82%  { transform: translateY(-9px) rotate(-0.3deg); animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+  91%  { transform: translateY(0) scale(1.01, 0.985); animation-timing-function: cubic-bezier(0, 0.55, 0.45, 1); }
+  96%  { transform: translateY(-2px); }
+  100% { opacity: 1; transform: none; }
+}
+/* Tips off the edge, falls, then the gap closes so the boxes above settle down. */
+@keyframes toast-fall {
+  0%   { opacity: 1; max-height: 160px; margin-bottom: 0; transform: none; animation-timing-function: ease-out; }
+  18%  { opacity: 1; max-height: 160px; margin-bottom: 0; transform: translateY(-6px) rotate(-2deg); animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+  70%  { opacity: 0.9; max-height: 160px; margin-bottom: 0; transform: translateY(120px) rotate(9deg); }
+  100% { opacity: 0; max-height: 0; margin-bottom: -10px; padding-block: 0; transform: translateY(160px) rotate(12deg); }
+}
+@keyframes toast-life { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: toast-in 0.2s ease both !important; }
+  .toast.leaving { animation: toast-out 0.2s ease both !important; }
+  .toast-bar { animation: none !important; }
+}
+@keyframes toast-out { to { opacity: 0; } }
+
 /* ── command palette ── */
 .cmdk-backdrop { position: fixed; inset: 0; z-index: 240; display: flex; justify-content: center; align-items: flex-start; padding: 12vh 16px 0; background: rgba(6, 8, 16, 0.6); backdrop-filter: blur(5px); animation: fade-in 0.15s ease both; }
 .cmdk { width: min(100%, 560px); max-height: 70dvh; display: flex; flex-direction: column; border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--raise-lg); overflow: hidden; animation: modal-in 0.3s var(--ease-out) both; }
