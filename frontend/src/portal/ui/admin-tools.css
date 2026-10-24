@@ -29,6 +29,9 @@
 .data-bar .search-box { flex: 1 1 220px; }
 .data-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; margin: 4px 2px 12px; font-size: 13px; color: var(--fg-soft); }
 .data-meta code { font-family: var(--mono); font-size: 12px; padding: 2px 8px; border-radius: 8px; background: var(--panel); box-shadow: var(--inset-sm); }
+/* "Rows per page": a small version of the site's own drop-down (not the browser's dark list) */
+.data-meta .field-inline .neo-select.dv-rows { width: 92px; min-width: 92px; padding-block: 6px; padding-left: 14px; padding-right: 10px; font-size: 14px; font-weight: 700; }
+@media (min-width: 769px) { .data-meta .field-inline .neo-select.dv-rows { min-height: 38px; } }
 .data-wrap { overflow: auto; max-height: min(66dvh, 640px); border-radius: var(--radius-lg); background: var(--panel); box-shadow: var(--inset); scrollbar-width: thin; }
 .data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
 .data-table th { position: sticky; top: 0; z-index: 2; padding: 0; text-align: left; background: var(--surface); box-shadow: 0 6px 12px -8px var(--lo); }

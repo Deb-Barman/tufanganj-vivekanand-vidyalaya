@@ -28,7 +28,7 @@ const SPEC: Record<string, Spec> = {
   database: { variant: "database", rows: 0, toolbar: false },
   blog: { variant: "blog", rows: 0, toolbar: false },
   data: { variant: "list", rows: 5, toolbar: true },
-  profile: { variant: "cards", rows: 3, toolbar: false },
+  profile: { variant: "profile", rows: 0, toolbar: false },
   import: { variant: "cards", rows: 4, toolbar: false },
   "attendance-report": { variant: "list", rows: 5, toolbar: true },
 };

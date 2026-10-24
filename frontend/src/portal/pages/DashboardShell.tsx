@@ -6,6 +6,7 @@ import { Icon } from "../ui/icons";
 import { dashPath, groupNav, navFor } from "../ui/nav";
 import { UIProvider } from "../ui/kit";
 import { Sidebar } from "../ui/Sidebar";
+import { NotificationBell } from "../ui/NotificationBell";
 import { api } from "../../lib/api";
 import { ProgressBusy } from "../../components/loading/Loading";
 import { AdminOverviewSkeleton, HeroSkeleton, MemberOverviewSkeleton, ModuleSkeleton } from "../ui/Skeletons";
@@ -91,7 +92,7 @@ export function DashboardShell() {
   }
 
   return (
-    <UIProvider>
+    <UIProvider notifyKey={user.id}>
       <div className={`console${rail ? " is-rail" : ""}`}>
         {drawer && <div className="console-scrim" onClick={() => setDrawer(false)} />}
 
@@ -114,9 +115,25 @@ export function DashboardShell() {
               <Icon name="menu" size={20} />
             </button>
             <span className="console-top-title">{!current || current.to === "" ? "Dashboard" : current.label}</span>
+            <NotificationBell uid={user.id} />
             <button type="button" className="icon-btn" onClick={() => setPalette(true)} aria-label="Search pages">
               <Icon name="search" size={19} />
             </button>
+          </div>
+
+          {/* Desktop header: where you are + the notification bell (phones use the bar above). */}
+          <div className="console-bar">
+            <span className="console-crumb">
+              <Icon name={current?.icon ?? "home"} size={15} />
+              <span>Dashboard</span>
+              {current && current.to !== "" && (
+                <>
+                  <i aria-hidden="true">/</i>
+                  <b>{current.label}</b>
+                </>
+              )}
+            </span>
+            <NotificationBell uid={user.id} />
           </div>
 
           <main className="console-page" key={location.pathname}>

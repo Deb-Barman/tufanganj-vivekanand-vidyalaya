@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import { useAuth } from "../../lib/AuthContext";
 import { skeletonSpecFor } from "./skeletonVariant";
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
@@ -62,12 +63,13 @@ function CardSk({ i }: { i: number }) {
   );
 }
 
-export type SkeletonVariant = "list" | "cards" | "grid" | "database" | "blog";
+export type SkeletonVariant = "list" | "cards" | "grid" | "database" | "blog" | "profile";
 
 /** Drop-in loading state. Pick the variant that matches the page: list rows, cards or a photo grid. */
 export function Skeleton({ rows = 4, variant = "list" }: { rows?: number; variant?: SkeletonVariant }) {
   if (variant === "database") return <SkDatabase />;
   if (variant === "blog") return <SkBlog />;
+  if (variant === "profile") return <SkProfile />;
   return (
     <div className="sk-wrap" role="status" aria-busy="true" aria-label="Loading">
       {variant === "cards" ? (
@@ -340,6 +342,115 @@ export function SkDatabase() {
       <section className="panel" style={{ marginTop: 20 }}>
         <div className="panel-title"><Bone w={80} h={16} /><Bone w={70} h={11} /></div>
         <div className="list">{[0, 1, 2, 3, 4, 5].map((i) => <DbRowSk key={i} i={i} />)}</div>
+      </section>
+      <SlowHint />
+    </div>
+  );
+}
+
+/* One labelled input / text box of the My profile form. */
+function PfField({ label = 90, h = 46 }: { label?: number; h?: number }) {
+  return (
+    <div className="form-field">
+      <Bone w={label} h={12} />
+      <Bone h={h} r={12} />
+    </div>
+  );
+}
+
+/** Number of rows in the "Social media & links" panel (one per site in SOCIAL_SITES, lib/mediaLinks.ts). */
+const PF_SOCIAL_ROWS = 13;
+
+/**
+ * My profile while loading — the SAME sections, in the same order and sizes as the real page: photo card, public-page
+ * card (not for the Super Admin), About you, Quick facts, Talents & achievements, Social media.
+ */
+export function SkProfile() {
+  const { user } = useAuth();
+  const role = user?.role;
+  const facts = role === "STUDENT" ? 3 : role === "TEACHER" ? 2 : 1;
+  return (
+    <div role="status" aria-busy="true" aria-label="Loading">
+      <section className="panel pf-head">
+        <div className="pf-photo">
+          <Bone w={96} h={96} circle />
+          <div className="pf-photo-actions"><Bone w={104} h={34} r={10} /></div>
+        </div>
+        <div className="pf-id" style={{ display: "grid", gap: 10 }}>
+          <Bone w="46%" h={26} />
+          <Bone w="64%" h={13} />
+          <Bone w="82%" h={10} />
+        </div>
+      </section>
+
+      {role === "SUPER_ADMIN" ? (
+        <p className="pf-note"><Bone w="78%" h={13} style={{ marginTop: 6 }} /></p>
+      ) : (
+        <section className="panel pf-publish">
+          <div style={{ display: "grid", gap: 10, flex: "1 1 240px", minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}><Bone w={86} h={16} /><Bone w={58} h={22} r={999} /></div>
+            <Bone w="68%" h={12} />
+            <Bone h={28} r={8} />
+          </div>
+          <div className="pf-publish-actions"><Bone w={112} h={34} r={10} /><Bone w={104} h={34} r={10} /><Bone w={84} h={34} r={10} /></div>
+        </section>
+      )}
+
+      <section className="panel">
+        <div className="panel-title"><Bone w={104} h={18} /></div>
+        <div className="pf-warn">
+          <Bone w={15} h={15} circle />
+          <span style={{ flex: 1, display: "grid", gap: 6 }}><Bone h={11} /><Bone w="55%" h={11} /></span>
+        </div>
+        <div className="stack" style={{ gap: 14 }}>
+          <PfField label={70} />
+          <PfField label={80} h={128} />
+          <PfField label={150} />
+          <PfField label={88} h={128} />
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title"><Bone w={96} h={18} /></div>
+        <div className="form-grid">
+          {Array.from({ length: facts }, (_, i) => <PfField key={i} label={96 + (i % 2) * 24} />)}
+        </div>
+        <div className="stack" style={{ gap: 14, marginTop: 14 }}>
+          <PfField label={130} />
+          <div className="form-grid">
+            {[0, 1].map((i) => (
+              <div className="form-field" key={i}>
+                <Bone w={i ? 62 : 36} h={12} />
+                <Bone h={46} r={12} />
+                <Bone w="78%" h={11} style={{ marginTop: 4 }} />
+              </div>
+            ))}
+          </div>
+          <Bone w="70%" h={11} />
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title"><Bone w={170} h={18} /></div>
+        <div className="stack" style={{ gap: 14 }}>
+          <PfField label={112} />
+          <PfField label={132} />
+          <PfField label={120} h={104} />
+          <PfField label={104} h={104} />
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title"><Bone w={160} h={18} /></div>
+        <div className="sk-panel-lines" style={{ marginBottom: 14 }}><Bone h={11} /><Bone w="64%" h={11} /></div>
+        <div className="pf-social">
+          {Array.from({ length: PF_SOCIAL_ROWS }, (_, i) => (
+            <div className="pf-social-row form-field" key={i}>
+              <Bone w={42} h={42} r={12} />
+              <Bone h={44} r={12} style={{ flex: 1, width: "auto" }} />
+            </div>
+          ))}
+        </div>
       </section>
       <SlowHint />
     </div>

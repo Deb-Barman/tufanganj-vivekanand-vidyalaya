@@ -72,6 +72,8 @@ export interface Toast {
   id: number;
   kind: "success" | "error" | "info";
   text: string;
+  /** Desktop only: the box is falling away (set a moment before it is removed). */
+  leaving?: boolean;
 }
 export interface ConfirmOptions {
   title: string;
