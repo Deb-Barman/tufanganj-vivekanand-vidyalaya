@@ -4,6 +4,7 @@ import { skeletonSpecFor } from "./skeletonVariant";
 import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import "./skeletons.css";
+import "../modules/profile.css"; // the My profile skeleton uses the page's own layout classes, so it looks identical before and after loading
 
 /** One grey shape. Sizes in px or any CSS length. */
 export function Bone({ w = "100%", h = 14, r, circle, style }: { w?: number | string; h?: number | string; r?: number | string; circle?: boolean; style?: CSSProperties }) {
@@ -383,6 +384,14 @@ export function SkProfile() {
         </div>
       </section>
 
+      {role !== "SUPER_ADMIN" && (
+        <section className="panel pf-strength">
+          <div className="pf-strength-top"><Bone w={140} h={16} /><Bone w={44} h={22} /></div>
+          <Bone h={10} r={99} />
+          <Bone w="62%" h={12} />
+        </section>
+      )}
+
       {role === "SUPER_ADMIN" ? (
         <p className="pf-note"><Bone w="78%" h={13} style={{ marginTop: 6 }} /></p>
       ) : (
@@ -431,13 +440,23 @@ export function SkProfile() {
       </section>
 
       <section className="panel">
-        <div className="panel-title"><Bone w={170} h={18} /></div>
-        <div className="stack" style={{ gap: 14 }}>
-          <PfField label={112} />
+        <div className="panel-title"><Bone w={150} h={18} /></div>
+        <div className="stack" style={{ gap: 16 }}>
+          <PfField label={120} h={110} />
           <PfField label={132} />
-          <PfField label={120} h={104} />
-          <PfField label={104} h={104} />
+          <PfField label={120} />
+          <PfField label={110} />
         </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title"><Bone w={90} h={18} /></div>
+        <div className="pe-card"><Bone w="40%" h={14} /><PfField label={90} /><PfField label={90} h={78} /><div className="form-grid"><PfField label={110} /><PfField label={90} /></div></div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title"><Bone w={190} h={18} /></div>
+        <div className="pe-card"><Bone w="46%" h={14} /><PfField label={70} /><div className="form-grid"><PfField label={50} /><PfField label={50} /></div></div>
       </section>
 
       <section className="panel">
@@ -452,6 +471,16 @@ export function SkProfile() {
           ))}
         </div>
       </section>
+      {role !== "SUPER_ADMIN" && (
+        <section className="panel">
+          <div className="panel-title"><Bone w={150} h={18} /></div>
+          <div className="pv-list">
+            {Array.from({ length: role === "STUDENT" ? 9 : 7 }, (_, i) => (
+              <div className="pv-row" key={i}><span style={{ flex: 1, display: "grid", gap: 6 }}><Bone w="40%" h={14} /><Bone w="70%" h={11} /></span><Bone w={48} h={28} r={99} /></div>
+            ))}
+          </div>
+        </section>
+      )}
       <SlowHint />
     </div>
   );
