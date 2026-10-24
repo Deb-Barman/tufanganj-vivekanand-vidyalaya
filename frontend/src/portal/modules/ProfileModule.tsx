@@ -72,7 +72,7 @@ export function ProfileModule() {
   }, [toast]);
 
   if (failed) return <EmptyState icon="alert" title="Your profile could not be loaded" text="Check your connection and open this page again." />;
-  if (!profile || !draft) return (<><PageHeader icon="user" title="My profile" /><Skeleton rows={4} /></>);
+  if (!profile || !draft) return (<><PageHeader icon="user" title="My profile" sub={user?.role === "SUPER_ADMIN" ? "Your account details." : "Tell people who you are. Choose whether to publish it as a public page."} /><Skeleton variant="profile" /></>);
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(pick(profile));
   const canPublish = profile.public_path !== null;

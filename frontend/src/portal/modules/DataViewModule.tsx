@@ -287,7 +287,7 @@ export function DataViewModule() {
         <div className="data-meta">
           <span><b>{rows.count.toLocaleString("en-IN")}</b> row{rows.count === 1 ? "" : "s"}{anyFilter ? " match" : ""} · {rows.columns.length} columns · table <code>{rows.db_table}</code></span>
           <span className="field-inline" style={{ gap: 6 }}>Rows per page
-            <select aria-label="Rows per page" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); resetView(); }} style={{ minHeight: 32, padding: "2px 8px" }}>{[25, 50, 100].map((n) => <option key={n} value={n}>{n}</option>)}</select>
+            <Select aria-label="Rows per page" className="dv-rows" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); resetView(); }}>{[25, 50, 100].map((n) => <option key={n} value={n}>{n}</option>)}</Select>
           </span>
         </div>
       )}
