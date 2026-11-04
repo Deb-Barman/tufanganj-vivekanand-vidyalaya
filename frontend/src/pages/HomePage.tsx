@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Hero } from "../components/Hero";
 import { TrustBar } from "../components/TrustBar";
 import { Section } from "../components/site/PageHero";
-import { SkList, Spinner } from "../components/loading/Loading";
+import { SkNotices, Spinner } from "../components/loading/Loading";
 import { MORE, NAV, SITE } from "../config/site";
 import { fmtDay, usePaged } from "../lib/usePaged";
 import { usePageMeta } from "../lib/usePageMeta";
@@ -47,7 +47,7 @@ export function HomePage() {
           </div>
         </div>
         {notices.data === null ? (
-          <SkList count={3} avatar={false} />
+          <SkNotices count={3} />
         ) : notices.data.length === 0 ? (
           <p className="pg-sub">No notices have been published yet. New announcements appear here as soon as the office posts them.</p>
         ) : (

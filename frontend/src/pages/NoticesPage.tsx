@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect } from "react";
 import { EmptyPanel, PageHero, Section } from "../components/site/PageHero";
-import { SkArticle, SkList, Spinner } from "../components/loading/Loading";
+import { SkArticle, SkNotices, Spinner } from "../components/loading/Loading";
 import { api, ApiError } from "../lib/api";
 import { SITE } from "../config/site";
 import { fmtDay, fmtLong, usePaged } from "../lib/usePaged";
@@ -26,7 +26,7 @@ export function NoticesPage() {
           </div>
         </div>
         {data === null ? (
-          <SkList count={5} avatar={false} />
+          <SkNotices count={4} />
         ) : shown.length === 0 ? (
           <EmptyPanel icon="file" title={error ? "Notices could not be loaded" : q ? "No notice matches your search" : "No notices yet"}>
             {error ?? (q ? "Try a different word." : "New announcements appear here as soon as the office posts them.")}
