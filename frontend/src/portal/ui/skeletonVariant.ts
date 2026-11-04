@@ -15,6 +15,7 @@ const SPEC: Record<string, Spec> = {
   admissions: { variant: "cards", rows: 3, toolbar: true },
   students: { variant: "cards", rows: 4, toolbar: true },
   academics: { variant: "cards", rows: 4, toolbar: true },
+  promotion: { variant: "cards", rows: 3, toolbar: false },
   achievements: { variant: "cards", rows: 3, toolbar: false },
   teachers: { variant: "cards", rows: 3, toolbar: false },
   marksheets: { variant: "cards", rows: 3, toolbar: false },
