@@ -4,6 +4,8 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { TimetableEntry } from "../../types/api";
 import { ImportButton } from "../ui/ImportButton";
+import { ClassYearPicker } from "../ui/ClassYear";
+import { useClassYears, yearQuery } from "../ui/classYears";
 import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, classLabel, errText, fmtTime, listAll, useUI, Select, TimeField } from "../ui/kitExports";
 import { PageLoading } from "../ui/PageLoading";
 import { useRefData } from "../ui/useRefData";
@@ -24,10 +26,15 @@ function TimetableView({ teacher }: { teacher: boolean }) {
   const ref = useRefData();
   const [rows, setRows] = useState<TimetableEntry[] | null>(null);
   const [day, setDay] = useState(jsDayToIndex(new Date().getDay()));
+  const years = useClassYears(!teacher);
+  const [year, setYear] = useState("");
+  const yq = yearQuery(years, year);
 
   useEffect(() => {
-    listAll<TimetableEntry>(`/academics/timetable/${teacher ? "?mine=1" : ""}`).then(setRows).catch(() => setRows([]));
-  }, [teacher]);
+    // oxlint-disable-next-line react/set-state-in-effect
+    setRows(null);
+    listAll<TimetableEntry>(`/academics/timetable/${teacher ? "?mine=1" : yq ? "?" + yq : ""}`).then(setRows).catch(() => setRows([]));
+  }, [teacher, yq]);
 
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -40,6 +47,7 @@ function TimetableView({ teacher }: { teacher: boolean }) {
       <PageHeader icon="clock" title={teacher ? "My periods" : "Timetable"} sub={teacher ? "Periods assigned to you by the school office." : "Your class timetable for the week."} />
       <div className="toolbar">
         <Segmented value={String(day)} onChange={(v) => setDay(Number(v))} options={DAYS.map((d, i) => ({ value: String(i), label: d }))} />
+        <ClassYearPicker years={years} value={year} onChange={setYear} />
       </div>
       {rows === null ? (
         <Skeleton rows={5} />

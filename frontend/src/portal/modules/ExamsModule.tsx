@@ -4,6 +4,8 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { Exam } from "../../types/api";
 import { ImportButton } from "../ui/ImportButton";
+import { ClassYearPicker } from "../ui/ClassYear";
+import { useClassYears, yearQuery } from "../ui/classYears";
 import { EmptyState, Icon, Modal, PageHeader, Segmented, Skeleton, classLabel, errText, fmtTime, listAll, todayISO, useUI, Select, DateField, TimeField } from "../ui/kitExports";
 import { useRefData } from "../ui/useRefData";
 
@@ -13,13 +15,16 @@ export function ExamsModule() {
   const staff = user?.role !== "STUDENT";
   const ref = useRefData();
   const [items, setItems] = useState<Exam[] | null>(null);
+  const years = useClassYears(!staff);
+  const [year, setYear] = useState("");
+  const yq = yearQuery(years, year);
   const [tab, setTab] = useState<"up" | "past">("up");
   const [edit, setEdit] = useState<Partial<Exam> | null>(null);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    try { setItems(await listAll<Exam>("/academics/exams/")); } catch (e) { toast("error", errText(e, "Could not load exams.")); setItems([]); }
-  }, [toast]);
+    try { setItems(await listAll<Exam>(`/academics/exams/${yq ? "?" + yq : ""}`)); } catch (e) { toast("error", errText(e, "Could not load exams.")); setItems([]); }
+  }, [toast, yq]);
   useEffect(() => {
     // oxlint-disable-next-line react/set-state-in-effect
     load();
@@ -51,7 +56,7 @@ export function ExamsModule() {
   return (
     <>
       <PageHeader icon="calendar" title="Exams" sub={staff ? "Schedule exams for a class. Students see only their own class." : "Your upcoming exams."} actions={staff && <>{user?.role === "SUPER_ADMIN" && <ImportButton kind="exams" label="Import exams" onDone={load} />}<button type="button" className="btn btn-primary btn-sm" onClick={openNew} disabled={!ref || ref.classes.length === 0}><Icon name="plus" size={16} /> Schedule exam</button></>} />
-      <div className="toolbar"><Segmented value={tab} onChange={setTab} options={[{ value: "up", label: "Upcoming" }, { value: "past", label: "Past" }]} /></div>
+      <div className="toolbar"><Segmented value={tab} onChange={setTab} options={[{ value: "up", label: "Upcoming" }, { value: "past", label: "Past" }]} />{!staff && <ClassYearPicker years={years} value={year} onChange={setYear} />}</div>
       {items === null ? <Skeleton rows={4} /> : shown.length === 0 ? (
         <EmptyState icon="calendar" title={tab === "up" ? "No upcoming exams" : "No past exams"} text={tab === "up" ? "When an exam is scheduled for your class, it appears here." : undefined} />
       ) : (
