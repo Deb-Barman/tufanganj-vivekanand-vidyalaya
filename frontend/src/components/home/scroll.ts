@@ -1,6 +1,19 @@
 import { useEffect, useRef } from "react";
 
 const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/**
+ * Scroll-driven animation is for a DESKTOP with a mouse only. Phones and tablets (even when they show the desktop layout)
+ * get calm, normal scrolling. This sets `data-fx` on <html>; the CSS only moves things under `html[data-fx]`.
+ */
+const FX_QUERY = "(min-width: 900px) and (hover: hover) and (pointer: fine)";
+export const fxOn = () => typeof window !== "undefined" && window.matchMedia(FX_QUERY).matches && !reduced();
+if (typeof window !== "undefined") {
+  const apply = () => document.documentElement.toggleAttribute("data-fx", fxOn());
+  apply();
+  window.matchMedia(FX_QUERY).addEventListener("change", apply);
+  window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", apply);
+}
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
 
 /**
@@ -52,5 +65,5 @@ export function useScrollProgress<T extends HTMLElement>(kind: "track" | "view" 
   return ref;
 }
 
-/** True on a mouse/trackpad device that is wide enough for the pinned horizontal gallery. */
-export const canPin = () => typeof window !== "undefined" && window.matchMedia("(min-width: 900px) and (hover: hover)").matches && !reduced();
+/** True where the pinned horizontal gallery may be used (desktop mouse only). */
+export const canPin = fxOn;

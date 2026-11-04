@@ -40,6 +40,7 @@ export function Story() {
             <div className="story-chapters">
               {CHAPTERS.map((c, i) => (
                 <article key={c.big} className={`story-ch${i === active ? " on" : i < active ? " past" : ""}`} aria-current={i === active}>
+                  <span className="story-ch-big" aria-hidden="true">{c.big}</span>
                   <span className="eyebrow">{c.tag}</span>
                   <h2>{c.title}</h2>
                   <p>{c.text}</p>

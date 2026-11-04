@@ -16,7 +16,7 @@ export function HorizontalShowcase({ items }: { items: ShowItem[] }) {
   const ref = useScrollProgress<HTMLElement>("track");
 
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 900px) and (hover: hover)");
+    const mq = window.matchMedia("(min-width: 900px) and (hover: hover) and (pointer: fine)");
     const onChange = () => setPinned(canPin());
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
