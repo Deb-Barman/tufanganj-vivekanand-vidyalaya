@@ -32,6 +32,7 @@ urlpatterns = [
     path("contact/<uuid:pk>/", views.ContactDetailView.as_view(), name="contact_detail"),
     # Achievements
     path("achievements/public/", views.PublicAchievementListView.as_view(), name="public_achievements"),
+    path("achievements/public/<uuid:pk>/", views.PublicAchievementDetailView.as_view(), name="public_achievement_detail"),
     path("achievements/", views.AchievementListCreateView.as_view(), name="achievements"),
     path("achievements/<uuid:pk>/", views.AchievementDetailView.as_view(), name="achievement_detail"),
 ]

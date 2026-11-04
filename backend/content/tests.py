@@ -165,6 +165,15 @@ class AchievementTests(BaseAPITestCase):
         self.assertEqual(student.post("/api/content/achievements/", {"title": "x", "year": 2025}, format="json").status_code, 403)
         self.assertEqual(APIClient().post("/api/content/achievements/", {"title": "x", "year": 2025}, format="json").status_code, 401)
 
+    def test_public_detail_page_data(self):
+        admin = self.login(self.make_admin())
+        made = admin.post("/api/content/achievements/", {"title": "Chess champion", "year": 2026, "category": "SPORTS", "description": "Long story"}, format="json").data
+        one = APIClient().get(f"/api/content/achievements/public/{made['id']}/")
+        self.assertEqual(one.status_code, 200)
+        self.assertEqual((one.data["title"], one.data["description"]), ("Chess champion", "Long story"))
+        self.assertNotIn("created_by", one.data)
+        self.assertEqual(APIClient().get("/api/content/achievements/public/00000000-0000-0000-0000-000000000000/").status_code, 404)
+
     def test_unrealistic_year_rejected(self):
         admin = self.login(self.make_admin())
         self.assertEqual(admin.post("/api/content/achievements/", {"title": "x", "year": 1800}, format="json").status_code, 400)
