@@ -44,6 +44,11 @@ urlpatterns = [
     path("homework/<uuid:pk>/", views.HomeworkDetailView.as_view(), name="homework_detail"),
     path("homework/<uuid:pk>/done/", views.HomeworkDoneView.as_view(), name="homework_done"),
     path("homework/<uuid:pk>/completions/", views.HomeworkCompletionsView.as_view(), name="homework_completions"),
+    path("my-classes/", views.MyClassYearsView.as_view(), name="my_classes"),
+    path("promotion/plan/", views.PromotionPlanView.as_view(), name="promotion_plan"),
+    path("promotion/apply/", views.PromotionApplyView.as_view(), name="promotion_apply"),
+    path("promotion/batches/", views.PromotionBatchListView.as_view(), name="promotion_batches"),
+    path("promotion/batches/<uuid:pk>/undo/", views.PromotionUndoView.as_view(), name="promotion_undo"),
     path("exams/", views.ExamListCreateView.as_view(), name="exams"),
     path("exams/<uuid:pk>/", views.ExamDetailView.as_view(), name="exam_detail"),
 ]

@@ -21,3 +21,10 @@ def ensure_role_profile(sender, instance, created, **kwargs):
         StudentProfile.objects.get_or_create(user=instance)
     elif instance.role == Role.TEACHER:
         TeacherProfile.objects.get_or_create(user=instance)
+
+
+@receiver(post_save, sender=StudentProfile)
+def record_class_history(sender, instance, **kwargs):
+    from .enrollment import sync_current
+
+    sync_current(instance)
