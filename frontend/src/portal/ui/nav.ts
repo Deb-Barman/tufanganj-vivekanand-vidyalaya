@@ -36,6 +36,7 @@ export const NAV: NavItem[] = [
   { to: "marksheets", label: "Marksheets", icon: "file", roles: ALL, group: "Academics", hint: "Upload or download marksheets" },
   { to: "attendance-report", label: "Attendance report", icon: "trend", roles: ADMIN, group: "Academics", hint: "Attendance % and who needs attention" },
   { to: "academics", label: "Classes & Subjects", icon: "layers", roles: ADMIN, group: "Academics", hint: "Sessions, classes, subjects" },
+  { to: "promotion", label: "Promote students", icon: "trend", roles: ADMIN, group: "Academics", hint: "Year-end: move students up to the next class" },
 
   { to: "students", label: "Students", icon: "cap", roles: STAFF, group: "People", hint: "Student profiles and classes" },
   { to: "teachers", label: "Faculty", icon: "school", roles: ALL, group: "People", hint: "Teacher directory" },

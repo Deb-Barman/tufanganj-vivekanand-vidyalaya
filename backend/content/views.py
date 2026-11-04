@@ -234,6 +234,14 @@ class PublicAchievementListView(generics.ListAPIView):
     queryset = Achievement.objects.all()
 
 
+class PublicAchievementDetailView(generics.RetrieveAPIView):
+    """One achievement on its own public page (/achievements/<id>) — same fields as the public list."""
+
+    permission_classes = [AllowAny]
+    serializer_class = PublicAchievementSerializer
+    queryset = Achievement.objects.all()
+
+
 class AchievementListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsSuperAdmin]
     serializer_class = AchievementSerializer

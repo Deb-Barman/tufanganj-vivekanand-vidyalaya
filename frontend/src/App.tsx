@@ -31,6 +31,7 @@ const AboutPage = lazyNamed(L.AboutPage, "AboutPage");
 const AcademicsPage = lazyNamed(L.AcademicsPage, "AcademicsPage");
 const FacultyPage = lazyNamed(L.FacultyPage, "FacultyPage");
 const AchievementsPage = lazyNamed(L.AchievementsPage, "AchievementsPage");
+const AchievementDetailPage = lazyNamed(L.AchievementDetailPage, "AchievementDetailPage");
 const CampusPage = lazyNamed(L.CampusPage, "CampusPage");
 const NoticesPage = lazyNamed(L.NoticesPage, "NoticesPage");
 const NoticeDetailPage = lazyNamed(L.NoticeDetailPage, "NoticeDetailPage");
@@ -72,6 +73,7 @@ const HomeworkModule = lazyNamed(L.HomeworkModule, "HomeworkModule");
 const ExamsModule = lazyNamed(L.ExamsModule, "ExamsModule");
 const DatabaseModule = lazyNamed(L.DatabaseModule, "DatabaseModule");
 const DataViewModule = lazyNamed(L.DataViewModule, "DataViewModule");
+const PromotionModule = lazyNamed(L.PromotionModule, "PromotionModule");
 const MessagesModule = lazyNamed(L.MessagesModule, "MessagesModule");
 const AchievementsModule = lazyNamed(L.AchievementsModule, "AchievementsModule");
 const ProfileModule = lazyNamed(L.ProfileModule, "ProfileModule");
@@ -90,6 +92,7 @@ export default function App() {
         <Route path="academics" element={<AcademicsPage />} />
         <Route path="faculty" element={<FacultyPage />} />
         <Route path="achievements" element={<AchievementsPage />} />
+        <Route path="achievements/:id" element={<AchievementDetailPage />} />
         <Route path="campus" element={<CampusPage />} />
         <Route path="notices" element={<NoticesPage />} />
         <Route path="notices/:id" element={<NoticeDetailPage />} />
@@ -139,6 +142,7 @@ export default function App() {
           <Route path="attendance-report" element={<RoleOnly roles={[...ADMIN]}><AttendanceReportModule /></RoleOnly>} />
           <Route path="database" element={<RoleOnly roles={[...ADMIN]}><DatabaseModule /></RoleOnly>} />
           <Route path="data" element={<RoleOnly roles={[...ADMIN]}><DataViewModule /></RoleOnly>} />
+          <Route path="promotion" element={<RoleOnly roles={[...ADMIN]}><PromotionModule /></RoleOnly>} />
           <Route path="accounts" element={<RoleOnly roles={[...ADMIN]}><AccountsModule /></RoleOnly>} />
           <Route path="admissions" element={<RoleOnly roles={[...ADMIN]}><AdmissionsModule /></RoleOnly>} />
           <Route path="messages" element={<RoleOnly roles={[...ADMIN]}><MessagesModule /></RoleOnly>} />

@@ -293,3 +293,10 @@ a.row-link:hover { transform: translateX(4px); box-shadow: var(--inset-sm), 0 0 
 .ov-in { animation: ov-in 0.45s var(--ease-out) both; }
 @keyframes ov-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .ov-in { animation: none; } }
+
+/* Achievements (admin): long text is clamped so one card cannot take the whole screen */
+.clamp2, .clamp3 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; white-space: normal; }
+.clamp2 { -webkit-line-clamp: 2; } .clamp3 { -webkit-line-clamp: 3; }
+.ach-admin .rcard-head { align-items: center; gap: 12px; } .ach-admin .row-main { min-width: 0; flex: 1; }
+.ach-admin-pic { flex: none; width: 46px; height: 46px; border-radius: 12px; object-fit: cover; box-shadow: var(--inset-sm); }
+.ach-admin .rcard-msg { margin: 0; font-size: 13px; line-height: 1.55; color: var(--fg-soft); }

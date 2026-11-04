@@ -96,8 +96,8 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentProfile
-        fields = ["user", "full_name", "username", "school_class", "roll_number", "guardian_name", "guardian_contact"]
-        read_only_fields = ["user"]
+        fields = ["user", "full_name", "username", "school_class", "roll_number", "guardian_name", "guardian_contact", "is_alumni"]
+        read_only_fields = ["user", "is_alumni"]
 
 
 class AttendanceSerializer(serializers.ModelSerializer):

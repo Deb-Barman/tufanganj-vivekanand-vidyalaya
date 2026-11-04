@@ -3,6 +3,8 @@ import type { FormEvent } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/AuthContext";
 import type { Homework, HomeworkCompletions } from "../../types/api";
+import { ClassYearPicker } from "../ui/ClassYear";
+import { useClassYears, yearQuery } from "../ui/classYears";
 import { EmptyState, Icon, Modal, PageHeader, Skeleton, StatusPill, classLabel, errText, fmtDate, listAll, todayISO, useUI, Select, DateField } from "../ui/kitExports";
 import { PageLoading } from "../ui/PageLoading";
 import { useRefData } from "../ui/useRefData";
@@ -32,9 +34,14 @@ export function HomeworkModule() {
 function StudentHomework() {
   const { toast } = useUI();
   const [items, setItems] = useState<Homework[] | null>(null);
+  const years = useClassYears(true);
+  const [year, setYear] = useState("");
+  const yq = yearQuery(years, year);
   useEffect(() => {
-    listAll<Homework>("/academics/homework/").then(setItems).catch((e) => { toast("error", errText(e, "Could not load homework.")); setItems([]); });
-  }, [toast]);
+    // oxlint-disable-next-line react/set-state-in-effect
+    setItems(null);
+    listAll<Homework>(`/academics/homework/${yq ? "?" + yq : ""}`).then(setItems).catch((e) => { toast("error", errText(e, "Could not load homework.")); setItems([]); });
+  }, [toast, yq]);
 
   async function toggle(h: Homework) {
     if (!h.can_tick) {
@@ -86,6 +93,7 @@ function StudentHomework() {
   return (
     <>
       <PageHeader icon="clipboard" title="Homework" sub="Tap the circle when you finish a task. You can only tick it between its start and end date." />
+      {years && years.length > 1 && <div className="toolbar"><ClassYearPicker years={years} value={year} onChange={setYear} /></div>}
       {items === null ? <Skeleton rows={4} /> : items.length === 0 ? (
         <EmptyState icon="clipboard" title="No homework" text="Nothing has been set for your class yet." />
       ) : (

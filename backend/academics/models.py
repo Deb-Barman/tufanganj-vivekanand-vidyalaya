@@ -72,6 +72,8 @@ class StudentProfile(models.Model):
     roll_number = models.CharField(max_length=20, blank=True)
     guardian_name = models.CharField(max_length=150, blank=True)
     guardian_contact = models.CharField(max_length=20, blank=True)
+    #: Finished the last class (Class 12) and left the school. The account, results, attendance and portfolio all stay.
+    is_alumni = models.BooleanField(default=False)
 
     class Meta:
         db_table = "student_profiles"
@@ -245,3 +247,47 @@ class Exam(models.Model):
     class Meta:
         db_table = "exams"
         ordering = ["date", "start_time"]
+
+
+class PromotionBatch(models.Model):
+    """One "move students up to the next class" run by the Super Admin. Kept so it can be undone and so there is a record."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    from_session = models.ForeignKey(AcademicSession, on_delete=models.SET_NULL, null=True, blank=True, related_name="promotions_from")
+    to_session = models.ForeignKey(AcademicSession, on_delete=models.SET_NULL, null=True, blank=True, related_name="promotions_to")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+    promoted = models.PositiveIntegerField(default=0)
+    repeated = models.PositiveIntegerField(default=0)
+    passed_out = models.PositiveIntegerField(default=0)
+    #: What is needed to undo it: moves [{student, from_class, to_class, outcome}], created class ids, previous current session…
+    detail = models.JSONField(default=dict, blank=True)
+    undone_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "promotion_batches"
+        ordering = ["-created_at"]
+
+
+class ClassEnrollment(models.Model):
+    """
+    Which class a student was in, year by year. The student's CURRENT class stays on StudentProfile.school_class; this
+    keeps every earlier one, so old timetables, homework, exams, results and attendance can still be opened.
+    """
+
+    OUTCOMES = [("", "Current"), ("promoted", "Promoted"), ("repeated", "Stayed in the same class"), ("passed_out", "Passed out"), ("moved", "Moved by the office")]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name="enrollments")
+    school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, related_name="enrollments")
+    roll_number = models.CharField(max_length=20, blank=True)
+    #: How that class year ended ("" while it is the current class).
+    outcome = models.CharField(max_length=12, choices=OUTCOMES, blank=True, default="")
+    started_on = models.DateField(auto_now_add=True)
+    ended_on = models.DateField(null=True, blank=True)
+    batch = models.ForeignKey(PromotionBatch, on_delete=models.SET_NULL, null=True, blank=True, related_name="enrollments")
+
+    class Meta:
+        db_table = "class_enrollments"
+        unique_together = [("student", "school_class")]
+        ordering = ["-school_class__session__label", "-started_on"]

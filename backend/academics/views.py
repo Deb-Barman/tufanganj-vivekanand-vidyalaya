@@ -11,10 +11,12 @@ from accounts.permissions import IsAuthenticatedActiveUser, IsSuperAdmin, IsSupe
 from .models import (
     AcademicSession,
     Attendance,
+    ClassEnrollment,
     Exam,
     Homework,
     HomeworkCompletion,
     Marksheet,
+    PromotionBatch,
     Result,
     SchoolClass,
     StudentProfile,
@@ -146,6 +148,11 @@ class StudentProfileListView(generics.ListAPIView):
                 qs = qs.filter(school_class__isnull=True)
             elif school_class:
                 qs = qs.filter(school_class_id=school_class)
+            alumni = self.request.query_params.get("alumni")
+            if alumni == "only":
+                qs = qs.filter(is_alumni=True)
+            elif alumni == "hide":
+                qs = qs.filter(is_alumni=False)
             search = (self.request.query_params.get("search") or "").strip()
             if search:
                 from django.db.models import Q
@@ -426,6 +433,22 @@ def _own_class_id(user):
     return profile.school_class_id if profile else None
 
 
+def _own_class_ids(user) -> set:
+    """Every class this student has been in (current and earlier years) — all of them stay readable."""
+    from .enrollment import class_ids_for
+
+    profile = StudentProfile.objects.filter(user=user).only("school_class_id").first()
+    return {str(i) for i in class_ids_for(profile)} if profile else set()
+
+
+def _student_class_scope(request):
+    """The class a student is looking at: ?school_class=<id> if it is one of THEIR classes, otherwise the current one."""
+    wanted = request.query_params.get("school_class")
+    if wanted and str(wanted) in _own_class_ids(request.user):
+        return wanted
+    return _own_class_id(request.user)
+
+
 class TimetableListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsSuperAdminOrReadOnly]
     serializer_class = TimetableEntrySerializer
@@ -433,8 +456,8 @@ class TimetableListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         qs = TimetableEntry.objects.select_related("subject", "teacher", "school_class")
-        if user.is_student:  # hard-scoped to the student's own class
-            return qs.filter(school_class_id=_own_class_id(user))
+        if user.is_student:  # hard-scoped to the student's own classes (current by default; earlier years on request)
+            return qs.filter(school_class_id=_student_class_scope(self.request))
         q = self.request.query_params
         if q.get("school_class"):
             qs = qs.filter(school_class_id=q["school_class"])
@@ -452,7 +475,7 @@ class TimetableDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         user = self.request.user
         qs = TimetableEntry.objects.select_related("subject", "teacher")
-        return qs.filter(school_class_id=_own_class_id(user)) if user.is_student else qs
+        return qs.filter(school_class_id__in=_own_class_ids(user)) if user.is_student else qs
 
 
 # --- Homework --------------------------------------------------------------
@@ -465,7 +488,7 @@ class HomeworkListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         qs = Homework.objects.select_related("subject", "school_class", "created_by")
         if user.is_student:
-            qs = qs.filter(school_class_id=_own_class_id(user))
+            qs = qs.filter(school_class_id=_student_class_scope(self.request))
         elif self.request.query_params.get("school_class"):
             qs = qs.filter(school_class_id=self.request.query_params["school_class"])
         if self.request.query_params.get("upcoming") == "1":
@@ -500,7 +523,7 @@ class HomeworkDetailView(generics.RetrieveUpdateDestroyAPIView):
         user = self.request.user
         qs = Homework.objects.select_related("subject", "school_class", "created_by")
         if user.is_student:
-            return qs.filter(school_class_id=_own_class_id(user))
+            return qs.filter(school_class_id__in=_own_class_ids(user))
         if user.is_teacher and self.request.method not in ("GET", "HEAD", "OPTIONS"):
             return qs.filter(created_by=user)
         return qs
@@ -576,7 +599,7 @@ class ExamListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         qs = Exam.objects.select_related("subject", "school_class")
         if user.is_student:
-            qs = qs.filter(school_class_id=_own_class_id(user))
+            qs = qs.filter(school_class_id=_student_class_scope(self.request))
         elif self.request.query_params.get("school_class"):
             qs = qs.filter(school_class_id=self.request.query_params["school_class"])
         if self.request.query_params.get("upcoming") == "1":
@@ -601,9 +624,99 @@ class ExamDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         user = self.request.user
         qs = Exam.objects.select_related("subject", "school_class")
-        return qs.filter(school_class_id=_own_class_id(user)) if user.is_student else qs
+        return qs.filter(school_class_id__in=_own_class_ids(user)) if user.is_student else qs
 
     def check_permissions(self, request):
         super().check_permissions(request)
         if request.user.is_student and request.method not in ("GET", "HEAD", "OPTIONS"):
             raise PermissionDenied("Students cannot change exams.")
+
+
+# --- Class years + year-end promotion ---------------------------------------
+
+class MyClassYearsView(APIView):
+    """A student's class years, newest first — lets timetable / homework / exams open an earlier year."""
+
+    permission_classes = [IsAuthenticatedActiveUser]
+
+    def get(self, request):
+        profile = StudentProfile.objects.filter(user=request.user).first()
+        if profile is None:
+            return Response([])
+        rows = list(ClassEnrollment.objects.filter(student=profile).select_related("school_class__session"))
+        have = {r.school_class_id for r in rows}
+        out = [
+            {"id": str(r.school_class_id), "label": str(r.school_class), "session": r.school_class.session.label, "current": r.ended_on is None and not profile.is_alumni, "outcome": r.outcome}
+            for r in rows
+        ]
+        if profile.school_class_id and profile.school_class_id not in have:
+            c = profile.school_class
+            out.insert(0, {"id": str(c.id), "label": str(c), "session": c.session.label, "current": True, "outcome": ""})
+        out.sort(key=lambda x: x["session"], reverse=True)
+        return Response(out)
+
+
+class PromotionPlanView(APIView):
+    """Step 1+2 of the wizard: every class of the session being closed, its students, and where the class goes next."""
+
+    permission_classes = [IsSuperAdmin]
+
+    def get(self, request):
+        from . import promotion
+
+        sid = request.query_params.get("from_session")
+        session = AcademicSession.objects.filter(pk=sid).first() if sid else AcademicSession.objects.filter(is_current=True).first()
+        if session is None:
+            raise ValidationError("There is no current academic session yet. Add one under Classes & Subjects first.")
+        return Response(promotion.build_plan(session))
+
+
+class PromotionApplyView(APIView):
+    permission_classes = [IsSuperAdmin]
+
+    def post(self, request):
+        from . import promotion
+
+        batch = promotion.apply_promotion(request.user, request.data)
+        return Response(_batch_json(batch), status=status.HTTP_201_CREATED)
+
+
+def _batch_json(b):
+    return {
+        "id": str(b.id),
+        "created_at": b.created_at,
+        "from_session": b.from_session.label if b.from_session else "",
+        "to_session": b.to_session.label if b.to_session else b.detail.get("to_session_label", ""),
+        "promoted": b.promoted,
+        "repeated": b.repeated,
+        "passed_out": b.passed_out,
+        "created_classes": len(b.detail.get("created_class_ids", [])),
+        "undone": b.undone_at is not None,
+        "by": b.created_by.full_name if b.created_by else "",
+    }
+
+
+class PromotionBatchListView(APIView):
+    permission_classes = [IsSuperAdmin]
+
+    def get(self, request):
+        newest_live = PromotionBatch.objects.filter(undone_at__isnull=True).order_by("-created_at").first()
+        rows = []
+        for b in PromotionBatch.objects.select_related("from_session", "to_session", "created_by")[:20]:
+            d = _batch_json(b)
+            d["can_undo"] = bool(newest_live and b.pk == newest_live.pk)
+            rows.append(d)
+        return Response(rows)
+
+
+class PromotionUndoView(APIView):
+    permission_classes = [IsSuperAdmin]
+
+    def post(self, request, pk):
+        from . import promotion
+
+        batch = PromotionBatch.objects.filter(pk=pk).first()
+        if batch is None:
+            raise ValidationError("That promotion was not found.")
+        promotion.undo_promotion(batch)
+        return Response({"undone": True})

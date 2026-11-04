@@ -35,3 +35,12 @@
 /* dashboard loading skeleton: sidebar + content on desktop, content only on phones/tablets */
 .sk-dash { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 24px; }
 @media (max-width: 980px) { .sk-dash { grid-template-columns: minmax(0, 1fr); } .sk-dash > :first-child { display: none; } }
+
+/* notices + achievements skeletons: slim rows that match the real cards */
+.sk-notices { display: flex; flex-direction: column; gap: 12px; }
+.sk-notice { display: flex; align-items: flex-start; gap: 16px; padding: 16px 18px; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--raise-sm); }
+.sk-notice .sk-badge { flex: none; border-radius: 16px; }
+.sk-meta { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.sk-ach { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 16px; }
+.sk-ach-card { display: flex; align-items: center; gap: 16px; padding: 14px; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--raise-sm); }
+.sk-ach-card > :first-child { flex: none; border-radius: 16px; }

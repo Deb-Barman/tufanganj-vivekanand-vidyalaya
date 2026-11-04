@@ -60,9 +60,13 @@ export function AchievementsModule() {
       ) : (
         <div className="cards">
           {items.map((a) => (
-            <article className="rcard" key={a.id}>
-              <div className="rcard-head"><div className="row-main"><strong>{a.title}</strong><span>{a.year}</span></div><StatusPill tone="info">{CATS[a.category]}</StatusPill></div>
-              {a.description && <p className="rcard-msg">{a.description}</p>}
+            <article className="rcard ach-admin" key={a.id}>
+              <div className="rcard-head">
+                {a.image && <img className="ach-admin-pic" src={a.image} alt="" loading="lazy" />}
+                <div className="row-main"><strong className="clamp2">{a.title}</strong><span>{a.year}</span></div>
+                <StatusPill tone="info">{CATS[a.category]}</StatusPill>
+              </div>
+              {a.description && <p className="rcard-msg clamp3">{a.description}</p>}
               <div className="rcard-actions">
                 <button type="button" className="btn btn-outline btn-sm" onClick={() => { setMedia(emptyMedia); setDraft({ id: a.id, title: a.title, year: String(a.year), category: a.category, description: a.description, image: a.image, source: a.source, adjust: a.image_adjust ?? "" }); }}><Icon name="edit" size={15} /> Edit</button>
                 <button type="button" className="icon-btn danger" style={{ marginLeft: "auto" }} onClick={() => remove(a)} aria-label="Remove"><Icon name="trash" size={17} /></button>

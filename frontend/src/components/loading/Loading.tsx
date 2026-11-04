@@ -78,6 +78,44 @@ export function SkList({ count = 5, avatar = true }: { count?: number; avatar?: 
   );
 }
 
+/** Same shape as a real notice row (date badge, title, two lines, meta) — compact, so nothing jumps when the notices arrive. */
+export function SkNotices({ count = 4 }: { count?: number }) {
+  return (
+    <div className="sk-notices" aria-busy="true" aria-label="Loading notices">
+      {Array.from({ length: count }, (_, i) => (
+        <div className="sk-notice" key={i}>
+          <Sk w={54} h={58} className="sk-box sk-badge" />
+          <div className="sk-col">
+            <Sk h={16} w={`${72 - (i % 3) * 9}%`} className="sk-line" />
+            <Sk h={10} className="sk-line sm" />
+            <Sk h={10} w={`${84 - (i % 4) * 8}%`} className="sk-line sm" />
+            <div className="sk-meta"><Sk w={96} h={9} className="sk-line sm" />{i % 2 === 0 && <Sk w={62} h={18} className="sk-line" style={{ borderRadius: 999 }} />}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Same shape as a real achievement card (small picture, pill, title, two lines). */
+export function SkAchievements({ count = 6 }: { count?: number }) {
+  return (
+    <div className="sk-ach" aria-busy="true" aria-label="Loading achievements">
+      {Array.from({ length: count }, (_, i) => (
+        <div className="sk-ach-card" key={i}>
+          <Sk w={84} h={84} className="sk-box" />
+          <div className="sk-col">
+            <Sk w={84} h={16} className="sk-line" style={{ borderRadius: 999 }} />
+            <Sk h={15} w={`${78 - (i % 3) * 10}%`} className="sk-line" />
+            <Sk h={10} className="sk-line sm" />
+            <Sk h={10} w="62%" className="sk-line sm" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** A full article: title, byline, paragraphs. */
 export function SkArticle() {
   return (
