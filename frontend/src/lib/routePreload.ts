@@ -25,7 +25,7 @@ const MODULES: Record<string, Loader> = {
   timetable: L.TimetableModule, homework: L.HomeworkModule, exams: L.ExamsModule, accounts: L.AccountsModule,
   admissions: L.AdmissionsModule, messages: L.MessagesModule, achievements: L.AchievementsModule,
   academics: L.AcademicSetupModule, students: L.StudentsModule,
-  database: L.DatabaseModule, data: L.DataViewModule,
+  database: L.DatabaseModule, data: L.DataViewModule, promotion: L.PromotionModule,
   profile: L.ProfileModule, import: L.ImportModule, "attendance-report": L.AttendanceReportModule,
 };
 
