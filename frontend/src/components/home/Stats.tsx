@@ -10,10 +10,10 @@ const ITEMS: { n: number | string; suffix?: string; label: string }[] = [
 /** Big numbers that count up as the band scrolls into view. */
 export function Stats() {
   return (
-    <section className="st" aria-label="The school in numbers">
-      <div className="wrap st-grid">
+    <section className="hstats" aria-label="The school in numbers">
+      <div className="wrap hstats-grid">
         {ITEMS.map((s, i) => (
-          <div className="st-item" key={s.label} data-reveal style={{ ["--d" as string]: i }}>
+          <div className="hstats-item" key={s.label} data-reveal style={{ ["--d" as string]: i }}>
             <b>{typeof s.n === "number" ? <CountUp to={s.n} suffix={s.suffix ?? ""} duration={1500} /> : s.n}</b>
             <span>{s.label}</span>
           </div>

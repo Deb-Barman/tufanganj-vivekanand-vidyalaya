@@ -16,9 +16,9 @@ function Row({ words, outline }: { words: string[]; outline?: boolean }) {
   );
 }
 
-/** Two huge lines of words that slide in opposite directions as the page scrolls. */
+/** Two huge lines of words that slide in opposite directions as the page scrolls — and lean into the speed of your scroll. */
 export function Marquee() {
-  const ref = useScrollProgress<HTMLElement>("view");
+  const ref = useScrollProgress<HTMLElement>("view", undefined, { velocity: true });
   return (
     <section className="mq" ref={ref} aria-label="Knowledge, Character, Progress">
       <Row words={A} />

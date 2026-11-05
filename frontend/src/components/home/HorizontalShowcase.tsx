@@ -1,48 +1,67 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ICONS } from "../site/icons";
-import { canPin, useScrollProgress } from "./scroll";
+import { fxOn, useScrollProgress } from "./scroll";
 
 export interface ShowItem { to: string; label: string; desc: string }
 
 /**
- * "Explore the school" as a pinned gallery: on a desktop the cards slide sideways while you scroll down;
- * on phones/tablets (and with reduced motion) it is a normal swipeable row.
+ * "Explore the school" as a pinned gallery: while you scroll down, the cards glide sideways and the card nearest the
+ * middle of the screen lifts and straightens (phones and desktops alike). With reduced motion it is a normal swipeable row.
  */
 export function HorizontalShowcase({ items }: { items: ShowItem[] }) {
-  const [pinned, setPinned] = useState(canPin);
+  const [pinned, setPinned] = useState(fxOn);
   const track = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState<number | undefined>();
-  const ref = useScrollProgress<HTMLElement>("track");
+  const geo = useRef({ centers: [] as number[], pitch: 300, dist: 0, vw: 0 });
+  const ref = useScrollProgress<HTMLElement>("track", (p) => {
+    const t = track.current;
+    if (!t || !pinned) return;
+    const { centers, pitch, dist, vw } = geo.current;
+    const shift = p * dist;
+    for (let i = 0; i < t.children.length; i++) {
+      // how many card-widths this card sits away from the middle of the screen (0 = centred)
+      const k = (centers[i] - shift - vw / 2) / pitch;
+      (t.children[i] as HTMLElement).style.setProperty("--k", k.toFixed(3));
+    }
+  });
 
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 900px) and (hover: hover) and (pointer: fine)");
-    const onChange = () => setPinned(canPin());
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setPinned(fxOn());
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  // Pinned: the section is as tall as the sideways distance + one screen.
+  // Pinned: the section is one screen + the sideways distance tall (see home.css: height = 100svh + --dist).
   useEffect(() => {
+    const section = ref.current;
+    const t = track.current;
+    if (!section || !t) return;
     if (!pinned) {
-      // oxlint-disable-next-line react/set-state-in-effect
-      setHeight(undefined);
+      section.style.removeProperty("--dist");
       return;
     }
     const measure = () => {
-      const t = track.current;
-      if (!t) return;
-      const dist = Math.max(0, t.scrollWidth - window.innerWidth + 120);
-      t.style.setProperty("--dist", `${dist}px`);
-      setHeight(window.innerHeight + dist);
+      const vw = document.documentElement.clientWidth;
+      const dist = Math.max(0, Math.round(t.scrollWidth - vw));
+      const cards = Array.from(t.children) as HTMLElement[];
+      const centers = cards.map((c) => c.offsetLeft + c.offsetWidth / 2);
+      geo.current = { centers, pitch: centers.length > 1 ? Math.max(1, centers[1] - centers[0]) : 300, dist, vw };
+      section.style.setProperty("--dist", `${dist}px`);
     };
     measure();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+    ro?.observe(t);
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [pinned, items.length]);
+    document.fonts?.ready.then(measure).catch(() => {});
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [pinned, items.length, ref]);
 
   return (
-    <section className={`hs${pinned ? " pinned" : ""}`} ref={ref} style={height ? { height } : undefined} aria-label="Explore the school">
+    <section className={`hs${pinned ? " pinned" : ""}`} ref={ref} aria-label="Explore the school">
       <div className="hs-stage">
         <div className="wrap hs-head" data-reveal>
           <div className="eyebrow">Explore the school</div>
