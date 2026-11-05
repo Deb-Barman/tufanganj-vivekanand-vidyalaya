@@ -406,7 +406,7 @@ export default function KoiLogin({ portal, initialNotice, onSigningIn, onSuccess
   const ctaLabel = f.phase === "ok" ? "Welcome back" : "Sign in";
 
   return (
-    <div className="lg-koi" ref={boxRef}>
+    <div className={`lg-koi${portal === "staff" ? " has-fp" : ""}`} ref={boxRef}>
       <canvas className="fx" ref={cvRef} aria-hidden="true" />
 
       <p className="hint" ref={hintRef}>

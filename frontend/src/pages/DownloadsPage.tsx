@@ -1,5 +1,5 @@
 import { EmptyPanel, PageHero, Section } from "../components/site/PageHero";
-import { SkList } from "../components/loading/Loading";
+import { SkRowCards } from "../components/loading/Loading";
 import { SITE } from "../config/site";
 import { fmtLong, usePaged } from "../lib/usePaged";
 import { usePageMeta } from "../lib/usePageMeta";
@@ -13,7 +13,7 @@ export function DownloadsPage() {
       <PageHero crumb="Downloads" eyebrow="Forms & documents" title="Download school forms." lede="Admission forms, certificates and other documents published by the school office." />
       <Section>
         {data === null ? (
-          <SkList count={4} avatar={false} />
+          <SkRowCards count={4} variant="file" />
         ) : data.length === 0 ? (
           <EmptyPanel icon="file" title={error ? "Documents could not be loaded" : "No documents yet"}>{error ?? "Forms appear here as soon as the office uploads them."}</EmptyPanel>
         ) : (

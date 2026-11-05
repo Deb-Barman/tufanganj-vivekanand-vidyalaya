@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { EmptyPanel, PageHero, Section } from "../components/site/PageHero";
-import { SkList } from "../components/loading/Loading";
+import { SkRowCards } from "../components/loading/Loading";
 import { SITE } from "../config/site";
 import { fmtDay, fmtLong, usePaged } from "../lib/usePaged";
 import { usePageMeta } from "../lib/usePageMeta";
@@ -21,11 +21,11 @@ export function EventsPage() {
       <PageHero crumb="Events" eyebrow="School calendar" title="What's happening at school." lede="Upcoming events, sports days, exams and celebrations." />
       <Section>
         <div className="filters" role="tablist">
-          <button type="button" role="tab" aria-selected={tab === "up"} className={`chip-btn ${tab === "up" ? "on" : ""}`} onClick={() => setTab("up")}>Upcoming{data ? ` (${lists.up.length})` : ""}</button>
-          <button type="button" role="tab" aria-selected={tab === "past"} className={`chip-btn ${tab === "past" ? "on" : ""}`} onClick={() => setTab("past")}>Past{data ? ` (${lists.past.length})` : ""}</button>
+          <button type="button" role="tab" aria-selected={tab === "up"} className={`chip-btn ${tab === "up" ? "on" : ""}`} onClick={() => setTab("up")}>Upcoming{data ? ` (${lists.up.length})` : " (…)"}</button>
+          <button type="button" role="tab" aria-selected={tab === "past"} className={`chip-btn ${tab === "past" ? "on" : ""}`} onClick={() => setTab("past")}>Past{data ? ` (${lists.past.length})` : " (…)"}</button>
         </div>
         {data === null ? (
-          <SkList count={4} avatar={false} />
+          <SkRowCards count={4} variant="event" />
         ) : shown.length === 0 ? (
           <EmptyPanel icon="calendar" title={error ? "Events could not be loaded" : tab === "up" ? "No upcoming events" : "No past events"}>{error ?? (tab === "up" ? "New events are added to the calendar by the school office." : undefined)}</EmptyPanel>
         ) : (

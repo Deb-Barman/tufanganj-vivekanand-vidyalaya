@@ -97,6 +97,41 @@ export function SkNotices({ count = 4 }: { count?: number }) {
   );
 }
 
+/**
+ * Same shape as a real `.row-card` row (Events, Downloads). It uses the real classes (row-list, row-card, date-badge, row-body),
+ * so the padding, badge and text sizes match the real rows on every screen — nothing jumps when the data arrives.
+ *   "event": date badge, title, two text lines, date + pill.   "file": file badge, title, "Added…" line, two buttons.
+ */
+export function SkRowCards({ count = 4, variant = "event" }: { count?: number; variant?: "event" | "file" }) {
+  return (
+    <div className="row-list sk-rowcards" aria-busy="true" aria-label="Loading content">
+      {Array.from({ length: count }, (_, i) => (
+        <div className="row-card" key={i}>
+          <span className="date-badge sk" aria-hidden="true" />
+          <div className="row-body">
+            <Sk h={20} w={`${68 - (i % 3) * 9}%`} className="sk-line" />
+            {variant === "event" ? (
+              <>
+                <Sk h={12} className="sk-line sm" />
+                <Sk h={12} w={`${74 - (i % 4) * 8}%`} className="sk-line sm" />
+                <div className="sk-meta"><Sk w={104} h={11} className="sk-line sm" />{i % 2 === 0 && <Sk w={52} h={20} className="sk-line" style={{ borderRadius: 999 }} />}</div>
+              </>
+            ) : (
+              <Sk w={140} h={11} className="sk-line sm" style={{ marginTop: 4 }} />
+            )}
+          </div>
+          {variant === "file" && (
+            <div className="sk-actions" aria-hidden="true">
+              <Sk w={66} h={36} className="sk-line" style={{ borderRadius: 999 }} />
+              <Sk w={94} h={36} className="sk-line" style={{ borderRadius: 999 }} />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Same shape as a real achievement card (small picture, pill, title, two lines). */
 export function SkAchievements({ count = 6 }: { count?: number }) {
   return (
