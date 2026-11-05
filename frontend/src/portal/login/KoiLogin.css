@@ -51,3 +51,8 @@ color-scheme:light}
 .lg-koi button:disabled{opacity:1}
 .lg-koi .sub{margin:-14px 0 24px;text-align:center;color:var(--mu);font-size:13px;line-height:1.45}
 .lg-koi .lnk{font:inherit;font-weight:700}
+
+/* the floating "Forgot password?" pill sits at the bottom edge — lift the hint above it so they never overlap */
+.lg-koi.has-fp .hint{bottom:calc(max(18px,env(safe-area-inset-bottom)) + 48px)}
+/* the status line only takes room when it has a message (it used to leave a blank gap under the button) */
+.lg-koi .st:empty{min-height:0;margin-top:0}
