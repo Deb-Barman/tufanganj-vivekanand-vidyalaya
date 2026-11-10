@@ -160,3 +160,37 @@ class Achievement(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.year})"
+
+
+class AppRelease(models.Model):
+    """
+    One downloadable app shown on the public "App" page (/app): an Android APK, an iPhone/iPad link, a Windows
+    installer, … It is always a pasted public LINK (Google Drive, GitHub Releases, a store page): app files are too big
+    for the school's free storage. The Super Admin adds, edits, hides and deletes them from Dashboard ▸ App.
+    """
+
+    class Platform(models.TextChoices):
+        ANDROID = "ANDROID", "Android"
+        IOS = "IOS", "iPhone / iPad"
+        WINDOWS = "WINDOWS", "Windows"
+        MAC = "MAC", "Mac"
+        WEB = "WEB", "Web app (open in browser)"
+        OTHER = "OTHER", "Other"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=120)
+    platform = models.CharField(max_length=10, choices=Platform.choices, default=Platform.ANDROID)
+    version = models.CharField(max_length=30, blank=True)
+    #: Free text such as "24 MB" — shown next to the download button.
+    size_text = models.CharField(max_length=30, blank=True)
+    notes = models.TextField(blank=True, max_length=2000)
+    download_link = models.URLField(max_length=1000)
+    #: Hidden apps are not shown on the public page (e.g. an old version).
+    is_published = models.BooleanField(default=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "app_releases"
+        ordering = ["platform", "-created_at"]

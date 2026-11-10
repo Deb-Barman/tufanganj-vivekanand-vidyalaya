@@ -1,0 +1,28 @@
+/* Bulk import — "type it like Excel" sheet. Shares the .bi-* look of bulk-import.css. */
+.sh { display: grid; gap: 14px; min-width: 0; }
+.sh-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sh-count { margin-left: auto; font-size: 12.5px; font-weight: 700; color: var(--fg-soft); }
+.sh-scroll { overflow: auto; max-height: min(62vh, 560px); border-radius: var(--radius-sm); box-shadow: var(--inset-sm); background: var(--panel); -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.sh-table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 13px; }
+.sh-table thead th { position: sticky; top: 0; z-index: 3; padding: 9px 10px; text-align: left; white-space: nowrap; font-size: 11.5px; letter-spacing: .03em; color: var(--fg-soft); background: var(--surface); }
+.sh-table .sh-n { position: sticky; left: 0; z-index: 2; width: 38px; min-width: 38px; text-align: center; padding: 0 6px; font-size: 11.5px; font-weight: 700; color: var(--fg-faint); background: var(--surface); }
+.sh-table thead .sh-n { z-index: 4; }
+.sh-table .sh-x { width: 36px; min-width: 36px; padding: 0 4px; text-align: center; background: var(--panel); }
+.sh-req { color: var(--danger); }
+.sh-table td { padding: 0; border-top: 1px solid color-mix(in srgb, var(--fg) 8%, transparent); border-left: 1px solid color-mix(in srgb, var(--fg) 6%, transparent); min-width: 150px; }
+.sh-table td.sh-x { min-width: 36px; border-left: 0; }
+.sh-table td input { display: block; width: 100%; min-width: 0; height: 40px; padding: 0 10px; border: 0; border-radius: 0; background: transparent; color: var(--fg); font: inherit; font-size: 13px; outline: none; }
+.sh-table td input::placeholder { color: var(--fg-faint); opacity: .75; }
+.sh-table td input:focus { background: var(--surface); box-shadow: inset 0 0 0 2px var(--accent); position: relative; }
+.sh-table tr.bad td input { background: color-mix(in srgb, var(--danger) 8%, transparent); }
+.sh-table tr.bad .sh-n { color: var(--danger); }
+.sh-table tr.warn .sh-n { color: var(--warn); }
+.sh-msg td { padding: 6px 12px 8px; min-width: 0; border-left: 0; background: color-mix(in srgb, var(--danger) 6%, var(--panel)); }
+.sh-msg span { display: block; font-size: 12.5px; line-height: 1.5; }
+.sh-msg .e { color: var(--danger); font-weight: 600; }
+.sh-msg .w { color: var(--warn); }
+.sh-paste { padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--raise-sm); }
+.sh-paste summary { cursor: pointer; font-weight: 700; font-size: 13.5px; color: var(--accent); }
+.sh-paste p { margin: 8px 0; font-size: 13px; line-height: 1.6; color: var(--fg-soft); }
+.sh-paste textarea { width: 100%; box-sizing: border-box; margin-bottom: 8px; padding: 10px 12px; border: 0; border-radius: var(--radius-sm); background: var(--panel); box-shadow: var(--inset-sm); color: var(--fg); font: inherit; font-size: 13px; resize: vertical; }
+.bi-mode { justify-self: start; }

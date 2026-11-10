@@ -333,6 +333,70 @@ export interface HomeworkCompletions {
 }
 
 
+/* ───────── Projects (set for a class and semester, with a start date and a deadline) ───────── */
+
+export interface Project {
+  id: string;
+  school_class: string;
+  class_name: string;
+  subject: string | null;
+  subject_name: string;
+  /** SEM1…SEM4, ANNUAL, or "" when it is not tied to a semester. */
+  term: ResultTerm | "";
+  term_label: string;
+  title: string;
+  details: string;
+  start_date: string;
+  /** Deadline: the last day students can finish it. */
+  due_date: string;
+  /** upcoming = not started, open = students can tick, closed = deadline passed */
+  phase: "upcoming" | "open" | "closed";
+  /** Student only: true while it is inside its start–deadline window. */
+  can_tick: boolean;
+  created_by: string | null;
+  created_by_name: string;
+  created_at: string;
+  done: boolean | null;
+  submitted: number | null;
+  class_size: number | null;
+}
+
+export interface ProjectCompletions {
+  project: string;
+  title: string;
+  class_name: string;
+  students: HomeworkCompletionRow[];
+}
+
+/* ───────── App downloads (the public /app page) ───────── */
+
+export type AppPlatform = "ANDROID" | "IOS" | "WINDOWS" | "MAC" | "WEB" | "OTHER";
+export const APP_PLATFORMS: { value: AppPlatform; label: string }[] = [
+  { value: "ANDROID", label: "Android" },
+  { value: "IOS", label: "iPhone / iPad" },
+  { value: "WINDOWS", label: "Windows" },
+  { value: "MAC", label: "Mac" },
+  { value: "WEB", label: "Web app (open in browser)" },
+  { value: "OTHER", label: "Other" },
+];
+
+export interface AppRelease {
+  id: string;
+  name: string;
+  platform: AppPlatform;
+  platform_label: string;
+  version: string;
+  size_text: string;
+  notes: string;
+  download_link: string;
+  /** Direct-download address for Google Drive files (null for anything else). */
+  download_url: string | null;
+  /** Only returned to the Super Admin. */
+  is_published?: boolean;
+  updated_at: string;
+}
+
+
 /* ───────── Super Admin: Database overview + Data view ───────── */
 
 export interface DbUsage { bytes: number | null; mb: number | null; limit_mb: number; percent: number | null }

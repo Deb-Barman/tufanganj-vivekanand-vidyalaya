@@ -70,6 +70,7 @@ export function SiteFooter() {
           <Link to="/find-profile">Profile Finder</Link>
           <Link to="/faq">FAQ</Link>
           <Link to="/downloads">Downloads</Link>
+          <Link to="/app">Get the App</Link>
           <Link to="/portal">Student &amp; Staff Login</Link>
           <Link to="/developer">Developer</Link>
         </div>

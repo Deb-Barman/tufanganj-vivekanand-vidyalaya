@@ -56,4 +56,6 @@ export const MORE: NavItem[] = [
   { to: "/privacy", label: "Privacy", desc: "How we handle your data" },
   { to: "/terms", label: "Terms", desc: "Using this website" },
   { to: "/gallery", label: "Gallery", desc: "Photos from school life" },
+  // Keep new entries at the END: the home page picks MORE[0] and MORE[2] by position.
+  { to: "/app", label: "App", desc: "Download the school app" },
 ];

@@ -16,6 +16,8 @@ from .models import (
     Homework,
     HomeworkCompletion,
     Marksheet,
+    Project,
+    ProjectCompletion,
     PromotionBatch,
     Result,
     SchoolClass,
@@ -35,6 +37,7 @@ from .serializers import (
     BulkResultSerializer,
     BulkTeacherAttendanceSerializer,
     MarksheetSerializer,
+    ProjectSerializer,
     PublicTeacherSerializer,
     ResultSerializer,
     SchoolClassSerializer,
@@ -587,6 +590,133 @@ class HomeworkCompletionsView(APIView):
             for sp in students
         ]
         return Response({"homework": str(hw.id), "title": hw.title, "class_name": hw.school_class.name, "students": rows})
+
+
+# --- Projects ---------------------------------------------------------------
+
+class ProjectListCreateView(generics.ListCreateAPIView):
+    """Staff set projects for a class; students see the projects of their own class (current year, or an earlier one on request)."""
+
+    permission_classes = [IsAuthenticatedActiveUser]
+    serializer_class = ProjectSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Project.objects.select_related("subject", "school_class", "created_by")
+        q = self.request.query_params
+        if user.is_student:
+            qs = qs.filter(school_class_id=_student_class_scope(self.request))
+        elif q.get("school_class"):
+            qs = qs.filter(school_class_id=q["school_class"])
+        if q.get("term"):
+            qs = qs.filter(term=q["term"])
+        if q.get("subject"):
+            qs = qs.filter(subject_id=q["subject"])
+        if q.get("mine") == "1" and not user.is_student:
+            qs = qs.filter(created_by=user)
+        if q.get("upcoming") == "1":
+            from django.utils import timezone
+
+            qs = qs.filter(due_date__gte=timezone.localdate())
+        return qs
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        user = self.request.user
+        if user.is_authenticated and user.is_student:
+            ctx["done_ids"] = set(ProjectCompletion.objects.filter(student__user=user).values_list("project_id", flat=True))
+        return ctx
+
+    def create(self, request, *args, **kwargs):
+        if request.user.is_student:
+            raise PermissionDenied("Students cannot set projects.")
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Staff can change/delete projects they set (Super Admin: any). Students can only read their class's."""
+
+    permission_classes = [IsAuthenticatedActiveUser]
+    serializer_class = ProjectSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Project.objects.select_related("subject", "school_class", "created_by")
+        if user.is_student:
+            return qs.filter(school_class_id__in=_own_class_ids(user))
+        if user.is_teacher and self.request.method not in ("GET", "HEAD", "OPTIONS"):
+            return qs.filter(created_by=user)
+        return qs
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        user = self.request.user
+        if user.is_authenticated and user.is_student:
+            ctx["done_ids"] = set(ProjectCompletion.objects.filter(student__user=user).values_list("project_id", flat=True))
+        return ctx
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        if request.user.is_student and request.method not in ("GET", "HEAD", "OPTIONS"):
+            raise PermissionDenied("Students cannot change projects.")
+
+
+class ProjectDoneView(APIView):
+    """POST /academics/projects/<id>/done/ {done: true|false} — a student ticks or unticks their own project."""
+
+    permission_classes = [IsAuthenticatedActiveUser]
+
+    def post(self, request, pk):
+        if not request.user.is_student:
+            raise PermissionDenied("Only students tick projects as done.")
+        profile = StudentProfile.objects.filter(user=request.user).first()
+        pr = Project.objects.filter(pk=pk, school_class_id=profile.school_class_id if profile else None).first()
+        if pr is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        done = bool(request.data.get("done", True))
+        phase = pr.phase()
+        if phase == "closed":
+            raise ValidationError({"detail": f"The deadline for this project was {pr.due_date:%d %b %Y}. It can no longer be changed."})
+        if phase == "upcoming":
+            raise ValidationError({"detail": f"This project starts on {pr.start_date:%d %b %Y}."})
+        if done:
+            ProjectCompletion.objects.get_or_create(project=pr, student=profile)
+        else:
+            ProjectCompletion.objects.filter(project=pr, student=profile).delete()
+        return Response({"id": str(pr.id), "done": done})
+
+
+class ProjectCompletionsView(APIView):
+    """GET /academics/projects/<id>/completions/ — staff see, per student in the class, who ticked it done.
+
+    Super Admin: any project. Teacher: only projects they set (same rule as editing it).
+    """
+
+    permission_classes = [IsSuperAdminOrTeacher]
+
+    def get(self, request, pk):
+        qs = Project.objects.select_related("school_class")
+        if request.user.is_teacher:
+            qs = qs.filter(created_by=request.user)
+        pr = qs.filter(pk=pk).first()
+        if pr is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        done = {c.student_id: c.completed_at for c in pr.completions.all()}
+        students = StudentProfile.objects.filter(school_class=pr.school_class).select_related("user")
+        rows = [
+            {
+                "student": str(sp.user_id),
+                "full_name": sp.user.full_name,
+                "roll_number": sp.roll_number,
+                "done": sp.user_id in done,
+                "completed_at": done.get(sp.user_id),
+            }
+            for sp in students
+        ]
+        return Response({"project": str(pr.id), "title": pr.title, "class_name": pr.school_class.name, "students": rows})
 
 
 # --- Exams -----------------------------------------------------------------

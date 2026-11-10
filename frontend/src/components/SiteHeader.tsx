@@ -11,7 +11,7 @@ const NAV_LINKS = NAV.map((n) => ({ href: n.to, label: n.label }));
 /* Desktop bar: the pages people look for first, in the order they look for them; everything else lives under "More". */
 const PRIMARY_PATHS = ["/about", "/academics", "/faculty", "/notices", "/admissions", "/contact"];
 const DESKTOP_LINKS = [{ to: "/", label: "Home" }, ...NAV.filter((n) => PRIMARY_PATHS.includes(n.to))];
-const MORE_LINKS = [...NAV.filter((n) => !PRIMARY_PATHS.includes(n.to)), ...MORE.filter((m) => ["/events", "/downloads", "/faq", "/gallery"].includes(m.to))];
+const MORE_LINKS = [...NAV.filter((n) => !PRIMARY_PATHS.includes(n.to)), ...MORE.filter((m) => ["/events", "/downloads", "/faq", "/gallery", "/app"].includes(m.to))];
 
 /** "More ▾" menu for the desktop bar: a soft raised panel with every other public page. */
 function MoreMenu() {

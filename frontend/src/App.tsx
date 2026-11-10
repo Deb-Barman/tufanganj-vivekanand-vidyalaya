@@ -42,6 +42,7 @@ const DownloadsPage = lazyNamed(L.DownloadsPage, "DownloadsPage");
 const FaqPage = lazyNamed(L.FaqPage, "FaqPage");
 const AdmissionsPage = lazyNamed(L.AdmissionsPage, "AdmissionsPage");
 const ContactPage = lazyNamed(L.ContactPage, "ContactPage");
+const AppPage = lazyNamed(L.AppPage, "AppPage");
 const PrivacyPage = lazyNamed(L.PrivacyPage, "PrivacyPage");
 const TermsPage = lazyNamed(L.TermsPage, "TermsPage");
 const GalleryPage = lazyNamed(L.GalleryPage, "GalleryPage");
@@ -71,6 +72,8 @@ const MarksheetsModule = lazyNamed(L.MarksheetsModule, "MarksheetsModule");
 const TimetableModule = lazyNamed(L.TimetableModule, "TimetableModule");
 const HomeworkModule = lazyNamed(L.HomeworkModule, "HomeworkModule");
 const ExamsModule = lazyNamed(L.ExamsModule, "ExamsModule");
+const ProjectsModule = lazyNamed(L.ProjectsModule, "ProjectsModule");
+const AppModule = lazyNamed(L.AppModule, "AppModule");
 const DatabaseModule = lazyNamed(L.DatabaseModule, "DatabaseModule");
 const DataViewModule = lazyNamed(L.DataViewModule, "DataViewModule");
 const PromotionModule = lazyNamed(L.PromotionModule, "PromotionModule");
@@ -103,6 +106,7 @@ export default function App() {
         <Route path="faq" element={<FaqPage />} />
         <Route path="admissions" element={<AdmissionsPage />} />
         <Route path="contact" element={<ContactPage />} />
+        <Route path="app" element={<AppPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="terms" element={<TermsPage />} />
         <Route path="gallery" element={<GalleryPage />} />
@@ -137,6 +141,7 @@ export default function App() {
           <Route path="timetable" element={<TimetableModule />} />
           <Route path="homework" element={<HomeworkModule />} />
           <Route path="exams" element={<ExamsModule />} />
+          <Route path="projects" element={<ProjectsModule />} />
           <Route path="profile" element={<ProfileModule />} />
           <Route path="import" element={<RoleOnly roles={[...ADMIN]}><ImportModule /></RoleOnly>} />
           <Route path="attendance-report" element={<RoleOnly roles={[...ADMIN]}><AttendanceReportModule /></RoleOnly>} />
@@ -147,6 +152,7 @@ export default function App() {
           <Route path="admissions" element={<RoleOnly roles={[...ADMIN]}><AdmissionsModule /></RoleOnly>} />
           <Route path="messages" element={<RoleOnly roles={[...ADMIN]}><MessagesModule /></RoleOnly>} />
           <Route path="achievements" element={<RoleOnly roles={[...ADMIN]}><AchievementsModule /></RoleOnly>} />
+          <Route path="app" element={<RoleOnly roles={[...ADMIN]}><AppModule /></RoleOnly>} />
           <Route path="academics" element={<RoleOnly roles={[...ADMIN]}><AcademicSetupModule /></RoleOnly>} />
           <Route path="students" element={<RoleOnly roles={[...STAFF]}><StudentsModule /></RoleOnly>} />
           <Route path="*" element={<DashboardNotFound />} />
@@ -168,6 +174,8 @@ export default function App() {
       <Route path="facilities" element={<Navigate to="/campus" replace />} />
       <Route path="event" element={<Navigate to="/events" replace />} />
       <Route path="forms" element={<Navigate to="/downloads" replace />} />
+      <Route path="apps" element={<Navigate to="/app" replace />} />
+      <Route path="download-app" element={<Navigate to="/app" replace />} />
       <Route path="login" element={<Navigate to="/portal" replace />} />
       <Route path="student" element={<Navigate to="/portal" replace />} />
 

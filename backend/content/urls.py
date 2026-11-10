@@ -22,6 +22,10 @@ urlpatterns = [
     path("forms/public/", views.PublicSchoolFormListView.as_view(), name="public_forms"),
     path("forms/", views.SchoolFormListCreateView.as_view(), name="forms"),
     path("forms/<uuid:pk>/", views.SchoolFormDetailView.as_view(), name="form_detail"),
+    # App downloads (public /app page)
+    path("apps/public/", views.PublicAppReleaseListView.as_view(), name="public_apps"),
+    path("apps/", views.AppReleaseListCreateView.as_view(), name="apps"),
+    path("apps/<uuid:pk>/", views.AppReleaseDetailView.as_view(), name="app_detail"),
     # Admissions
     path("admissions/submit/", views.AdmissionCreateView.as_view(), name="admission_submit"),
     path("admissions/", views.AdmissionListView.as_view(), name="admissions"),

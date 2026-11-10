@@ -27,9 +27,11 @@ export const NAV: NavItem[] = [
   { to: "gallery", label: "Gallery", icon: "image", roles: ALL, group: "Website", hint: "Photos" },
   { to: "downloads", label: "Downloads", icon: "download", roles: ALL, group: "Website", hint: "Forms and documents" },
   { to: "achievements", label: "Achievements", icon: "award", roles: ADMIN, group: "Website", hint: "Add results and awards to the website" },
+  { to: "app", label: "App", icon: "phone", roles: ADMIN, group: "Website", hint: "Add or update the app people download from the website" },
 
   { to: "timetable", label: "Timetable", icon: "clock", roles: ALL, group: "Academics", hint: "Weekly class timetable" },
   { to: "homework", label: "Homework", icon: "clipboard", roles: ALL, group: "Academics", hint: "Set or view homework" },
+  { to: "projects", label: "Projects", icon: "layers", roles: ALL, group: "Academics", hint: "Class projects with a start date and deadline" },
   { to: "exams", label: "Exams", icon: "calendar", roles: ALL, group: "Academics", hint: "Exam schedule" },
   { to: "attendance", label: "Attendance", icon: "checkCircle", roles: ALL, group: "Academics", hint: "Mark or view attendance" },
   { to: "results", label: "Results", icon: "award", roles: ALL, group: "Academics", hint: "Enter or view marks" },
