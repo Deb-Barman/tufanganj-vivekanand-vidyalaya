@@ -16,13 +16,13 @@ const PUBLIC: Record<string, Loader[]> = {
   "/about": [L.AboutPage], "/academics": [L.AcademicsPage], "/faculty": [L.FacultyPage], "/achievements": [L.AchievementsPage],
   "/campus": [L.CampusPage], "/notices": [L.NoticesPage], "/blog": [L.BlogPage], "/events": [L.EventsPage],
   "/downloads": [L.DownloadsPage], "/faq": [L.FaqPage], "/admissions": [L.AdmissionsPage], "/contact": [L.ContactPage],
-  "/privacy": [L.PrivacyPage], "/terms": [L.TermsPage], "/gallery": [L.GalleryPage], "/developer": [L.DeveloperPage],
+  "/app": [L.AppPage], "/privacy": [L.PrivacyPage], "/terms": [L.TermsPage], "/gallery": [L.GalleryPage], "/developer": [L.DeveloperPage],
 };
 
 const MODULES: Record<string, Loader> = {
   notices: L.NoticesModule, blog: L.BlogModule, events: L.EventsModule, gallery: L.GalleryModule, downloads: L.DownloadsModule,
   teachers: L.TeachersModule, attendance: L.AttendanceModule, results: L.ResultsModule, marksheets: L.MarksheetsModule,
-  timetable: L.TimetableModule, homework: L.HomeworkModule, exams: L.ExamsModule, accounts: L.AccountsModule,
+  timetable: L.TimetableModule, homework: L.HomeworkModule, exams: L.ExamsModule, projects: L.ProjectsModule, app: L.AppModule, accounts: L.AccountsModule,
   admissions: L.AdmissionsModule, messages: L.MessagesModule, achievements: L.AchievementsModule,
   academics: L.AcademicSetupModule, students: L.StudentsModule,
   database: L.DatabaseModule, data: L.DataViewModule, promotion: L.PromotionModule,
