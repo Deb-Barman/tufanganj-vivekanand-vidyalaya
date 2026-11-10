@@ -24,7 +24,7 @@ export function ImportModule() {
   const current = catalog?.imports.find((i) => i.key === kind);
   return (
     <>
-      <PageHeader icon="file" title="Bulk import" sub="Stop typing forms by hand: upload an Excel or CSV file, check every row, then confirm. A sample file with the exact columns is provided for each kind." />
+      <PageHeader icon="file" title="Bulk import" sub="Choose what to import, then type the rows in a sheet right here (or paste them from Excel / Google Sheets). Every row is checked before anything is saved. You can still upload an Excel or CSV file instead." />
       {error && <p className="bi-error" role="alert">{error}</p>}
       {!catalog && !error && <Skeleton rows={4} />}
       {catalog && !current && (
