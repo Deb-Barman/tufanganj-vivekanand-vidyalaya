@@ -1,0 +1,22 @@
+/* Public "App" page (/app): install-as-app card + download cards. Uses the shared neumorphic tokens. */
+.app-grid { display: grid; gap: 18px; }
+.app-install { display: grid; gap: 14px; padding: 22px; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--raise); }
+.app-install h2 { margin: 0; font-family: var(--serif); font-size: clamp(20px, 3.4vw, 26px); }
+.app-install p { margin: 0; color: var(--fg-soft); line-height: 1.65; font-size: 15px; }
+.app-install ol { list-style: decimal; margin: 0; padding-left: 22px; color: var(--fg-soft); line-height: 1.8; font-size: 14.5px; }
+.app-install .app-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.app-install .app-ok { display: inline-flex; align-items: center; gap: 8px; color: var(--good); font-weight: 700; }
+.app-cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.app-card { display: grid; gap: 12px; align-content: start; padding: 20px; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--raise-sm); min-width: 0; }
+.app-card.is-match { box-shadow: var(--raise-sm), 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent); }
+.app-card header { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.app-card .app-ico { flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: var(--panel); box-shadow: var(--inset-sm); color: var(--accent); }
+.app-card h3 { margin: 0; font-size: 17px; line-height: 1.25; overflow-wrap: anywhere; }
+.app-card .app-plat { font-size: 12.5px; color: var(--fg-soft); font-weight: 600; }
+.app-card .app-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+.app-card .app-meta span { padding: 4px 10px; border-radius: 999px; background: var(--panel); box-shadow: var(--inset-sm); font-size: 12px; font-weight: 700; color: var(--fg-soft); }
+.app-card .app-notes { margin: 0; color: var(--fg-soft); font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.app-card .app-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.app-badge { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: var(--accent); color: var(--accent-ink, #fff); font-size: 11px; font-weight: 800; vertical-align: middle; }
+.app-safe { display: flex; gap: 10px; align-items: flex-start; padding: 14px 16px; border-radius: var(--radius); background: var(--panel); box-shadow: var(--inset-sm); color: var(--fg-soft); font-size: 13.5px; line-height: 1.6; }
+.app-safe svg { flex: none; margin-top: 2px; color: var(--good); }
