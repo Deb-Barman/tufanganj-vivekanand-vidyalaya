@@ -5,6 +5,10 @@ import type { ImportCatalog, ImportCommitResult, ImportKind, ImportPreview } fro
 import { Icon } from "./icons";
 import { Skeleton } from "./Skeletons";
 import { errText } from "./kitHelpers";
+import { SheetEditor } from "./SheetEditor";
+import type { SheetProblems } from "./SheetEditor";
+import { blankGrid, gridToCsv, isBlankRow, rowToIndex, trimGrid } from "./sheetHelpers";
+import type { Grid } from "./sheetHelpers";
 import "./bulk-import.css";
 
 /* The catalog never changes while the app is open, so it is fetched once and shared. */
@@ -24,6 +28,23 @@ function saveBlob(blob: Blob, name: string) {
 
 /** A spreadsheet opens "=cmd…" cells as formulas: prefix them so a name can never run as one. */
 const csvCell = (v: string) => `"${(/^[=+\-@\t\r]/.test(v) ? `'${v}` : v).replace(/"/g, '""')}"`;
+
+/* The typed sheet is kept for this browser tab only (sessionStorage), so a refresh or a dropped connection does not lose it. */
+const draftKey = (kind: string) => `tvv-import-sheet:${kind}`;
+function loadDraft(kind: string, cols: number): Grid | null {
+  try {
+    const raw = sessionStorage.getItem(draftKey(kind));
+    const g = raw ? (JSON.parse(raw) as unknown) : null;
+    if (Array.isArray(g) && g.length > 0 && g.every((r) => Array.isArray(r) && r.length === cols && r.every((c) => typeof c === "string"))) return g as Grid;
+  } catch { /* storage blocked or corrupt: start fresh */ }
+  return null;
+}
+function saveDraft(kind: string, grid: Grid) {
+  try {
+    if (grid.every(isBlankRow)) sessionStorage.removeItem(draftKey(kind));
+    else sessionStorage.setItem(draftKey(kind), JSON.stringify(grid));
+  } catch { /* ignore */ }
+}
 
 const MAX_BYTES = 2 * 1024 * 1024;
 type Phase = "pick" | "checking" | "preview" | "saving" | "done";
@@ -50,6 +71,11 @@ export default function BulkImportPanel({ kind, onDone, onBusyChange }: BulkImpo
   const [result, setResult] = useState<{ created: number; updated: number; skipped: number; rejected: number; credentials: ImportCommitResult["credentials"]; stoppedEarly: string } | null>(null);
   const [drag, setDrag] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  /* "sheet" = type the rows here like in Excel (default); "file" = upload an .xlsx / .csv. `source` is how the checked data arrived. */
+  const [mode, setMode] = useState<"sheet" | "file">("sheet");
+  const [source, setSource] = useState<"sheet" | "file">("sheet");
+  const [grid, setGrid] = useState<Grid>([]);
+  const [problems, setProblems] = useState<SheetProblems>(new Map());
 
   useEffect(() => {
     let alive = true;
@@ -62,6 +88,17 @@ export default function BulkImportPanel({ kind, onDone, onBusyChange }: BulkImpo
   const spec: ImportKind | undefined = catalog?.imports.find((i) => i.key === kind);
   const busy = phase === "checking" || phase === "saving";
   useEffect(() => onBusyChange?.(busy), [busy, onBusyChange]);
+
+  const cols = spec?.columns.length ?? 0;
+  useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
+    if (cols && grid.length === 0) setGrid(loadDraft(kind, cols) ?? blankGrid(cols));
+  }, [cols, kind, grid.length]);
+  useEffect(() => {
+    if (!grid.length) return;
+    const t = window.setTimeout(() => saveDraft(kind, grid), 400);
+    return () => window.clearTimeout(t);
+  }, [kind, grid]);
 
   const reset = useCallback(() => {
     setPhase("pick");
@@ -82,8 +119,9 @@ export default function BulkImportPanel({ kind, onDone, onBusyChange }: BulkImpo
     }
   }
 
-  async function check(f: File) {
+  async function check(f: File, from: "sheet" | "file" = "file") {
     setError("");
+    setSource(from);
     const name = f.name.toLowerCase();
     if (!/\.(xlsx|csv)$/.test(name)) return setError("Please choose an Excel (.xlsx) or CSV (.csv) file.");
     if (f.size > MAX_BYTES) return setError("That file is larger than 2 MB. Split it into smaller files.");
@@ -94,6 +132,11 @@ export default function BulkImportPanel({ kind, onDone, onBusyChange }: BulkImpo
       fd.append("file", f);
       const p = await api.postForm<ImportPreview>(`/imports/${kind}/preview/`, fd);
       setPreview(p);
+      if (from === "sheet") {
+        const next: SheetProblems = new Map();
+        for (const r of p.rows) if (!r.ok || r.warnings.length) next.set(rowToIndex(r.row), { errors: r.errors, warnings: r.warnings });
+        setProblems(next);
+      }
       setFilter(p.counts.invalid > 0 ? "problems" : "all");
       setShown(PAGE);
       setPhase("preview");
@@ -103,12 +146,31 @@ export default function BulkImportPanel({ kind, onDone, onBusyChange }: BulkImpo
     }
   }
 
+  /** Turns the typed sheet into a CSV (in memory) and sends it through the same check as an uploaded file. */
+  async function checkSheet() {
+    if (!spec) return;
+    const rows = trimGrid(grid, spec.columns.length, 0);
+    if (rows.every(isBlankRow)) return setError("Type at least one row first.");
+    if (rows.length > (catalog?.max_rows ?? 1000)) return setError(`The sheet has more than ${catalog?.max_rows ?? 1000} rows. Import them in smaller parts.`);
+    const csv = gridToCsv(spec.columns.map((c) => c.label), rows);
+    await check(new File([csv], "typed-data.csv", { type: "text/csv" }), "sheet");
+  }
+
+  /** Back from the check to the sheet, with the typed rows (and the messages on them) still there. */
+  function backToSheet() {
+    setPhase("pick");
+    setPreview(null);
+    setError("");
+    setMode("sheet");
+  }
+
   async function importNow() {
     if (!file || !preview) return;
     const rows = preview.rows.filter((r) => r.ok).map((r) => r.row);
     const size = Math.max(1, preview.chunk_size);
     const credentials: ImportCommitResult["credentials"] = [];
     let created = 0, updated = 0, skipped = 0, rejected = 0, stoppedEarly = "";
+    const saved = new Set<number>();
     setPhase("saving");
     setProgress({ done: 0, total: rows.length });
     for (let i = 0; i < rows.length; i += size) {
@@ -119,12 +181,28 @@ export default function BulkImportPanel({ kind, onDone, onBusyChange }: BulkImpo
         fd.append("rows", JSON.stringify(batch));
         const r = await api.postForm<ImportCommitResult>(`/imports/${kind}/commit/`, fd);
         created += r.created; updated += r.updated; skipped += r.skipped; rejected += r.rejected.length;
+        const refused = new Set(r.rejected.map((x) => x.row));
+        batch.forEach((n) => { if (!refused.has(n)) saved.add(n); });
         credentials.push(...r.credentials);
         setProgress({ done: Math.min(i + size, rows.length), total: rows.length });
       } catch (e) {
         stoppedEarly = errText(e, "The import stopped because of a network or server problem.");
         break;
       }
+    }
+    if (source === "sheet") {
+      // Keep only what was NOT saved (rows with problems, or rows after a network stop) so the person can fix just those.
+      const keep: Grid = [];
+      const left: SheetProblems = new Map();
+      grid.forEach((row, i) => {
+        if (isBlankRow(row) || saved.has(i + 2)) return;
+        const pr = problems.get(i);
+        if (pr) left.set(keep.length, pr);
+        keep.push(row);
+      });
+      setGrid(keep.length ? trimGrid(keep, cols) : blankGrid(cols));
+      setProblems(left);
+      if (!keep.length) saveDraft(kind, []);
     }
     setResult({ created, updated, skipped, rejected, credentials, stoppedEarly });
     setPhase("done");
@@ -157,7 +235,34 @@ export default function BulkImportPanel({ kind, onDone, onBusyChange }: BulkImpo
     return (
       <div className="bi">
         <p className="bi-lead">{spec.description}</p>
+        <div className="bi-filter bi-mode" role="tablist" aria-label="How do you want to add the data?">
+          <button type="button" role="tab" aria-selected={mode === "sheet"} className={mode === "sheet" ? "on" : ""} onClick={() => setMode("sheet")}>Type in a sheet</button>
+          <button type="button" role="tab" aria-selected={mode === "file"} className={mode === "file" ? "on" : ""} onClick={() => setMode("file")}>Upload a file</button>
+        </div>
 
+        {mode === "sheet" && (
+          <>
+            <SheetEditor columns={spec.columns} example={spec.example[0]} grid={grid} setGrid={setGrid} problems={problems} setProblems={setProblems} maxRows={catalog?.max_rows ?? 1000} disabled={phase === "checking"} onCheck={() => void checkSheet()} />
+            <details className="bi-cols">
+              <summary>What goes in each column?</summary>
+              <div className="bi-scroll">
+                <table className="bi-table">
+                  <thead><tr><th>Column</th><th>Needed?</th><th>What to type</th></tr></thead>
+                  <tbody>
+                    {spec.columns.map((c) => (
+                      <tr key={c.key}><td><b>{c.label}</b></td><td>{c.required ? <span className="bi-pill bi-req">Required</span> : <span className="bi-pill">Optional</span>}</td><td>{c.help || "—"}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <ul className="bi-notes">{spec.notes.map((n) => <li key={n}>{n}</li>)}</ul>
+            </details>
+            <p className="bi-safe"><Icon name="shield" size={15} /> Nothing is saved yet. You will see every row checked first.</p>
+            {phase === "checking" && <p className="bi-note" aria-live="polite">Checking your rows…</p>}
+          </>
+        )}
+
+        {mode === "file" && (<>
         <section className="bi-step">
           <h4><span>1</span> Get the sample file</h4>
           <p>Fill the sample the same way (same columns), then save it as Excel or CSV. Rows in the sample are only examples — delete them.</p>
@@ -204,6 +309,7 @@ export default function BulkImportPanel({ kind, onDone, onBusyChange }: BulkImpo
           </div>
           <p className="bi-safe"><Icon name="shield" size={15} /> Nothing is saved yet. You will see every row checked first.</p>
         </section>
+        </>)}
         {error && <p className="bi-error" role="alert">{error}</p>}
       </div>
     );
@@ -215,10 +321,10 @@ export default function BulkImportPanel({ kind, onDone, onBusyChange }: BulkImpo
     const cols = preview.columns;
     return (
       <div className="bi">
-        <div className="bi-file"><Icon name="file" size={18} /> <b>{preview.file_name}</b> <button type="button" className="link-btn" onClick={reset}>Choose another file</button></div>
+        <div className="bi-file"><Icon name="file" size={18} /> <b>{source === "sheet" ? "Your typed sheet" : preview.file_name}</b> {source === "sheet" ? <button type="button" className="link-btn" onClick={backToSheet}>← Back to the sheet</button> : <button type="button" className="link-btn" onClick={reset}>Choose another file</button>}</div>
         {blocked && (
           <div className="bi-error" role="alert"><b>This file cannot be imported yet:</b><ul>{preview.file_errors.map((m) => <li key={m}>{m}</li>)}</ul>
-            <button type="button" className="btn btn-outline btn-sm" onClick={() => void downloadSample("xlsx")}><Icon name="download" size={16} /> Download the sample</button>
+            {source === "sheet" ? <button type="button" className="btn btn-outline btn-sm" onClick={backToSheet}>← Back to the sheet</button> : <button type="button" className="btn btn-outline btn-sm" onClick={() => void downloadSample("xlsx")}><Icon name="download" size={16} /> Download the sample</button>}
           </div>
         )}
         {preview.unknown_columns.length > 0 && <p className="bi-note">Ignored columns (not recognised): {preview.unknown_columns.join(", ")}</p>}
@@ -257,9 +363,9 @@ export default function BulkImportPanel({ kind, onDone, onBusyChange }: BulkImpo
               </table>
             </div>
             {visibleRows.length > shown && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShown((n) => n + PAGE)}>Show {Math.min(PAGE, visibleRows.length - shown)} more</button>}
-            {c.invalid > 0 && <p className="bi-note">Rows with problems will <b>not</b> be imported. Fix them in your file and upload again, or import the ready rows now and add the rest later.</p>}
+            {c.invalid > 0 && <p className="bi-note">Rows with problems will <b>not</b> be imported. {source === "sheet" ? <>Go back to the sheet — the problem rows are marked in red with what to fix — or import the ready rows now and fix the rest afterwards.</> : <>Fix them in your file and upload again, or import the ready rows now and add the rest later.</>}</p>}
             <div className="bi-actions">
-              <button type="button" className="btn btn-ghost btn-sm" onClick={reset}>Cancel</button>
+              {source === "sheet" ? <button type="button" className="btn btn-ghost btn-sm" onClick={backToSheet}>{c.invalid > 0 ? "← Fix rows in the sheet" : "← Back to the sheet"}</button> : <button type="button" className="btn btn-ghost btn-sm" onClick={reset}>Cancel</button>}
               <button type="button" className="btn btn-primary" disabled={c.valid === 0} onClick={() => void importNow()}>
                 <Icon name="check" size={16} /> {c.invalid > 0 ? `Import ${c.valid} ready row${c.valid === 1 ? "" : "s"}` : `Confirm & import ${c.valid} row${c.valid === 1 ? "" : "s"}`}
               </button>
@@ -304,7 +410,13 @@ export default function BulkImportPanel({ kind, onDone, onBusyChange }: BulkImpo
           <button type="button" className="btn btn-primary btn-sm" onClick={downloadCredentials}><Icon name="download" size={16} /> Download passwords (CSV)</button>
         </div>
       )}
-      <div className="bi-actions"><button type="button" className="btn btn-outline btn-sm" onClick={reset}>Import another file</button></div>
+      <div className="bi-actions">
+        {source === "sheet" ? (
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => { reset(); setMode("sheet"); }}>{grid.some((r) => !isBlankRow(r)) ? `Fix the ${grid.filter((r) => !isBlankRow(r)).length} row${grid.filter((r) => !isBlankRow(r)).length === 1 ? "" : "s"} that were not saved` : "Add more"}</button>
+        ) : (
+          <button type="button" className="btn btn-outline btn-sm" onClick={reset}>Import another file</button>
+        )}
+      </div>
     </div>
   );
 }

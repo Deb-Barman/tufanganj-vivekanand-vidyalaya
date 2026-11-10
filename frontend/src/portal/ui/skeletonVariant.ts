@@ -24,6 +24,8 @@ const SPEC: Record<string, Spec> = {
   exams: { variant: "list", rows: 4, toolbar: true },
   timetable: { variant: "list", rows: 4, toolbar: true },
   homework: { variant: "list", rows: 4, toolbar: "staff" },
+  projects: { variant: "list", rows: 4, toolbar: "staff" },
+  app: { variant: "list", rows: 3, toolbar: false },
   attendance: { variant: "list", rows: 4, toolbar: "staff" },
   results: { variant: "list", rows: 4, toolbar: "staff" },
   database: { variant: "database", rows: 0, toolbar: false },
