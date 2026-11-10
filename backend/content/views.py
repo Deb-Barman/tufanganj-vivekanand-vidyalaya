@@ -8,7 +8,7 @@ from rest_framework.throttling import AnonRateThrottle
 from accounts.permissions import IsSuperAdmin, IsSuperAdminOrReadOnly
 from config.clientip import client_ip
 
-from .models import Achievement, Admission, Article, ContactMessage, Event, GalleryImage, SchoolForm
+from .models import Achievement, Admission, AppRelease, Article, ContactMessage, Event, GalleryImage, SchoolForm
 from .serializers import (
     AchievementSerializer,
     ContactMessageAdminSerializer,
@@ -22,7 +22,9 @@ from .serializers import (
     PublicArticleSerializer,
     PublicEventSerializer,
     PublicGalleryImageSerializer,
+    PublicAppReleaseSerializer,
     PublicSchoolFormSerializer,
+    AppReleaseSerializer,
     SchoolFormSerializer,
 )
 
@@ -139,6 +141,41 @@ class SchoolFormDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsSuperAdminOrReadOnly]
     serializer_class = SchoolFormSerializer
     queryset = SchoolForm.objects.all()
+
+
+# --- App downloads (the public /app page) ----------------------------------
+
+class PublicAppReleaseListView(generics.ListAPIView):
+    """Anyone can see the published app downloads (no sign-in)."""
+
+    permission_classes = [AllowAny]
+    serializer_class = PublicAppReleaseSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return AppRelease.objects.filter(is_published=True)
+
+    def list(self, request, *args, **kwargs):
+        resp = super().list(request, *args, **kwargs)
+        resp["Cache-Control"] = "public, max-age=60"
+        return resp
+
+
+class AppReleaseListCreateView(generics.ListCreateAPIView):
+    """Super Admin: every app download, including hidden ones."""
+
+    permission_classes = [IsSuperAdmin]
+    serializer_class = AppReleaseSerializer
+    queryset = AppRelease.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+class AppReleaseDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsSuperAdmin]
+    serializer_class = AppReleaseSerializer
+    queryset = AppRelease.objects.all()
 
 
 # --- Admissions --------------------------------------------------------

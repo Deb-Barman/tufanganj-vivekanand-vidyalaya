@@ -6,7 +6,7 @@ from notices.serializers import sanitize
 
 from .adjust import clean_adjust
 from .links import LinkError, drive_download_url, normalize_file_link, normalize_image_link
-from .models import Achievement, ContactMessage, Admission, Article, Event, GalleryImage, SchoolForm
+from .models import Achievement, AppRelease, ContactMessage, Admission, Article, Event, GalleryImage, SchoolForm
 
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
 MAX_DOC_SIZE = 10 * 1024 * 1024  # 10 MB
@@ -218,6 +218,52 @@ class SchoolFormSerializer(LinkOrUploadMixin, serializers.ModelSerializer):
         if value:
             validate_doc_upload(value)
         return value
+
+
+class AppReleaseSerializer(serializers.ModelSerializer):
+    """The Super Admin's view of an app download. `download_link` is a pasted public link (Drive, GitHub, store page…)."""
+
+    platform_label = serializers.CharField(source="get_platform_display", read_only=True)
+    download_url = serializers.SerializerMethodField()
+    download_link = serializers.CharField(max_length=1000)
+
+    class Meta:
+        model = AppRelease
+        fields = ["id", "name", "platform", "platform_label", "version", "size_text", "notes", "download_link", "download_url", "is_published", "created_by", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at"]
+
+    def get_download_url(self, obj):
+        """Direct-download address for Google Drive files (None for anything else)."""
+        return drive_download_url(obj.download_link)
+
+    def validate_name(self, value):
+        value = sanitize(value.strip())
+        if not value:
+            raise serializers.ValidationError("Give the app a name.")
+        return value
+
+    def validate_version(self, value):
+        return sanitize(value.strip())
+
+    def validate_size_text(self, value):
+        return sanitize(value.strip())
+
+    def validate_notes(self, value):
+        return sanitize(value.strip())
+
+    def validate_download_link(self, value):
+        try:
+            return normalize_file_link(value)
+        except LinkError as exc:
+            raise serializers.ValidationError(str(exc)) from None
+
+
+class PublicAppReleaseSerializer(AppReleaseSerializer):
+    """What visitors see: no internal user ids, no hidden fields."""
+
+    class Meta(AppReleaseSerializer.Meta):
+        fields = ["id", "name", "platform", "platform_label", "version", "size_text", "notes", "download_link", "download_url", "updated_at"]
+        read_only_fields = fields
 
 
 class AdmissionSerializer(serializers.ModelSerializer):

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Achievement, Admission, Article, ContactMessage, Event, GalleryImage, SchoolForm
+from .models import Achievement, Admission, AppRelease, Article, ContactMessage, Event, GalleryImage, SchoolForm
 
 
 @admin.register(Article)
@@ -48,3 +48,10 @@ class AchievementAdmin(admin.ModelAdmin):
     list_display = ("title", "year", "category", "created_by", "created_at")
     list_filter = ("category", "year")
     search_fields = ("title", "description")
+
+
+@admin.register(AppRelease)
+class AppReleaseAdmin(admin.ModelAdmin):
+    list_display = ("name", "platform", "version", "is_published", "updated_at")
+    list_filter = ("platform", "is_published")
+    search_fields = ("name", "notes")
