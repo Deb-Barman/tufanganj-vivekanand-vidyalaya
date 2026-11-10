@@ -249,6 +249,56 @@ class Exam(models.Model):
         ordering = ["date", "start_time"]
 
 
+class Project(models.Model):
+    """
+    A longer piece of work (a project / assignment) given to ONE class, optionally for one semester and subject.
+    Unlike homework it has a clear start and a deadline, and usually a longer description. Teachers and the Super Admin
+    set it; students of that class see it and tick it as done between its start date and its deadline.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, related_name="projects")
+    #: Optional: a project can be for the whole class without belonging to one subject.
+    subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True, blank=True, related_name="projects")
+    #: Which semester it belongs to (SEM1…ANNUAL). Blank = not tied to a semester.
+    term = models.CharField(max_length=6, choices=Result.Term.choices, blank=True, default="")
+    title = models.CharField(max_length=200)
+    details = models.TextField(blank=True, max_length=4000)
+    #: First day students can tick it as done.
+    start_date = models.DateField()
+    #: Deadline: the last day students can finish (and tick) it. After this the tick is locked.
+    due_date = models.DateField()
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="projects_set")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "projects"
+        ordering = ["due_date", "-created_at"]
+
+    def phase(self, today=None):
+        """'upcoming' (not started), 'open' (students can tick) or 'closed' (deadline passed)."""
+        from django.utils import timezone
+
+        today = today or timezone.localdate()
+        if today > self.due_date:
+            return "closed"
+        if today < self.start_date:
+            return "upcoming"
+        return "open"
+
+
+class ProjectCompletion(models.Model):
+    """A student ticking a project as done."""
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="completions")
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name="projects_done")
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "project_completions"
+        unique_together = [("project", "student")]
+
+
 class PromotionBatch(models.Model):
     """One "move students up to the next class" run by the Super Admin. Kept so it can be undone and so there is a record."""
 

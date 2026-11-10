@@ -13,6 +13,7 @@ from .models import (
     Exam,
     Homework,
     Marksheet,
+    Project,
     Result,
     SchoolClass,
     StudentProfile,
@@ -356,6 +357,73 @@ class HomeworkSerializer(serializers.ModelSerializer):
         if not validated_data.get("start_date"):
             validated_data["start_date"] = timezone.localdate()
         return super().create(validated_data)
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    """A project for one class (optionally one semester and subject), with a start date and a deadline."""
+
+    subject_name = serializers.CharField(source="subject.name", read_only=True, default="")
+    class_name = serializers.CharField(source="school_class.name", read_only=True)
+    term_label = serializers.CharField(source="get_term_display", read_only=True)
+    created_by_name = serializers.CharField(source="created_by.full_name", read_only=True, default="")
+    done = serializers.SerializerMethodField()
+    submitted = serializers.SerializerMethodField()
+    class_size = serializers.SerializerMethodField()
+    phase = serializers.SerializerMethodField()
+    can_tick = serializers.SerializerMethodField()
+    term = serializers.ChoiceField(choices=Result.Term.choices, required=False, allow_blank=True)
+    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=False, allow_null=True)
+
+    class Meta:
+        model = Project
+        fields = [
+            "id", "school_class", "class_name", "subject", "subject_name", "term", "term_label", "title", "details",
+            "start_date", "due_date", "phase", "can_tick", "created_by", "created_by_name", "created_at", "done", "submitted", "class_size",
+        ]
+        read_only_fields = ["id", "created_by", "created_at"]
+
+    def get_phase(self, obj):
+        return obj.phase()
+
+    def get_can_tick(self, obj):
+        user = self.context["request"].user
+        return bool(getattr(user, "is_student", False)) and obj.phase() == "open"
+
+    def get_done(self, obj):
+        user = self.context["request"].user
+        if not getattr(user, "is_student", False):
+            return None
+        done_ids = self.context.get("done_ids")
+        if done_ids is None:
+            return obj.completions.filter(student__user=user).exists()
+        return obj.id in done_ids
+
+    def get_submitted(self, obj):
+        return None if self.context["request"].user.is_student else obj.completions.count()
+
+    def get_class_size(self, obj):
+        return None if self.context["request"].user.is_student else obj.school_class.students.count()
+
+    def validate_title(self, v):
+        v = _plain(v)
+        if not v:
+            raise serializers.ValidationError("Title cannot be empty.")
+        return v
+
+    def validate_details(self, v):
+        return _plain(v)
+
+    def validate(self, attrs):
+        inst = self.instance
+        subject = attrs["subject"] if "subject" in attrs else getattr(inst, "subject", None)
+        klass = attrs.get("school_class", getattr(inst, "school_class", None))
+        if subject and klass and subject.school_class_id != klass.id:
+            raise serializers.ValidationError({"subject": "That subject belongs to a different class."})
+        start = attrs.get("start_date", getattr(inst, "start_date", None))
+        due = attrs.get("due_date", getattr(inst, "due_date", None))
+        if start and due and start > due:
+            raise serializers.ValidationError({"due_date": "The deadline cannot be before the start date."})
+        return attrs
 
 
 class ExamSerializer(serializers.ModelSerializer):

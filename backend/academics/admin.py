@@ -8,6 +8,8 @@ from .models import (
     Homework,
     HomeworkCompletion,
     Marksheet,
+    Project,
+    ProjectCompletion,
     Result,
     SchoolClass,
     StudentProfile,
@@ -61,3 +63,19 @@ class ExamAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     list_select_related = ("school_class", "subject", "created_by")
     date_hierarchy = "date"
+
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ("title", "school_class", "term", "subject", "start_date", "due_date", "created_by", "created_at")
+    list_filter = ("school_class", "term", "due_date")
+    search_fields = ("title", "details")
+    list_select_related = ("school_class", "subject", "created_by")
+    date_hierarchy = "due_date"
+
+
+@admin.register(ProjectCompletion)
+class ProjectCompletionAdmin(admin.ModelAdmin):
+    list_display = ("project", "student", "completed_at")
+    list_filter = ("project__school_class",)
+    raw_id_fields = ("project", "student")
