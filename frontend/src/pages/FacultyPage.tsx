@@ -12,7 +12,7 @@ export function FacultyPage() {
   const { data, error } = usePaged<PublicTeacher>("/academics/teachers/public/", 60);
   return (
     <>
-      <PageHero crumb="Faculty" eyebrow="Our faculty" title="The teachers behind every classroom." lede="Each teacher keeps their own profile up to date from the school portal, so what you read here comes from them. Tap a teacher to read their full profile." />
+      <PageHero crumb="Faculty" eyebrow="Teachers & staff" title="The teachers behind every classroom." lede="Each teacher keeps their own profile up to date from the school portal, so what you read here comes from them. Tap a teacher to read their full profile." />
       <Section>
         {data === null ? (
           <SkTeachers count={6} />

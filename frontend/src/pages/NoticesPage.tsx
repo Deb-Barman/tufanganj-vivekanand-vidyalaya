@@ -7,6 +7,7 @@ import { api, ApiError } from "../lib/api";
 import { SITE } from "../config/site";
 import { fmtDay, fmtLong, usePaged } from "../lib/usePaged";
 import { usePageMeta } from "../lib/usePageMeta";
+import { articleSchema } from "../seo/schema";
 import type { Notice } from "../types/api";
 
 export function NoticesPage() {
@@ -17,7 +18,7 @@ export function NoticesPage() {
 
   return (
     <>
-      <PageHero crumb="Notices" eyebrow="Notice board" title="Notices from the school office." lede="Official announcements, newest first. Every notice has its own link you can share." />
+      <PageHero crumb="Notices" eyebrow="Tufanganj school notice board" title="Notices from the school office." lede="Official announcements, newest first. Every notice has its own link you can share." />
       <Section>
         <div className="filters">
           <div className="search-field">
@@ -68,7 +69,25 @@ export function NoticeDetailPage() {
   const navigate = useNavigate();
   const [notice, setNotice] = useState<Notice | null>(null);
   const [failed, setFailed] = useState(false);
-  usePageMeta(notice?.title ?? "Notice", notice?.body.slice(0, 150) ?? "School notice");
+  const noticeDesc = notice?.body.replace(/\s+/g, " ").trim().slice(0, 155) || "School notice";
+  usePageMeta(
+    notice?.title ?? "Notice",
+    noticeDesc,
+    undefined,
+    notice
+      ? {
+          ogType: "article",
+          jsonLd: articleSchema({
+            path: `/notices/${notice.id}`,
+            headline: notice.title,
+            description: noticeDesc,
+            datePublished: notice.created_at,
+            dateModified: notice.updated_at,
+            crumbs: [{ name: "Home", path: "/" }, { name: "Notices", path: "/notices" }, { name: notice.title, path: `/notices/${notice.id}` }],
+          }),
+        }
+      : {},
+  );
 
   useEffect(() => {
     api.get<Notice>(`/notices/public/${id}/`, { auth: false }).then(setNotice).catch((e) => (e instanceof ApiError && e.status === 404 ? navigate("/notices", { replace: true }) : setFailed(true)));

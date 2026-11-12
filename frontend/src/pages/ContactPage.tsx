@@ -35,7 +35,7 @@ export function ContactPage() {
 
   return (
     <>
-      <PageHero crumb="Contact" eyebrow="Visit or write to us" title="Find the school. Ask us anything." lede="Send a message and the school office will reply, or visit us during office hours." />
+      <PageHero crumb="Contact" eyebrow="School in Tufanganj, Cooch Behar" title="Find the school. Ask us anything." lede="Send a message and the school office will reply, or visit us during office hours." />
       <Section>
         <div className="contact-layout">
           <div className="info-stack" data-reveal="left">

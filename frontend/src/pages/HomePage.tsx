@@ -11,6 +11,7 @@ import { HorizontalShowcase } from "../components/home/HorizontalShowcase";
 import { Magnetic } from "../components/home/Magnetic";
 import { Marquee } from "../components/home/Marquee";
 import { PortalShowcase } from "../components/home/PortalShowcase";
+import { SchoolIntro } from "../components/home/SchoolIntro";
 import { ScrollProgressBar } from "../components/home/ScrollProgressBar";
 import { Stats } from "../components/home/Stats";
 import { Story } from "../components/home/Story";
@@ -33,6 +34,7 @@ export function HomePage() {
       <HorizontalShowcase items={EXPLORE} />
       <Stats />
       <PortalShowcase />
+      <SchoolIntro />
 
       <Section>
         <div className="split-2" style={{ alignItems: "end", marginBottom: 22 }}>
