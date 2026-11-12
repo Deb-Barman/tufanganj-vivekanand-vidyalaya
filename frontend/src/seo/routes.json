@@ -1,1 +1,182 @@
-
+{
+  "site": {
+    "url": "https://tufanganj-vivekanand-vidyalaya.vercel.app",
+    "name": "Tufanganj Vivekananda Vidyalaya (H.S.)",
+    "locale": "en_IN",
+    "image": "/og-image.jpg",
+    "imageAlt": "Tufanganj Vivekananda Vidyalaya (H.S.) school seal and name"
+  },
+  "routes": [
+    {
+      "path": "/",
+      "title": "Tufanganj Vivekananda Vidyalaya (H.S.) – School in Tufanganj, Cooch Behar",
+      "description": "Official website of Tufanganj Vivekananda Vidyalaya (H.S.), a higher secondary school in Tufanganj, Cooch Behar, West Bengal. Notices, admissions and results.",
+      "name": "Home",
+      "type": "WebPage",
+      "changefreq": "daily",
+      "priority": "1.0"
+    },
+    {
+      "path": "/about",
+      "title": "About Tufanganj Vivekananda Vidyalaya (H.S.) – Tufanganj School Since 1964",
+      "description": "About Tufanganj Vivekananda Vidyalaya (H.S.): a higher secondary school serving Tufanganj, Cooch Behar since 1964. Class V to XII, Science and Arts streams.",
+      "name": "About",
+      "type": "AboutPage",
+      "changefreq": "monthly",
+      "priority": "0.9"
+    },
+    {
+      "path": "/admissions",
+      "title": "School Admission in Tufanganj | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "School admission in Tufanganj: how to apply to Tufanganj Vivekananda Vidyalaya (H.S.). Send an admission enquiry online and the school office will contact you.",
+      "name": "Admissions",
+      "type": "WebPage",
+      "changefreq": "monthly",
+      "priority": "0.9"
+    },
+    {
+      "path": "/academics",
+      "title": "Academics: Science & Arts, Class XI–XII | Tufanganj Vivekananda Vidyalaya",
+      "description": "Academics at Tufanganj Vivekananda Vidyalaya (H.S.): Science and Arts streams for Class XI–XII under the West Bengal Council of Higher Secondary Education.",
+      "name": "Academics",
+      "type": "WebPage",
+      "changefreq": "monthly",
+      "priority": "0.8"
+    },
+    {
+      "path": "/notices",
+      "title": "School Notices & Announcements | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "Official notices and announcements from Tufanganj Vivekananda Vidyalaya (H.S.), Tufanganj, Cooch Behar. Newest first, each notice with its own shareable link.",
+      "name": "Notices",
+      "type": "CollectionPage",
+      "changefreq": "daily",
+      "priority": "0.9"
+    },
+    {
+      "path": "/achievements",
+      "title": "Results & Achievements | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "Results, awards and recognition earned by students of Tufanganj Vivekananda Vidyalaya (H.S.), Tufanganj, Cooch Behar.",
+      "name": "Achievements",
+      "type": "CollectionPage",
+      "changefreq": "weekly",
+      "priority": "0.7"
+    },
+    {
+      "path": "/faculty",
+      "title": "Teachers & Staff | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "Meet the teachers and staff of Tufanganj Vivekananda Vidyalaya (H.S.), Tufanganj, Cooch Behar.",
+      "name": "Faculty",
+      "type": "CollectionPage",
+      "changefreq": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "path": "/campus",
+      "title": "Campus & Facilities | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "Campus and facilities at Tufanganj Vivekananda Vidyalaya (H.S.), Tufanganj, Cooch Behar: playing field, science laboratories, computer centre and library.",
+      "name": "Campus",
+      "type": "WebPage",
+      "changefreq": "monthly",
+      "priority": "0.7"
+    },
+    {
+      "path": "/contact",
+      "title": "Contact Tufanganj Vivekananda Vidyalaya (H.S.) – Tufanganj, Cooch Behar",
+      "description": "Contact Tufanganj Vivekananda Vidyalaya (H.S.), Tufanganj, Cooch Behar, West Bengal: location, office hours and a message form for the school office.",
+      "name": "Contact",
+      "type": "ContactPage",
+      "changefreq": "monthly",
+      "priority": "0.8"
+    },
+    {
+      "path": "/blog",
+      "title": "School Blog & News | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "News and stories from Tufanganj Vivekananda Vidyalaya (H.S.), Tufanganj, Cooch Behar: events, achievements and school life.",
+      "name": "Blog",
+      "type": "CollectionPage",
+      "changefreq": "weekly",
+      "priority": "0.7"
+    },
+    {
+      "path": "/events",
+      "title": "School Events & Calendar | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "School calendar of Tufanganj Vivekananda Vidyalaya (H.S.): upcoming events, sports days, exams and celebrations in Tufanganj, Cooch Behar.",
+      "name": "Events",
+      "type": "CollectionPage",
+      "changefreq": "weekly",
+      "priority": "0.6"
+    },
+    {
+      "path": "/gallery",
+      "title": "Photo Gallery | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "Photographs from the classroom, the field and school events at Tufanganj Vivekananda Vidyalaya (H.S.), Tufanganj, Cooch Behar.",
+      "name": "Gallery",
+      "type": "CollectionPage",
+      "changefreq": "weekly",
+      "priority": "0.6"
+    },
+    {
+      "path": "/downloads",
+      "title": "Download School Forms & Documents | Tufanganj Vivekananda Vidyalaya",
+      "description": "Download admission forms, certificates and other documents published by the office of Tufanganj Vivekananda Vidyalaya (H.S.), Tufanganj.",
+      "name": "Downloads",
+      "type": "CollectionPage",
+      "changefreq": "monthly",
+      "priority": "0.6"
+    },
+    {
+      "path": "/faq",
+      "title": "FAQ – Admissions & School Life | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "Answers to questions parents ask about admissions, classes and school life at Tufanganj Vivekananda Vidyalaya (H.S.), Tufanganj, Cooch Behar.",
+      "name": "FAQ",
+      "type": "WebPage",
+      "changefreq": "monthly",
+      "priority": "0.6"
+    },
+    {
+      "path": "/app",
+      "title": "TVV School App – Download for Android | Tufanganj Vivekananda Vidyalaya",
+      "description": "Download the Tufanganj Vivekananda Vidyalaya school app: timetable, homework, projects, attendance and results on your phone.",
+      "name": "App",
+      "type": "WebPage",
+      "changefreq": "monthly",
+      "priority": "0.5"
+    },
+    {
+      "path": "/privacy",
+      "title": "Privacy Policy | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "How Tufanganj Vivekananda Vidyalaya (H.S.) handles personal information on this website.",
+      "name": "Privacy",
+      "type": "WebPage",
+      "changefreq": "yearly",
+      "priority": "0.2"
+    },
+    {
+      "path": "/terms",
+      "title": "Terms of Use | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "Terms for using the Tufanganj Vivekananda Vidyalaya (H.S.) website and student portal.",
+      "name": "Terms",
+      "type": "WebPage",
+      "changefreq": "yearly",
+      "priority": "0.2"
+    },
+    {
+      "path": "/developer",
+      "title": "Website Developer | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "The Tufanganj Vivekananda Vidyalaya (H.S.) website and student portal: who designed and developed it.",
+      "name": "Developer",
+      "type": "WebPage",
+      "changefreq": "yearly",
+      "priority": "0.2"
+    },
+    {
+      "path": "/find-profile",
+      "title": "Profile Finder | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "Find a public teacher profile of Tufanganj Vivekananda Vidyalaya (H.S.) by username.",
+      "name": "Profile Finder",
+      "type": "WebPage",
+      "robots": "noindex,follow",
+      "sitemap": false
+    }
+  ]
+}
