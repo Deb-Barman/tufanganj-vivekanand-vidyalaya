@@ -32,7 +32,7 @@ function AchCard({ a, i }: { a: Achievement; i: number }) {
   return (
     <Link to={`/achievements/${a.id}`} className={`ach2 cat-${a.category}`} data-reveal style={{ ["--d" as string]: i % 3 }}>
       <span className="ach2-thumb" aria-hidden="true">
-        {a.image ? <AdjustedImg src={a.image} adjust={a.image_adjust} alt="" /> : <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d={CAT_ICON[a.category] ?? CAT_ICON.OTHER} /></svg>}
+        {a.image ? <AdjustedImg src={a.image} adjust={a.image_adjust} alt={a.title} /> : <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d={CAT_ICON[a.category] ?? CAT_ICON.OTHER} /></svg>}
       </span>
       <span className="ach2-body">
         <span className="ach2-tag">{catLabel(a.category)}</span>
@@ -57,7 +57,7 @@ export function AchievementsPage() {
 
   return (
     <>
-      <PageHero crumb="Achievements" eyebrow="Achievements" title="Proud moments, recorded." lede="Awards, results and recognition earned by our students and staff — added by the school office once confirmed." />
+      <PageHero crumb="Achievements" eyebrow="Results & achievements" title="Proud moments, recorded." lede="Awards, results and recognition earned by our students and staff — added by the school office once confirmed." />
       <Section>
         {data === null ? (
           <SkAchievements count={6} />
@@ -105,7 +105,15 @@ export function AchievementDetailPage() {
   const [a, setA] = useState<Achievement | null>(null);
   const [more, setMore] = useState<Achievement[]>([]);
   const [failed, setFailed] = useState(false);
-  usePageMeta(a?.title ?? "Achievement", a?.description?.slice(0, 150) || `An achievement of ${SITE.nameFull}.`);
+  const achDesc = a?.description?.replace(/\s+/g, " ").trim().slice(0, 155) || `An achievement of ${SITE.nameFull}.`;
+  usePageMeta(
+    a?.title ?? "Achievement",
+    achDesc,
+    undefined,
+    a
+      ? { crumbs: [{ name: "Home", path: "/" }, { name: "Achievements", path: "/achievements" }, { name: a.title, path: `/achievements/${a.id}` }] }
+      : {},
+  );
 
   useEffect(() => {
     let alive = true;
@@ -144,7 +152,7 @@ export function AchievementDetailPage() {
           <article className={`cat-${a.category}`}>
             {a.image && (
               <button type="button" className="ach-hero-pic" onClick={() => openLightbox({ src: a.image!, alt: a.title, caption: a.title })} aria-label="View the photo full size">
-                <AdjustedImg src={a.image} adjust={a.image_adjust} alt="" />
+                <AdjustedImg src={a.image} adjust={a.image_adjust} alt={`${a.title} — achievement of Tufanganj Vivekananda Vidyalaya`} />
               </button>
             )}
             <div className="ach-detail-meta"><span className="ach2-tag">{catLabel(a.category)}</span><span className="ach-year">{a.year}</span></div>

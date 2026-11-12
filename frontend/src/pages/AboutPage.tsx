@@ -14,7 +14,7 @@ export function AboutPage() {
   const age = new Date().getFullYear() - SITE.since;
   return (
     <>
-      <PageHero crumb="About" eyebrow="About the school" title={<>A school for Tufanganj, since {SITE.since}.</>} lede={`${SITE.nameFull} has been teaching the children of Tufanganj for more than ${Math.floor(age / 10) * 10} years — from Class V through Higher Secondary.`} />
+      <PageHero crumb="About" eyebrow="About Tufanganj Vivekananda Vidyalaya" title={<>A school for Tufanganj, since {SITE.since}.</>} lede={`${SITE.nameFull} has been teaching the children of Tufanganj for more than ${Math.floor(age / 10) * 10} years — from Class V through Higher Secondary.`} />
 
       <Section>
         <div className="split-2">

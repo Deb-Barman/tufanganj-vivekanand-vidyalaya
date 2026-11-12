@@ -1,6 +1,12 @@
+# Tufanganj Vivekananda Vidyalaya (H.S.) — https://tufanganj-vivekanand-vidyalaya.vercel.app
+# Everything public is open to search engines. Only the private login / dashboard area is kept out.
+# (Do NOT block /assets/ — Google needs the site's CSS and JavaScript to see the pages the way visitors do.)
+
 User-agent: *
 Allow: /
 Disallow: /portal
 Disallow: /errors/
+Disallow: /shell.html
+Disallow: /api/
 
 Sitemap: https://tufanganj-vivekanand-vidyalaya.vercel.app/sitemap.xml

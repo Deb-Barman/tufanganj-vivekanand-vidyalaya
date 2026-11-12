@@ -73,7 +73,8 @@ export function PublicProfilePage() {
     };
   }, [role, username]);
 
-  usePageMeta(data ? data.full_name : "Profile", data ? `${data.full_name}${data.headline ? " — " + data.headline : ""} at ${SITE.nameFull}.` : `A profile at ${SITE.nameFull}.`);
+  // Profiles belong to people (many of them children): the page works for anyone with the link but is kept out of search results.
+  usePageMeta(data ? data.full_name : "Profile", data ? `${data.full_name}${data.headline ? " — " + data.headline : ""} at ${SITE.nameFull}.` : `A profile at ${SITE.nameFull}.`, undefined, { noindex: true });
 
   async function share() {
     const url = window.location.href;
