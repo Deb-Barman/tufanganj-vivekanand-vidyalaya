@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { RouteProgress } from "../components/loading/Loading";
+import { useNoIndex } from "../lib/usePageMeta";
 
 /**
  * Wrapper for every dashboard (Super Admin, Teacher, Student).
@@ -9,6 +10,7 @@ import { RouteProgress } from "../components/loading/Loading";
  */
 export function DashboardLayout() {
   const { pathname } = useLocation();
+  useNoIndex();
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [pathname]);
