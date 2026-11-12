@@ -2,12 +2,14 @@ import { useCallback, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/AuthContext";
 import { LoginExperience } from "../login/LoginExperience";
+import { useNoIndex } from "../../lib/usePageMeta";
 
 /**
  * The one login page for Students and Teachers (backend: /api/auth/staff-login/,
  * which refuses Super Admins). One of two designs is shown at random.
  */
 export function LoginPage() {
+  useNoIndex();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

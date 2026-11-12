@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/AuthContext";
 import { LoginExperience } from "../login/LoginExperience";
+import { useNoIndex } from "../../lib/usePageMeta";
 
 /**
  * Head Sir's sign-in (backend: /api/auth/admin-login/, which refuses everyone
@@ -9,6 +10,7 @@ import { LoginExperience } from "../login/LoginExperience";
  * login page is for Students and Teachers only. It uses the same designs.
  */
 export function AdminLoginPage() {
+  useNoIndex();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
