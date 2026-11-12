@@ -84,7 +84,7 @@ export function Hero() {
           <p className="eyebrow hero-eyebrow" data-reveal>
             <span className="status-dot" /> TUFANGANJ, COOCH BEHAR · EST. 1964
           </p>
-          <h1 aria-label="Sixty years in Tufanganj, one student at a time.">
+          <h1 aria-label="Tufanganj Vivekananda Vidyalaya (H.S.): sixty years in Tufanganj, one student at a time.">
             <Words text="Sixty years in Tufanganj," />
             <br />
             <Words text="one student" start={4} /> <span className="serif-word"><Words text="at a time." start={6} className="grad-shimmer" /></span>

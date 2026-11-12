@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import catalog from "../errors/catalog.json";
+import { useNoIndex } from "../lib/usePageMeta";
 import "../styles/error-screen.css";
 
 export type ErrorCode = keyof typeof catalog;
@@ -18,6 +19,7 @@ const SPARKS = [
  */
 export function ErrorScreen({ code = "404", onRetry }: { code?: ErrorCode; onRetry?: () => void }) {
   const c = catalog[code];
+  useNoIndex();
 
   useEffect(() => {
     const html = document.documentElement;
