@@ -29,7 +29,7 @@ export function Sk({ w = "100%", h, className = "", circle = false, style }: { w
 /** Cards with an image area and two text lines — blog, gallery, achievements. */
 export function SkCards({ count = 6, image = true }: { count?: number; image?: boolean }) {
   return (
-    <div className="sk-grid" aria-busy="true" aria-label="Loading content">
+    <div className="sk-grid" role="status" aria-busy="true" aria-label="Loading content">
       {Array.from({ length: count }, (_, i) => (
         <div className="sk-card" key={i}>
           {image && <Sk h={140} className="sk-box" />}
@@ -45,7 +45,7 @@ export function SkCards({ count = 6, image = true }: { count?: number; image?: b
 /** Same grid and card shape as the real teacher cards, so nothing jumps when data arrives. */
 export function SkTeachers({ count = 6 }: { count?: number }) {
   return (
-    <div className="card-grid" aria-busy="true" aria-label="Loading teachers">
+    <div className="card-grid" role="status" aria-busy="true" aria-label="Loading teachers">
       {Array.from({ length: count }, (_, i) => (
         <div className="feature sk-teacher" key={i}>
           <Sk w={58} h={58} circle />
@@ -63,7 +63,7 @@ export function SkTeachers({ count = 6 }: { count?: number }) {
 /** Avatar + lines rows — faculty, notices, people. */
 export function SkList({ count = 5, avatar = true }: { count?: number; avatar?: boolean }) {
   return (
-    <div className="sk-list" aria-busy="true" aria-label="Loading content">
+    <div className="sk-list" role="status" aria-busy="true" aria-label="Loading content">
       {Array.from({ length: count }, (_, i) => (
         <div className="sk-card sk-row" key={i}>
           {avatar ? <Sk w={48} h={48} circle /> : <Sk w={58} h={58} className="sk-box" />}
@@ -81,7 +81,7 @@ export function SkList({ count = 5, avatar = true }: { count?: number; avatar?: 
 /** Same shape as a real notice row (date badge, title, two lines, meta) — compact, so nothing jumps when the notices arrive. */
 export function SkNotices({ count = 4 }: { count?: number }) {
   return (
-    <div className="sk-notices" aria-busy="true" aria-label="Loading notices">
+    <div className="sk-notices" role="status" aria-busy="true" aria-label="Loading notices">
       {Array.from({ length: count }, (_, i) => (
         <div className="sk-notice" key={i}>
           <Sk w={54} h={58} className="sk-box sk-badge" />
@@ -104,7 +104,7 @@ export function SkNotices({ count = 4 }: { count?: number }) {
  */
 export function SkRowCards({ count = 4, variant = "event" }: { count?: number; variant?: "event" | "file" }) {
   return (
-    <div className="row-list sk-rowcards" aria-busy="true" aria-label="Loading content">
+    <div className="row-list sk-rowcards" role="status" aria-busy="true" aria-label="Loading content">
       {Array.from({ length: count }, (_, i) => (
         <div className="row-card" key={i}>
           <span className="date-badge sk" aria-hidden="true" />
@@ -135,7 +135,7 @@ export function SkRowCards({ count = 4, variant = "event" }: { count?: number; v
 /** Same shape as a real achievement card (small picture, pill, title, two lines). */
 export function SkAchievements({ count = 6 }: { count?: number }) {
   return (
-    <div className="sk-ach" aria-busy="true" aria-label="Loading achievements">
+    <div className="sk-ach" role="status" aria-busy="true" aria-label="Loading achievements">
       {Array.from({ length: count }, (_, i) => (
         <div className="sk-ach-card" key={i}>
           <Sk w={84} h={84} className="sk-box" />
@@ -154,7 +154,7 @@ export function SkAchievements({ count = 6 }: { count?: number }) {
 /** A full article: title, byline, paragraphs. */
 export function SkArticle() {
   return (
-    <div className="sk-list" aria-busy="true" aria-label="Loading article" style={{ maxWidth: 760 }}>
+    <div className="sk-list" role="status" aria-busy="true" aria-label="Loading article" style={{ maxWidth: 760 }}>
       <Sk h={38} w="85%" className="sk-line xl" />
       <Sk h={12} w="40%" className="sk-line sm" />
       <Sk h={220} className="sk-box" />
@@ -168,7 +168,7 @@ export function SkArticle() {
 /** Whole-page placeholder: used while a page's code loads (Suspense). */
 export function PageSkeleton() {
   return (
-    <div className="wrap sk-page" aria-busy="true" aria-label="Loading page">
+    <div className="wrap sk-page" role="status" aria-busy="true" aria-label="Loading page">
       <div className="sk-hero">
         <Sk h={12} w={120} className="sk-line sm" />
         <Sk h={44} w="75%" className="sk-line xl" />
