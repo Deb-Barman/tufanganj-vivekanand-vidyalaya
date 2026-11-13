@@ -40,6 +40,7 @@ const BlogPostPage = lazyNamed(L.BlogPostPage, "BlogPostPage");
 const EventsPage = lazyNamed(L.EventsPage, "EventsPage");
 const DownloadsPage = lazyNamed(L.DownloadsPage, "DownloadsPage");
 const FaqPage = lazyNamed(L.FaqPage, "FaqPage");
+const GuidePage = lazyNamed(L.GuidePage, "GuidePage");
 const AdmissionsPage = lazyNamed(L.AdmissionsPage, "AdmissionsPage");
 const ContactPage = lazyNamed(L.ContactPage, "ContactPage");
 const AppPage = lazyNamed(L.AppPage, "AppPage");
@@ -104,6 +105,7 @@ export default function App() {
         <Route path="events" element={<EventsPage />} />
         <Route path="downloads" element={<DownloadsPage />} />
         <Route path="faq" element={<FaqPage />} />
+        <Route path="school-in-tufanganj" element={<GuidePage />} />
         <Route path="admissions" element={<AdmissionsPage />} />
         <Route path="contact" element={<ContactPage />} />
         <Route path="app" element={<AppPage />} />
