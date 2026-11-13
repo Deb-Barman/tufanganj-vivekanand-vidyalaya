@@ -1,21 +1,69 @@
 {
-  "/": "Tufanganj Vivekananda Vidyalaya (H.S.) is a higher secondary school in Tufanganj, Cooch Behar, West Bengal, teaching since 1964. It offers Class V to XII, with Science and Arts streams in Class XI and XII. This website has the school's notices, admission enquiry form, faculty, achievements and results, campus information, events, gallery and the student and staff portal.",
-  "/about": "Read the story, values and facts about Tufanganj Vivekananda Vidyalaya (H.S.), a school that has taught the children of Tufanganj, Cooch Behar since 1964.",
-  "/admissions": "How to join Tufanganj Vivekananda Vidyalaya (H.S.): send an admission enquiry using the online form, or contact the school office directly.",
-  "/academics": "From Class XI students choose Science or Arts under the West Bengal Council of Higher Secondary Education at Tufanganj Vivekananda Vidyalaya (H.S.), Tufanganj, Cooch Behar.",
-  "/notices": "The notice board of Tufanganj Vivekananda Vidyalaya (H.S.): official announcements from the school office, newest first.",
-  "/achievements": "Awards, results and recognition earned by students and staff of Tufanganj Vivekananda Vidyalaya (H.S.), added by the school office.",
-  "/faculty": "The teachers of Tufanganj Vivekananda Vidyalaya (H.S.). Each teacher keeps their own profile up to date from the school portal.",
-  "/campus": "The campus of Tufanganj Vivekananda Vidyalaya (H.S.): playing field, science laboratories, computer centre and library.",
-  "/contact": "Find Tufanganj Vivekananda Vidyalaya (H.S.) in Tufanganj, Cooch Behar, West Bengal, or send a message to the school office.",
-  "/blog": "News, events and articles written by Tufanganj Vivekananda Vidyalaya (H.S.).",
-  "/events": "Upcoming events, sports days, exams and celebrations at Tufanganj Vivekananda Vidyalaya (H.S.).",
-  "/gallery": "Photographs of school life at Tufanganj Vivekananda Vidyalaya (H.S.), added by the school office.",
-  "/downloads": "Admission forms, certificates and other documents published by the school office of Tufanganj Vivekananda Vidyalaya (H.S.).",
-  "/faq": "Frequently asked questions about admissions, classes and school life at Tufanganj Vivekananda Vidyalaya (H.S.).",
-  "/app": "The school app of Tufanganj Vivekananda Vidyalaya (H.S.): timetable, homework, projects, attendance and results on your phone.",
-  "/privacy": "What this website collects and what it does with it.",
-  "/terms": "Simple rules for using this website and the student portal.",
-  "/developer": "Credit for the design and development of this website and student portal.",
-  "/find-profile": "Open a public profile by username."
+  "/": [
+    "Tufanganj Vivekananda Vidyalaya (H.S.), also spelt Tufanganj Vivekanand Vidyalaya and known as TVV, is a higher secondary school in Tufanganj, Cooch Behar, West Bengal. Since 1964 it has taught Class V to XII, with Science and Arts streams in Class XI and XII under the West Bengal Council of Higher Secondary Education.",
+    "Parents and students can read the latest school notices, send an online admission enquiry, meet the teachers, see results and achievements, look at the campus, events and photo gallery, download school forms, get the TVV School app, and log in to the student and staff portal.",
+    "In Bengali the school's name is তুফানগঞ্জ বিবেকানন্দ বিদ্যালয়।"
+  ],
+  "/about": [
+    "Tufanganj Vivekananda Vidyalaya (H.S.) was established in 1964 in Tufanganj, Cooch Behar, West Bengal. It is a higher secondary school that teaches Class V to Class XII, so a child can complete the whole school journey in one place. From Class XI students choose the Science or the Arts stream.",
+    "The school is named after Swami Vivekananda. Its motto is Knowledge · Character · Progress. It is also written Tufanganj Vivekanand Vidyalaya and called TVV."
+  ],
+  "/admissions": [
+    "How to join Tufanganj Vivekananda Vidyalaya (H.S.): send an admission enquiry using the online form — student's name, guardian's contact number and the class — or contact the school office directly. The usual steps are to collect the prospectus, submit the application with the previous mark-sheet, and attend a short interview. Ask the office for the current dates.",
+    "Class V to XII are taught here, with Science and Arts streams in Class XI and XII."
+  ],
+  "/academics": [
+    "Academics at Tufanganj Vivekananda Vidyalaya (H.S.), Tufanganj, Cooch Behar. Classes V to X follow the West Bengal Board of Secondary Education; in Class XI and XII students choose the Science or the Arts stream under the West Bengal Council of Higher Secondary Education.",
+    "Science covers Physics, Chemistry, Biology, Mathematics, English and Environmental Science. Arts covers History, Geography, Philosophy, Political Science, Sanskrit, Bangla and English."
+  ],
+  "/notices": [
+    "The notice board of Tufanganj Vivekananda Vidyalaya (H.S.): official Tufanganj school notices from the school office, newest first. Each notice has its own link that can be shared."
+  ],
+  "/achievements": [
+    "Results, awards and recognition earned by students and staff of Tufanganj Vivekananda Vidyalaya (H.S.), added by the school office."
+  ],
+  "/faculty": [
+    "The teachers of Tufanganj Vivekananda Vidyalaya (H.S.). Each teacher keeps their own profile up to date from the school portal."
+  ],
+  "/campus": [
+    "The campus of Tufanganj Vivekananda Vidyalaya (H.S.), Tufanganj, Cooch Behar: playing field, science laboratories, computer centre and library."
+  ],
+  "/contact": [
+    "Find Tufanganj Vivekananda Vidyalaya (H.S.) in Tufanganj, Cooch Behar, West Bengal, India. The Contact page shows the school on a map, gives the office hours and has a message form for the school office. For admissions use the admission enquiry form."
+  ],
+  "/blog": [
+    "News, events and articles written by Tufanganj Vivekananda Vidyalaya (H.S.)."
+  ],
+  "/events": [
+    "Upcoming events, sports days, exams and celebrations at Tufanganj Vivekananda Vidyalaya (H.S.)."
+  ],
+  "/gallery": [
+    "Photographs of school life at Tufanganj Vivekananda Vidyalaya (H.S.), added by the school office."
+  ],
+  "/downloads": [
+    "Admission forms, certificates and other documents published by the school office of Tufanganj Vivekananda Vidyalaya (H.S.)."
+  ],
+  "/faq": [
+    "Frequently asked questions about Tufanganj Vivekananda Vidyalaya (H.S.): the school's name and location, classes, boards and examinations, admissions, notices, results, the TVV School app and portal login.",
+    "Is the school also called Tufanganj Vivekanand Vidyalaya? Yes — the same school, spelt either way, and often called TVV."
+  ],
+  "/school-in-tufanganj": [
+    "Choosing a school in Tufanganj, Cooch Behar? Check the board and classes, the streams after Class X, how teachers and parents communicate, safety on campus, and how to visit. Then see the school with your own eyes before you decide.",
+    "Tufanganj Vivekananda Vidyalaya (H.S.) teaches Class V to XII with Science and Arts streams in Class XI and XII."
+  ],
+  "/app": [
+    "The school app of Tufanganj Vivekananda Vidyalaya (H.S.): timetable, homework, projects, attendance and results on your phone."
+  ],
+  "/privacy": [
+    "What this website collects and what it does with it."
+  ],
+  "/terms": [
+    "Simple rules for using this website and the student portal."
+  ],
+  "/developer": [
+    "Credit for the design and development of this website and student portal."
+  ],
+  "/find-profile": [
+    "Open a public profile by username."
+  ]
 }
