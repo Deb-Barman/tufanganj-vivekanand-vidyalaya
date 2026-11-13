@@ -1,51 +1,343 @@
 {
   "trailingSlash": false,
   "redirects": [
-    { "source": "/index.html", "destination": "/", "permanent": true },
-    { "source": "/teacher", "destination": "/faculty", "permanent": true },
-    { "source": "/teachers", "destination": "/faculty", "permanent": true },
-    { "source": "/staff", "destination": "/faculty", "permanent": true },
-    { "source": "/about-us", "destination": "/about", "permanent": true },
-    { "source": "/contact-us", "destination": "/contact", "permanent": true },
-    { "source": "/admission", "destination": "/admissions", "permanent": true },
-    { "source": "/notice", "destination": "/notices", "permanent": true },
-    { "source": "/facilities", "destination": "/campus", "permanent": true },
-    { "source": "/event", "destination": "/events", "permanent": true },
-    { "source": "/forms", "destination": "/downloads", "permanent": true },
-    { "source": "/apps", "destination": "/app", "permanent": true },
-    { "source": "/download-app", "destination": "/app", "permanent": true },
-    { "source": "/login", "destination": "/portal", "permanent": true },
-    { "source": "/student", "destination": "/portal", "permanent": true }
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/teacher",
+      "destination": "/faculty",
+      "permanent": true
+    },
+    {
+      "source": "/teachers",
+      "destination": "/faculty",
+      "permanent": true
+    },
+    {
+      "source": "/staff",
+      "destination": "/faculty",
+      "permanent": true
+    },
+    {
+      "source": "/about-us",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/contact-us",
+      "destination": "/contact",
+      "permanent": true
+    },
+    {
+      "source": "/admission",
+      "destination": "/admissions",
+      "permanent": true
+    },
+    {
+      "source": "/notice",
+      "destination": "/notices",
+      "permanent": true
+    },
+    {
+      "source": "/facilities",
+      "destination": "/campus",
+      "permanent": true
+    },
+    {
+      "source": "/event",
+      "destination": "/events",
+      "permanent": true
+    },
+    {
+      "source": "/forms",
+      "destination": "/downloads",
+      "permanent": true
+    },
+    {
+      "source": "/apps",
+      "destination": "/app",
+      "permanent": true
+    },
+    {
+      "source": "/download-app",
+      "destination": "/app",
+      "permanent": true
+    },
+    {
+      "source": "/login",
+      "destination": "/portal",
+      "permanent": true
+    },
+    {
+      "source": "/student",
+      "destination": "/portal",
+      "permanent": true
+    },
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/about-school",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/history",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/school-notice",
+      "destination": "/notices",
+      "permanent": true
+    },
+    {
+      "source": "/school-notices",
+      "destination": "/notices",
+      "permanent": true
+    },
+    {
+      "source": "/notice-board",
+      "destination": "/notices",
+      "permanent": true
+    },
+    {
+      "source": "/results",
+      "destination": "/achievements",
+      "permanent": true
+    },
+    {
+      "source": "/result",
+      "destination": "/achievements",
+      "permanent": true
+    },
+    {
+      "source": "/admission-enquiry",
+      "destination": "/admissions",
+      "permanent": true
+    },
+    {
+      "source": "/admission-form",
+      "destination": "/admissions",
+      "permanent": true
+    },
+    {
+      "source": "/apply",
+      "destination": "/admissions",
+      "permanent": true
+    },
+    {
+      "source": "/news",
+      "destination": "/blog",
+      "permanent": true
+    },
+    {
+      "source": "/calendar",
+      "destination": "/events",
+      "permanent": true
+    },
+    {
+      "source": "/download",
+      "destination": "/downloads",
+      "permanent": true
+    },
+    {
+      "source": "/help",
+      "destination": "/faq",
+      "permanent": true
+    },
+    {
+      "source": "/school-guide",
+      "destination": "/school-in-tufanganj",
+      "permanent": true
+    },
+    {
+      "source": "/best-school-in-tufanganj",
+      "destination": "/school-in-tufanganj",
+      "permanent": true
+    },
+    {
+      "source": "/tufanganj-school",
+      "destination": "/school-in-tufanganj",
+      "permanent": true
+    }
   ],
   "rewrites": [
-    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/notices/:id", "destination": "/api/page?t=notice&id=:id" },
-    { "source": "/blog/:slug", "destination": "/api/page?t=blog&id=:slug" },
-    { "source": "/achievements/:id", "destination": "/api/page?t=achievement&id=:id" },
-    { "source": "/profile/:role/:username", "destination": "/shell.html" },
-    { "source": "/portal", "destination": "/shell.html" },
-    { "source": "/portal/:path*", "destination": "/shell.html" }
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/notices/:id",
+      "destination": "/api/page?t=notice&id=:id"
+    },
+    {
+      "source": "/blog/:slug",
+      "destination": "/api/page?t=blog&id=:slug"
+    },
+    {
+      "source": "/achievements/:id",
+      "destination": "/api/page?t=achievement&id=:id"
+    },
+    {
+      "source": "/profile/:role/:username",
+      "destination": "/shell.html"
+    },
+    {
+      "source": "/portal",
+      "destination": "/shell.html"
+    },
+    {
+      "source": "/portal/:path*",
+      "destination": "/shell.html"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains"
+        }
       ]
     },
-    { "source": "/assets/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
-    { "source": "/(.*)\\.(png|jpg|jpeg|webp|avif|svg|ico|woff2)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800, stale-while-revalidate=86400" }] },
-    { "source": "/manifest.webmanifest", "headers": [{ "key": "Content-Type", "value": "application/manifest+json" }, { "key": "Cache-Control", "value": "public, max-age=86400" }] },
-    { "source": "/robots.txt", "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }] },
-    { "source": "/portal", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
-    { "source": "/portal/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
-    { "source": "/profile/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
-    { "source": "/shell.html", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
-    { "source": "/errors/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
-    { "source": "/find-profile", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, follow" }] }
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(png|jpg|jpeg|webp|avif|svg|ico|woff2)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    },
+    {
+      "source": "/portal",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/portal/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/profile/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/shell.html",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/errors/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/find-profile",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/llms.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/favicon.ico",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, stale-while-revalidate=86400"
+        }
+      ]
+    }
   ]
 }
