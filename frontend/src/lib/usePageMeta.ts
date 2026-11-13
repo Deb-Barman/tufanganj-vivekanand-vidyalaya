@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { SITE } from "../config/site";
-import { SEO_SITE, cleanPath, pageSchema, routeFor } from "../seo/schema";
+import { SEO_SITE, cleanPath, keywordsFor, pageSchema, routeFor } from "../seo/schema";
 import type { Crumb } from "../seo/schema";
 
 function setMeta(attr: "name" | "property", key: string, content: string) {
@@ -68,6 +68,8 @@ export function usePageMeta(title: string, description: string, path?: string, o
     const url = `${SEO_SITE.url}${pathname === "/" ? "/" : pathname}`;
     document.title = full;
     setMeta("name", "description", desc);
+    if (route && !hidden) setMeta("name", "keywords", keywordsFor(route));
+    else document.head.querySelector('meta[name="keywords"]')?.remove();
     setMeta("name", "robots", hidden ? (route?.robots ?? NOINDEX) : INDEX);
     setMeta("property", "og:title", full);
     setMeta("property", "og:description", desc);
