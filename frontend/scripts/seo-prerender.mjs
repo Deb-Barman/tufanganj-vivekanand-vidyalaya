@@ -14,10 +14,10 @@
  *   VITE_API_URL               Django API address → the browser connects to it early (preconnect)
  *   SITE_URL / VITE_SITE_URL   the website's own address once it has a custom domain (set BOTH to the same value, no trailing slash)
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { API_BASE, ROUTES, SITE, SITE_URL, abs, applyHead, noscriptHtml, pageGraph } from "../api/_seo.js";
+import { API_BASE, ROUTES, SITE, SITE_URL, abs, applyHead, extraFor, keywordList, keywordsFor, noscriptHtml, pageGraph, siteGraph } from "../api/_seo.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 /** Plain-text summary per page for the <noscript> block (build-time only: kept out of the browser bundle). */
@@ -29,6 +29,20 @@ if (!existsSync(indexPath)) {
   process.exit(1);
 }
 let template = readFileSync(indexPath, "utf8");
+
+// ---- housekeeping: files that must never be served ------------------------------------------------------------
+// A static sitemap.xml would hide the live /api/sitemap one (Vercel serves real files before rewrites); the logo note is not for visitors.
+for (const stale of ["sitemap.xml", "README_LOGO.txt"]) {
+  if (existsSync(join(dist, stale))) {
+    rmSync(join(dist, stale));
+    console.log(`seo-prerender: removed dist/${stale}`);
+  }
+}
+
+// ---- site-wide structured data (the school + the website) is generated from routes.json → site, never hand-edited in HTML -------
+const siteLd = /<script type="application\/ld\+json" id="ld-site">[\s\S]*?<\/script>/;
+if (!siteLd.test(template)) throw new Error('seo-prerender: <script id="ld-site"> missing in index.html');
+template = template.replace(siteLd, () => `<script type="application/ld+json" id="ld-site">${JSON.stringify(siteGraph()).replace(/</g, "\\u003c")}</script>`);
 
 // ---- once-per-site extras -------------------------------------------------------------------------------------
 const extras = [];
@@ -58,13 +72,15 @@ let count = 0;
 for (const r of ROUTES) {
   const crumbs = r.path === "/" ? [{ name: "Home", path: "/" }] : [{ name: "Home", path: "/" }, { name: r.name, path: r.path }];
   const robots = r.robots || undefined;
+  const body = summaries[r.path] ?? [r.description];
   const html = applyHead(template, {
     title: r.title,
     description: r.description,
+    keywords: keywordsFor(r),
     canonical: robots?.startsWith("noindex") ? null : abs(r.path),
     robots,
-    jsonLd: pageGraph({ path: r.path, name: r.title, description: r.description, type: r.type, crumbs }),
-    noscript: noscriptHtml({ heading: r.title.split(/\s[–|]\s/)[0], text: summaries[r.path] ?? r.description, path: r.path }),
+    jsonLd: pageGraph({ path: r.path, name: r.title, description: r.description, type: r.type, crumbs, extra: extraFor(r.path) }),
+    noscript: noscriptHtml({ heading: r.path === "/" ? SITE.name : r.title.split(" | ")[0], paragraphs: Array.isArray(body) ? body : [body], path: r.path }),
   });
   write(r.path === "/" ? "index.html" : `${r.path.slice(1)}/index.html`, html);
   count++;
@@ -77,11 +93,12 @@ write("404.html", applyHead(template, {
   description: `This page does not exist. Go to the home page of ${SITE.name}.`,
   canonical: null,
   robots: noindex,
-  noscript: noscriptHtml({ heading: "Page not found", text: "The page you are looking for does not exist or has moved.", path: "" }),
+  noscript: noscriptHtml({ heading: "Page not found", paragraphs: ["The page you are looking for does not exist or has moved."], path: "" }),
 }));
 write("shell.html", applyHead(template, {
   title: SITE.name,
   description: `${SITE.name}, Tufanganj, Cooch Behar, West Bengal.`,
+  keywords: keywordList(["brand", "updates"], 12).join(", "),
   canonical: null,
   robots: noindex,
 }));

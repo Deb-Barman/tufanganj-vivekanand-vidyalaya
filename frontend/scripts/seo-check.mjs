@@ -7,7 +7,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ROUTES, SITE_URL, applyHead } from "../api/_seo.js";
+import { ALL_KEYWORDS, ROUTES, SITE, SITE_URL, applyHead } from "../api/_seo.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist");
@@ -32,9 +32,9 @@ for (const r of ROUTES) {
   const robots = tag(html, /<meta name="robots" content="([^"]*)"/);
   const hidden = String(r.robots || "").startsWith("noindex");
   if (!title || title.length < 20) fail(`${r.path}: title missing/short`);
-  else if (title.length > 80) warn(`${r.path}: title is ${title.length} chars (Google may cut it near 60)`);
+  else if (title.length > 95) warn(`${r.path}: title is ${title.length} chars (Google shows about 60, but reads all of it)`);
   if (!desc || desc.length < 70) fail(`${r.path}: description missing/short`);
-  else if (desc.length > 170) warn(`${r.path}: description is ${desc.length} chars`);
+  else if (desc.length > 180) warn(`${r.path}: description is ${desc.length} chars`);
   if (titles.has(title)) fail(`${r.path}: same title as ${titles.get(title)}`); else titles.set(title, r.path);
   if (descs.has(desc)) fail(`${r.path}: same description as ${descs.get(desc)}`); else descs.set(desc, r.path);
   if (hidden) {
@@ -51,6 +51,16 @@ for (const r of ROUTES) {
   if (!/<noscript id="seo-content"><main><h1>/.test(html)) fail(`${r.path}: <noscript> content with an H1 is missing`);
   if (!/<meta property="og:image" content="https:\/\/[^"]+og-image\.jpg"/.test(html)) fail(`${r.path}: og:image missing`);
   if (!/twitter:card" content="summary_large_image"/.test(html)) fail(`${r.path}: twitter:card missing`);
+  if (/hreflang=/.test(html)) fail(`${r.path}: hreflang present (single-language site; a copy pointing at "/" is wrong)`);
+  if (!hidden && !/<meta name="keywords" content="[^"]{10,}"/.test(html)) fail(`${r.path}: keywords meta missing`);
+  if (!hidden && !/<h1>[^<]{5,}<\/h1>/.test(html)) fail(`${r.path}: <noscript> H1 missing`);
+  if (!hidden && /id="tvv-loader"/.test(html) === false) fail(`${r.path}: intro markup missing (template changed?)`);
+  if (r.path === "/") {
+    for (const must of ["Tufanganj Vivekananda Vidyalaya", "Tufanganj Vivekanand Vidyalaya"]) if (!title.includes(must) && !desc.includes(must)) fail(`/: "${must}" is in neither the title nor the description`);
+    if (!title.includes("Vivekanand Vidyalaya")) fail("/: title lacks the Vivekanand spelling");
+  }
+  if (r.path === "/faq" && !html.includes('"@type":"Question"')) fail("/faq: FAQ structured data missing");
+  if (r.path === "/app" && !html.includes("MobileApplication")) fail("/app: app structured data missing");
   // internal links in the static HTML must point at real pages
   for (const m of html.matchAll(/<noscript id="seo-content">[\s\S]*?<\/noscript>/g))
     for (const l of m[0].matchAll(/href="(\/[^"#?]*)"/g)) {
@@ -98,6 +108,37 @@ if (v) {
 }
 for (const f of ["api/sitemap.js", "api/page.js"]) if (!existsSync(join(root, f))) fail(f + " missing");
 if (existsSync(join(dist, "sitemap.xml"))) fail("a static sitemap.xml in dist would hide the live /api/sitemap one");
+
+console.log("Site-wide");
+{
+  const home = read("index.html");
+  const m = home.match(/<script type="application\/ld\+json" id="ld-site">([\s\S]*?)<\/script>/);
+  let g; try { g = JSON.parse(m[1])["@graph"]; } catch { fail("ld-site JSON-LD missing or invalid"); }
+  if (g) {
+    const school = g.find((n) => [].concat(n["@type"]).includes("School"));
+    const web = g.find((n) => n["@type"] === "WebSite");
+    if (!school || !web) fail("ld-site must hold a School and a WebSite");
+    else {
+      for (const k of ["name", "alternateName", "description", "url", "logo", "foundingDate", "address", "areaServed", "sameAs", "keywords"]) if (!school[k]) fail(`School JSON-LD lacks ${k}`);
+      if (!school.alternateName.some((n) => /[\u0980-\u09FF]/.test(n))) fail("School JSON-LD has no Bengali name");
+      if (!school.alternateName.includes("Tufanganj Vivekanand Vidyalaya")) fail("School JSON-LD lacks the Vivekanand spelling");
+      // invented-fact guard: these may only appear when filled in routes.json → site.contact
+      for (const [k, v] of [["telephone", SITE.contact?.telephone], ["email", SITE.contact?.email], ["geo", SITE.contact?.latitude]]) if (!v && school[k]) fail(`School JSON-LD has ${k} but routes.json does not`);
+      ok(`School + WebSite JSON-LD valid, ${school.alternateName.length} alternate names (incl. Bengali), no invented contact facts`);
+    }
+  }
+  if (ALL_KEYWORDS.length < 40) fail(`only ${ALL_KEYWORDS.length} keywords defined (target 40+)`); else ok(`${ALL_KEYWORDS.length} search phrases defined`);
+  for (const f of ["favicon.ico", "favicon-48.png", "favicon-96.png", "icon-192.png", "llms.txt", "og-image.jpg", "manifest.webmanifest"]) if (!existsSync(join(dist, f))) fail(`dist/${f} missing`);
+  if (existsSync(join(dist, "README_LOGO.txt"))) fail("README_LOGO.txt is being published");
+  if (existsSync(join(root, "public/sitemap.xml"))) fail("public/sitemap.xml exists in the source: delete it (it hides the live sitemap)");
+  const mf = JSON.parse(read("manifest.webmanifest"));
+  if (!mf.lang || !mf.icons?.length) fail("manifest lacks lang or icons"); else ok("manifest, favicons and llms.txt present");
+  const fq = JSON.parse(readFileSync(join(root, "src/seo/faqs.json"), "utf8"));
+  const bad = fq.filter((x) => !x.q || !x.a || x.a.length < 20);
+  if (bad.length) fail("FAQ entries without a question or answer"); else ok(`${fq.length} FAQ entries`);
+  const jsonLdText = ROUTES.map((r) => read(r.path === "/" ? "index.html" : `${r.path.slice(1)}/index.html`)).join("");
+  if (/"(telephone|email|streetAddress|postalCode)"/.test(jsonLdText) && !SITE.contact?.telephone && !SITE.contact?.email && !SITE.contact?.streetAddress) fail("contact details appear in JSON-LD without being configured");
+}
 
 console.log(errors ? `\n${errors} error(s), ${warns} warning(s)` : `\nAll SEO checks passed${warns ? ` (${warns} warning(s))` : ""}.`);
 process.exit(errors ? 1 : 0);
