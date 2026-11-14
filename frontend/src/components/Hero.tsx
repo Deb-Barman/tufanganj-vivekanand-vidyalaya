@@ -82,7 +82,7 @@ export function Hero() {
       <div className="wrap hero-inner">
         <div className="hero-copy">
           <p className="eyebrow hero-eyebrow" data-reveal>
-            <span className="status-dot" /> TUFANGANJ, COOCH BEHAR · EST. 1964
+            <span className="status-dot" /> TUFANGANJ VIVEKANANDA VIDYALAYA (H.S.) · EST. 1964
           </p>
           <h1 aria-label="Tufanganj Vivekananda Vidyalaya (H.S.): sixty years in Tufanganj, one student at a time.">
             <Words text="Sixty years in Tufanganj," />

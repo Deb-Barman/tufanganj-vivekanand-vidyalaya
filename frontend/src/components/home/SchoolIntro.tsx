@@ -25,6 +25,10 @@ export function SchoolIntro() {
             meet the <Link to="/faculty">teachers</Link>, see <Link to="/achievements">results and achievements</Link>, and look at the{" "}
             <Link to="/campus">campus facilities</Link> — playing field, science laboratories, computer centre and library.
           </p>
+          <p className="pg-sub">
+            The name is written both ways — {SITE.name} and {SITE.alsoSpelt} — and is often shortened to TVV. In Bengali: {SITE.bengali}. New to Tufanganj?{" "}
+            Read our <Link to="/school-in-tufanganj">checklist for choosing a school</Link> or the <Link to="/faq">questions parents ask</Link>.
+          </p>
           <div className="hero-actions" style={{ marginTop: 16 }}>
             <Link to="/academics" className="btn btn-outline btn-sm">Academics</Link>
             <Link to="/about" className="btn btn-outline btn-sm">About the school</Link>

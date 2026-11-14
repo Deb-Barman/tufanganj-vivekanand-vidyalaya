@@ -1,32 +1,8 @@
 import { useState } from "react";
+import faqs from "../seo/faqs.json";
 import "./Faq.css";
 
-const FAQS = [
-  {
-    q: "Which board is the school affiliated with?",
-    a: "TVV follows the West Bengal Board of Secondary Education up to Class X, and the West Bengal Council of Higher Secondary Education for Class XI–XII, across both Science and Arts streams.",
-  },
-  {
-    q: "What is the admission process and when does it open?",
-    a: "Admissions generally open ahead of the new academic session. The process has three steps — collecting the prospectus, submitting the application with prior mark-sheets, and a short admissions interview. Contact the school office for exact current dates.",
-  },
-  {
-    q: "Is transport available for students outside Tufanganj town?",
-    a: "Many students commute from surrounding areas independently or via local transport; the school itself does not currently run dedicated buses. Please check with the office for the latest arrangement.",
-  },
-  {
-    q: "Can a student switch between Science and Arts after Class X?",
-    a: "Stream choice is made at the start of Class XI based on the student's Class X performance and interest. Switching after that point is discouraged but can be discussed with the class teacher and Principal on a case-by-case basis.",
-  },
-  {
-    q: "How does the school communicate with parents day-to-day?",
-    a: "Through the physical Notice Board, scheduled Parent-Teacher Meetings, and the digital Notice Board on this site and in the Smart Portal.",
-  },
-  {
-    q: "What safety measures are in place on campus?",
-    a: "The campus gate is supervised during school hours, teachers are present through every break period, and each class has a designated teacher-in-charge as a direct point of contact for parents.",
-  },
-];
+const FAQS: { q: string; a: string }[] = faqs;
 
 export function Faq({ bare = false }: { bare?: boolean }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);

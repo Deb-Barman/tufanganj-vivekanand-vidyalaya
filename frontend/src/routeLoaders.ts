@@ -26,6 +26,7 @@ export const L = {
   EventsPage: track(() => import("./pages/EventsPage")),
   DownloadsPage: track(() => import("./pages/DownloadsPage")),
   FaqPage: track(() => import("./pages/FaqPage")),
+  GuidePage: track(() => import("./pages/GuidePage")),
   AdmissionsPage: track(() => import("./pages/AdmissionsPage")),
   ContactPage: track(() => import("./pages/ContactPage")),
   AppPage: track(() => import("./pages/AppPage")),

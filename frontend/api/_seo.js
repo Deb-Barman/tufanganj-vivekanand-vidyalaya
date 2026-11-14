@@ -1,6 +1,8 @@
 // Shared SEO helpers. Used by the build step (scripts/seo-prerender.mjs) AND by the Vercel functions in this folder
 // (a file whose name starts with "_" is NOT turned into an endpoint by Vercel).
 import routes from "../src/seo/routes.json" with { type: "json" };
+import keywordData from "../src/seo/keywords.json" with { type: "json" };
+import faqs from "../src/seo/faqs.json" with { type: "json" };
 
 export const SITE = routes.site;
 export const ROUTES = routes.routes;
@@ -37,6 +39,83 @@ export async function fetchJson(url, ms = 8000) {
 export const orgRef = { "@id": `${SITE_URL}/#school` };
 export const websiteRef = { "@id": `${SITE_URL}/#website` };
 
+// ---- keywords -----------------------------------------------------------------------------------------------------
+/** Search phrases for a route: its keyword groups, de-duplicated, capped (the home page gets the widest set). */
+export function keywordList(groups = [], max = 14) {
+  const out = [];
+  for (const g of groups) for (const k of keywordData.groups[g] ?? []) if (!out.includes(k)) out.push(k);
+  return out.slice(0, max);
+}
+export const keywordsFor = (route) => keywordList(route?.kw ?? ["brand"], route?.path === "/" ? 40 : 14).join(", ");
+export const ALL_KEYWORDS = Object.values(keywordData.groups).flat();
+
+// ---- the school (EducationalOrganization + School) ------------------------------------------------------------
+/** Only facts that exist in routes.json → site. Phone, e-mail, street address, postcode and pin are added automatically the day they are filled in. */
+export function orgNode() {
+  const c = SITE.contact ?? {};
+  const address = { "@type": "PostalAddress", addressLocality: SITE.locality, addressRegion: SITE.region, addressCountry: SITE.country };
+  if (c.streetAddress) address.streetAddress = c.streetAddress;
+  if (c.postalCode) address.postalCode = c.postalCode;
+  const node = {
+    "@type": ["EducationalOrganization", "School"],
+    "@id": orgRef["@id"],
+    name: SITE.name,
+    alternateName: SITE.alternateNames,
+    description: SITE.description,
+    url: `${SITE_URL}/`,
+    logo: { "@type": "ImageObject", url: abs(SITE.logo), width: SITE.logoSize, height: SITE.logoSize },
+    image: abs(SITE.image),
+    slogan: SITE.slogan,
+    foundingDate: SITE.foundingDate,
+    address,
+    areaServed: [
+      { "@type": "AdministrativeArea", name: `${SITE.locality}, ${SITE.district}, ${SITE.region}, India` },
+      { "@type": "AdministrativeArea", name: `${SITE.district}, ${SITE.region}, India` },
+    ],
+    keywords: keywordList(["brand", "location", "level", "admission"], 26).join(", "),
+    sameAs: SITE.sameAs,
+  };
+  if (c.telephone) node.telephone = c.telephone;
+  if (c.email) node.email = c.email;
+  if (c.latitude && c.longitude) node.geo = { "@type": "GeoCoordinates", latitude: Number(c.latitude), longitude: Number(c.longitude) };
+  if (c.mapsUrl) { node.hasMap = c.mapsUrl; node.sameAs = [...SITE.sameAs, c.mapsUrl]; }
+  return node;
+}
+
+/** Site-wide structured data: the school and the website. Replaces the placeholder block in index.html at build time. */
+export function siteGraph() {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      orgNode(),
+      {
+        "@type": "WebSite",
+        "@id": websiteRef["@id"],
+        url: `${SITE_URL}/`,
+        name: SITE.name,
+        alternateName: ["Tufanganj Vivekanand Vidyalaya", "Tufanganj Vivekananda Vidyalaya", "TVV School", "তুফানগঞ্জ বিবেকানন্দ বিদ্যালয়"],
+        description: SITE.description,
+        inLanguage: "en-IN",
+        publisher: orgRef,
+      },
+    ],
+  };
+}
+
+/** Compact copy of the school for Article / BlogPosting author + publisher (Google wants a name and a logo inline, not only an @id). */
+const orgInline = () => ({ "@type": "EducationalOrganization", "@id": orgRef["@id"], name: SITE.name, url: `${SITE_URL}/`, logo: { "@type": "ImageObject", url: abs(SITE.logo), width: SITE.logoSize, height: SITE.logoSize } });
+
+/** Extra, page-specific structured data merged into a page node (FAQ questions, the school app). */
+export function extraFor(path) {
+  if (path === "/faq") {
+    return { mainEntity: faqs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) };
+  }
+  if (path === "/app") {
+    return { mainEntity: { "@type": "MobileApplication", name: "TVV School", alternateName: `${SITE.name} school app`, operatingSystem: "Android", applicationCategory: "EducationalApplication", description: "Timetable, homework, projects, attendance and results for students, teachers and parents of Tufanganj Vivekananda Vidyalaya (H.S.).", publisher: orgRef } };
+  }
+  return {};
+}
+
 export function breadcrumbLd(items) {
   return {
     "@type": "BreadcrumbList",
@@ -69,8 +148,8 @@ export function articleGraph({ path, headline, description, datePublished, dateM
     url,
     inLanguage: "en-IN",
     image: [abs(SITE.image)],
-    author: orgRef,
-    publisher: orgRef,
+    author: orgInline(),
+    publisher: orgInline(),
     isPartOf: websiteRef,
   };
   if (datePublished) article.datePublished = datePublished;
@@ -100,6 +179,12 @@ export function applyHead(html, m) {
   out = swap(out, /<title>[\s\S]*?<\/title>/, `<title>${title}</title>`, "<title>");
   out = swap(out, /<meta name="description" content="[^"]*"\s*\/?>/, `<meta name="description" content="${desc}" />`, "meta description");
   out = swap(out, /<meta name="robots" content="[^"]*"\s*\/?>/, `<meta name="robots" content="${esc(robots)}" />`, "meta robots");
+  // Keywords: Google ignores this tag, but other engines read it. Added when the page has some, replaced when present, removed when not.
+  const kwRe = /\s*<meta name="keywords" content="[^"]*"\s*\/?>/;
+  out = out.replace(kwRe, "");
+  if (m.keywords) out = out.replace(/(<meta name="description" content="[^"]*"\s*\/?>)/, (tag) => `${tag}\n    <meta name="keywords" content="${esc(m.keywords)}" />`);
+  // One language, one URL per page: hreflang is not needed, and a copy that points every page at the home page is wrong.
+  out = out.replace(/\s*<link rel="alternate" hreflang="[^"]*" href="[^"]*"\s*\/?>/g, "");
   // The canonical tag may be absent (the shell and 404 templates have none): remove it, replace it, or add it.
   const canonRe = /\s*<link rel="canonical" href="[^"]*"\s*\/?>/;
   if (m.canonical === null) out = out.replace(canonRe, "");
@@ -127,11 +212,16 @@ export function applyHead(html, m) {
 const NAV_LINKS = [
   ["/", "Home"], ["/about", "About the school"], ["/admissions", "Admissions"], ["/academics", "Academics"], ["/notices", "Notices"],
   ["/achievements", "Results & achievements"], ["/faculty", "Teachers & staff"], ["/campus", "Campus"], ["/events", "Events"],
-  ["/gallery", "Gallery"], ["/downloads", "Downloads"], ["/faq", "FAQ"], ["/contact", "Contact"], ["/app", "School app"],
+  ["/gallery", "Gallery"], ["/downloads", "Downloads"], ["/faq", "FAQ"], ["/school-in-tufanganj", "Choosing a school in Tufanganj"],
+  ["/contact", "Contact"], ["/app", "School app"],
 ];
 
-/** Plain, crawlable content for visitors (and bots) without JavaScript. Mirrors what the page itself says. */
-export function noscriptHtml({ heading, text, path }) {
+/**
+ * Plain, crawlable content for visitors (and bots) without JavaScript. Mirrors what the page itself says.
+ * `paragraphs` may be one string or a list; `text` is the older single-string form.
+ */
+export function noscriptHtml({ heading, text, paragraphs, path }) {
+  const paras = (paragraphs ?? (text ? [text] : [])).map((p) => `<p>${esc(p)}</p>`).join("");
   const links = NAV_LINKS.filter(([p]) => p !== path).map(([p, l]) => `<li><a href="${p}">${esc(l)}</a></li>`).join("");
-  return `<main><h1>${esc(heading)}</h1><p>${esc(text)}</p><p>${esc(SITE.name)} — Tufanganj, Cooch Behar, West Bengal, India.</p><nav aria-label="Main pages"><ul>${links}</ul></nav><p>This website works best with JavaScript turned on.</p></main>`;
+  return `<main><h1>${esc(heading)}</h1>${paras}<p>${esc(SITE.name)} — Tufanganj, Cooch Behar, West Bengal, India. Also written Tufanganj Vivekanand Vidyalaya.</p><nav aria-label="Main pages"><ul>${links}</ul></nav><p>This website works best with JavaScript turned on.</p></main>`;
 }

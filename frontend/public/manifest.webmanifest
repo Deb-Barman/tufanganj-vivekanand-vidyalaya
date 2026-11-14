@@ -1,14 +1,20 @@
 {
   "name": "Tufanganj Vivekananda Vidyalaya (H.S.)",
   "short_name": "TVV School",
-  "description": "Official website and student/staff portal of Tufanganj Vivekananda Vidyalaya (H.S.).",
+  "description": "Official website and student/staff portal of Tufanganj Vivekananda Vidyalaya (H.S.), also spelt Tufanganj Vivekanand Vidyalaya, Tufanganj, Cooch Behar, West Bengal.",
   "id": "/",
+  "lang": "en-IN",
+  "dir": "ltr",
   "start_url": "/?source=app",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#181b27",
   "theme_color": "#181b27",
+  "categories": [
+    "education",
+    "school"
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -32,11 +38,23 @@
   "shortcuts": [
     {
       "name": "Student & Staff Login",
+      "short_name": "Login",
       "url": "/portal"
     },
     {
-      "name": "Notices",
+      "name": "School Notices",
+      "short_name": "Notices",
       "url": "/notices"
+    },
+    {
+      "name": "Admissions",
+      "short_name": "Admissions",
+      "url": "/admissions"
+    },
+    {
+      "name": "Contact the school",
+      "short_name": "Contact",
+      "url": "/contact"
     }
   ]
 }

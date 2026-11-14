@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Admissions } from "../components/Admissions";
-import { PageHero } from "../components/site/PageHero";
+import { PageHero, Section } from "../components/site/PageHero";
 import { SITE } from "../config/site";
 import { usePageMeta } from "../lib/usePageMeta";
 
@@ -13,6 +13,19 @@ export function AdmissionsPage() {
         <Link to="/faq" className="btn btn-outline">Read the FAQ</Link>
       </PageHero>
       <Admissions bare />
+      <Section>
+        <div className="prose" data-reveal>
+          <h2 style={{ marginTop: 0 }}>School admission in Tufanganj: what to know</h2>
+          <p>
+            {SITE.nameFull} teaches Class V to XII. In Class XI students choose the Science or the Arts stream. Admissions generally open ahead of the new academic
+            session — send the enquiry above, or write to the <Link to="/contact">school office</Link> for current dates.
+          </p>
+          <p>
+            Admission forms and other documents are on the <Link to="/downloads">Downloads</Link> page. Still comparing schools? Read our{" "}
+            <Link to="/school-in-tufanganj">checklist for choosing a school in Tufanganj</Link> and the <Link to="/faq">FAQ</Link>.
+          </p>
+        </div>
+      </Section>
     </>
   );
 }

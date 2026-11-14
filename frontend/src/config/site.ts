@@ -7,6 +7,9 @@ export const SITE = {
   name: "Tufanganj Vivekananda Vidyalaya",
   nameFull: "Tufanganj Vivekananda Vidyalaya (H.S.)",
   short: "T.V. Vidyalaya",
+  /** Other ways the same name is written — shown (visibly) in the footer and on the home page so people searching either spelling find the school. */
+  alsoSpelt: "Tufanganj Vivekanand Vidyalaya",
+  bengali: "তুফানগঞ্জ বিবেকানন্দ বিদ্যালয়",
   since: 1964,
   town: "Tufanganj, Cooch Behar, West Bengal, India",
   hours: "Monday–Saturday, during the school term",
@@ -58,4 +61,5 @@ export const MORE: NavItem[] = [
   { to: "/gallery", label: "Gallery", desc: "Photos from school life" },
   // Keep new entries at the END: the home page picks MORE[0] and MORE[2] by position.
   { to: "/app", label: "App", desc: "Download the school app" },
+  { to: "/school-in-tufanganj", label: "Choosing a school", desc: "A parent's checklist for Tufanganj" },
 ];

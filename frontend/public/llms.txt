@@ -1,0 +1,24 @@
+# Tufanganj Vivekananda Vidyalaya (H.S.)
+
+> Official website of Tufanganj Vivekananda Vidyalaya (H.S.), also written Tufanganj Vivekanand Vidyalaya and called TVV — a higher secondary school in Tufanganj, Cooch Behar district, West Bengal, India. Established 1964. Teaches Class V to XII; Science and Arts streams in Class XI and XII. Classes V–X follow the West Bengal Board of Secondary Education, Class XI–XII the West Bengal Council of Higher Secondary Education. Bengali name: তুফানগঞ্জ বিবেকানন্দ বিদ্যালয়.
+
+Facts on this site are published by the school office. No phone number, e-mail address or street address is listed here because none has been confirmed for publication; use the contact form instead.
+
+## Main pages
+- [Home](https://tufanganj-vivekanand-vidyalaya.vercel.app/): overview of the school
+- [About the school](https://tufanganj-vivekanand-vidyalaya.vercel.app/about): history since 1964, name, motto "Knowledge · Character · Progress"
+- [Admissions](https://tufanganj-vivekanand-vidyalaya.vercel.app/admissions): how to apply, online admission enquiry form
+- [Academics](https://tufanganj-vivekanand-vidyalaya.vercel.app/academics): classes, boards, Science and Arts streams
+- [Notices](https://tufanganj-vivekanand-vidyalaya.vercel.app/notices): official school notices, newest first
+- [Results & achievements](https://tufanganj-vivekanand-vidyalaya.vercel.app/achievements): results and awards published by the school
+- [Teachers & staff](https://tufanganj-vivekanand-vidyalaya.vercel.app/faculty)
+- [Campus & facilities](https://tufanganj-vivekanand-vidyalaya.vercel.app/campus)
+- [Events](https://tufanganj-vivekanand-vidyalaya.vercel.app/events) · [Gallery](https://tufanganj-vivekanand-vidyalaya.vercel.app/gallery) · [Blog](https://tufanganj-vivekanand-vidyalaya.vercel.app/blog)
+- [Downloads (forms and documents)](https://tufanganj-vivekanand-vidyalaya.vercel.app/downloads)
+- [FAQ](https://tufanganj-vivekanand-vidyalaya.vercel.app/faq)
+- [Choosing a school in Tufanganj: a parent's checklist](https://tufanganj-vivekanand-vidyalaya.vercel.app/school-in-tufanganj)
+- [Contact and map](https://tufanganj-vivekanand-vidyalaya.vercel.app/contact)
+- [TVV School app (Android)](https://tufanganj-vivekanand-vidyalaya.vercel.app/app)
+
+## Not for indexing
+The student and staff portal (/portal) and personal profile pages (/profile/...) are private and are marked noindex.

@@ -16,6 +16,7 @@ export function SiteFooter() {
             Vidyalaya (H.S.)
           </p>
           <p>A Higher Secondary institution in {SITE.town.replace(", India", "")} — Class V to XII, Science &amp; Arts streams.</p>
+          <p>Also spelt {SITE.alsoSpelt} · {SITE.bengali}</p>
           <p className="footer-motto">{SITE.motto}</p>
           <ul className="footer-contact" aria-label="School contact details">
             <li>
@@ -43,12 +44,12 @@ export function SiteFooter() {
             Contact the school office <span aria-hidden="true">→</span>
           </Link>
           <div className="footer-social">
-            <h5>Follow us</h5>
+            <h5 role="heading" aria-level={2}>Follow us</h5>
             <SocialIcons />
           </div>
         </div>
         <div className="footer-col">
-          <h5>Explore</h5>
+          <h5 role="heading" aria-level={2}>Explore</h5>
           {NAV.slice(0, 5).map((n) => (
             <Link key={n.to} to={n.to}>
               {n.label}
@@ -56,7 +57,7 @@ export function SiteFooter() {
           ))}
         </div>
         <div className="footer-col">
-          <h5>School</h5>
+          <h5 role="heading" aria-level={2}>School</h5>
           {NAV.slice(5).map((n) => (
             <Link key={n.to} to={n.to}>
               {n.label}
@@ -66,9 +67,10 @@ export function SiteFooter() {
           <Link to="/gallery">Gallery</Link>
         </div>
         <div className="footer-col">
-          <h5>Help</h5>
+          <h5 role="heading" aria-level={2}>Help</h5>
           <Link to="/find-profile">Profile Finder</Link>
           <Link to="/faq">FAQ</Link>
+          <Link to="/school-in-tufanganj">Choosing a school</Link>
           <Link to="/downloads">Downloads</Link>
           <Link to="/app">Get the App</Link>
           <Link to="/portal">Student &amp; Staff Login</Link>

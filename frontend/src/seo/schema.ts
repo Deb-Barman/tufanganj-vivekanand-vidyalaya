@@ -4,6 +4,8 @@
  * Keep the two in step: same @id values, same types.
  */
 import seo from "./routes.json";
+import faqs from "./faqs.json";
+import keywordData from "./keywords.json";
 
 export interface SeoRoute {
   path: string;
@@ -12,6 +14,7 @@ export interface SeoRoute {
   name: string;
   type: string;
   robots?: string;
+  kw?: string[];
 }
 
 /** `VITE_SITE_URL` (Vercel env var) switches the whole site to a custom domain without touching the code. */
@@ -21,11 +24,30 @@ const BY_PATH = new Map(SEO_ROUTES.map((r) => [r.path, r]));
 
 /** "/about/" → "/about"; "" → "/". */
 export const cleanPath = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p) || "/";
+/** Comma-separated search phrases for a route (the home page gets the widest set). Mirrors keywordsFor() in api/_seo.js. */
+export const keywordsFor = (route?: SeoRoute): string => {
+  const out: string[] = [];
+  const groups = keywordData.groups as Record<string, string[]>;
+  for (const g of route?.kw ?? ["brand"]) for (const k of groups[g] ?? []) if (!out.includes(k)) out.push(k);
+  return out.slice(0, route?.path === "/" ? 40 : 14).join(", ");
+};
+
+/** Page-specific structured data merged into the page node. Mirrors extraFor() in api/_seo.js. */
+export function extraFor(path: string): Record<string, unknown> {
+  if (path === "/faq") return { mainEntity: faqs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) };
+  if (path === "/app") {
+    return { mainEntity: { "@type": "MobileApplication", name: "TVV School", alternateName: `${seo.site.name} school app`, operatingSystem: "Android", applicationCategory: "EducationalApplication", description: "Timetable, homework, projects, attendance and results for students, teachers and parents of Tufanganj Vivekananda Vidyalaya (H.S.).", publisher: { "@id": `${SEO_SITE.url}/#school` } } };
+  }
+  return {};
+}
+
 export const routeFor = (path: string): SeoRoute | undefined => BY_PATH.get(cleanPath(path));
 
 const abs = (path: string) => (/^https?:\/\//.test(path) ? path : `${SEO_SITE.url}${path}`);
 const org = { "@id": `${SEO_SITE.url}/#school` };
 const website = { "@id": `${SEO_SITE.url}/#website` };
+
+const orgInline = () => ({ "@type": "EducationalOrganization", "@id": `${SEO_SITE.url}/#school`, name: seo.site.name, url: `${SEO_SITE.url}/`, logo: { "@type": "ImageObject", url: abs(seo.site.logo), width: seo.site.logoSize, height: seo.site.logoSize } });
 
 export interface Crumb {
   name: string;
@@ -42,7 +64,7 @@ function breadcrumb(url: string, crumbs: Crumb[]) {
 
 export function pageSchema(opts: { path: string; name: string; description: string; type?: string; crumbs?: Crumb[] }) {
   const url = abs(opts.path);
-  const node: Record<string, unknown> = { "@type": opts.type ?? "WebPage", "@id": `${url}#webpage`, url, name: opts.name, description: opts.description, inLanguage: "en-IN", isPartOf: website, about: org };
+  const node: Record<string, unknown> = { "@type": opts.type ?? "WebPage", "@id": `${url}#webpage`, url, name: opts.name, description: opts.description, inLanguage: "en-IN", isPartOf: website, about: org, ...extraFor(opts.path) };
   const graph: unknown[] = [node];
   if (opts.crumbs && opts.crumbs.length > 1) {
     node.breadcrumb = { "@id": `${url}#breadcrumb` };
@@ -62,8 +84,8 @@ export function articleSchema(opts: { path: string; headline: string; descriptio
     url,
     inLanguage: "en-IN",
     image: [abs(SEO_SITE.image)],
-    author: org,
-    publisher: org,
+    author: orgInline(),
+    publisher: orgInline(),
     isPartOf: website,
   };
   if (opts.datePublished) node.datePublished = opts.datePublished;

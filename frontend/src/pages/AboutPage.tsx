@@ -28,6 +28,16 @@ export function AboutPage() {
               From Class XI, students choose the <strong>Science</strong> or <strong>Arts</strong> stream under the West Bengal
               Council of Higher Secondary Education. Both streams are taught with the same seriousness.
             </p>
+            <h2>Boards and classes</h2>
+            <p>
+              Classes V to X follow the West Bengal Board of Secondary Education, and Classes XI and XII follow the West Bengal Council of Higher
+              Secondary Education. Students sit the Madhyamik examination at the end of Class X and the Higher Secondary examination at the end of Class XII.
+            </p>
+            <h2>One school, two spellings</h2>
+            <p>
+              The school's full name is {SITE.nameFull}. It is also written <strong>{SITE.alsoSpelt}</strong> — the spelling on the school seal — and is often
+              shortened to TVV. In Bengali it is {SITE.bengali}. The &ldquo;H.S.&rdquo; stands for Higher Secondary.
+            </p>
             <h2>Named after Swami Vivekananda</h2>
             <p>
               The school carries the name of Swami Vivekananda, and his call to young people — to rise, to wake up and to keep going

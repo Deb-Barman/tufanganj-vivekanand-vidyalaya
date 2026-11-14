@@ -15,7 +15,7 @@ type Loader = () => Promise<unknown>;
 const PUBLIC: Record<string, Loader[]> = {
   "/about": [L.AboutPage], "/academics": [L.AcademicsPage], "/faculty": [L.FacultyPage], "/achievements": [L.AchievementsPage],
   "/campus": [L.CampusPage], "/notices": [L.NoticesPage], "/blog": [L.BlogPage], "/events": [L.EventsPage],
-  "/downloads": [L.DownloadsPage], "/faq": [L.FaqPage], "/admissions": [L.AdmissionsPage], "/contact": [L.ContactPage],
+  "/downloads": [L.DownloadsPage], "/faq": [L.FaqPage], "/school-in-tufanganj": [L.GuidePage], "/admissions": [L.AdmissionsPage], "/contact": [L.ContactPage],
   "/app": [L.AppPage], "/privacy": [L.PrivacyPage], "/terms": [L.TermsPage], "/gallery": [L.GalleryPage], "/developer": [L.DeveloperPage],
 };
 

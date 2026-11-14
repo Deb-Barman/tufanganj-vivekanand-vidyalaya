@@ -1,0 +1,75 @@
+{
+  "_note": "Search phrases people use to find the school. Used for <meta name=keywords>, JSON-LD keywords and the keyword report in docs/SEO_GUIDE.md. Google ignores the keywords meta tag; the real ranking work is done by the visible wording of titles, headings and page text, which uses these phrases naturally. Only truthful descriptors belong here — no 'best', no invented facts.",
+  "groups": {
+    "brand": [
+      "Tufanganj Vivekananda Vidyalaya",
+      "Tufanganj Vivekanand Vidyalaya",
+      "Tufanganj Vivekananda Vidyalaya HS",
+      "Tufanganj Vivekanand Vidyalaya HS",
+      "Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "Vivekananda Vidyalaya Tufanganj",
+      "Vivekanand Vidyalaya Tufanganj",
+      "Vivekananda Vidyalaya",
+      "Tufanganj Vivekananda Vidyalaya official website",
+      "Tufanganj Vivekanand Vidyalaya website",
+      "TVV Tufanganj",
+      "TVV School Tufanganj"
+    ],
+    "bengali": [
+      "তুফানগঞ্জ বিবেকানন্দ বিদ্যালয়",
+      "তুফানগঞ্জ বিবেকানন্দ বিদ্যালয় (উচ্চ মাধ্যমিক)",
+      "তুফানগঞ্জ স্কুল",
+      "তুফানগঞ্জ বিবেকানন্দ বিদ্যালয় ভর্তি",
+      "তুফানগঞ্জ বিবেকানন্দ বিদ্যালয় নোটিশ"
+    ],
+    "location": [
+      "Tufanganj School",
+      "School in Tufanganj",
+      "Schools in Tufanganj Cooch Behar",
+      "Tufanganj Cooch Behar school",
+      "Schools near Tufanganj",
+      "Tufanganj Education",
+      "Cooch Behar school",
+      "West Bengal School",
+      "Tufanganj West Bengal school"
+    ],
+    "level": [
+      "Higher Secondary School in Tufanganj",
+      "Tufanganj High School",
+      "Class V to XII school in Tufanganj",
+      "Science and Arts school Tufanganj",
+      "WBCHSE school Cooch Behar",
+      "WBBSE school Tufanganj",
+      "Class 11 Science Arts Tufanganj",
+      "Class 12 school Tufanganj"
+    ],
+    "admission": [
+      "School Admission Tufanganj",
+      "Tufanganj school admission enquiry",
+      "Tufanganj Vivekananda Vidyalaya admission",
+      "Class 11 admission Tufanganj",
+      "Tufanganj school admission form"
+    ],
+    "updates": [
+      "Tufanganj School Notice",
+      "Tufanganj School Notices",
+      "Tufanganj School Results",
+      "Tufanganj Vivekananda Vidyalaya notice board",
+      "Tufanganj school events",
+      "Tufanganj school gallery",
+      "Tufanganj school teachers",
+      "Tufanganj school downloads"
+    ],
+    "digital": [
+      "TVV School App",
+      "Tufanganj school student portal",
+      "Tufanganj school contact"
+    ],
+    "guide": [
+      "Best school in Tufanganj",
+      "How to choose a school in Tufanganj",
+      "School checklist for parents Tufanganj",
+      "Schools in Tufanganj list"
+    ]
+  }
+}
