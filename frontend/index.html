@@ -38,7 +38,8 @@
     <meta name="apple-mobile-web-app-title" content="TVV School" />
     <meta name="geo.region" content="IN-WB" />
     <meta name="geo.placename" content="Tufanganj, Cooch Behar" />
-    <meta name="author" content="Tufanganj Vivekananda Vidyalaya (H.S.)" />
+    <meta name="author" content="Deb Barman" />
+    <link rel="author" href="/developer" />
 
     <!-- Link previews (WhatsApp, Facebook, X…) read these static tags: they cannot run the app's JavaScript.
          The build step (scripts/seo-prerender.mjs) rewrites title / description / canonical / og / twitter / JSON-LD for every page. -->
@@ -144,7 +145,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Loaded without blocking the first paint (print → all): faster LCP/FCP, text shows in a system font until the web fonts arrive. -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&display=swap" />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" data-tvv-fonts />
+    <script>
+      /* Switches the font stylesheet on once it has loaded (an inline handler attribute would be blocked by the Content-Security-Policy). */
+      (function () {
+        var l = document.querySelector("link[data-tvv-fonts]");
+        if (!l) return;
+        var go = function () { l.media = "all"; };
+        if (l.sheet) go(); else l.addEventListener("load", go);
+      })();
+    </script>
     <noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
 
     <!--

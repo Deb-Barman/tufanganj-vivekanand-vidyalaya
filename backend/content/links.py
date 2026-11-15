@@ -9,7 +9,7 @@ The server never downloads anything from these links (so there is nothing to abu
 them. Only https links are accepted — never javascript:, data:, file: or plain http.
 """
 import re
-from urllib.parse import parse_qs, urlparse, urlunparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 MAX_LINK = 1000
 
@@ -76,7 +76,7 @@ def normalize_image_link(url: str) -> str:
         return f"https://drive.google.com/thumbnail?id={fid}&sz=w1600"
     if _host_is(host, "dropbox.com") and not host.startswith("dl."):
         q = {k: v for k, v in parse_qs(p.query).items() if k not in ("dl", "raw")}
-        pairs = "&".join(f"{k}={v[0]}" for k, v in q.items())
+        pairs = urlencode({k: v[0] for k, v in q.items()})  # re-encoded: nothing typed in the link can smuggle in extra characters
         return urlunparse(("https", host, p.path, "", (pairs + "&" if pairs else "") + "raw=1", ""))
     if host == "imgur.com" or host == "www.imgur.com":
         m = re.fullmatch(r"/([A-Za-z0-9]{5,8})", p.path)

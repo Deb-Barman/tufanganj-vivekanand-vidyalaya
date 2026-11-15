@@ -14,6 +14,7 @@
  *   VITE_API_URL               Django API address → the browser connects to it early (preconnect)
  *   SITE_URL / VITE_SITE_URL   the website's own address once it has a custom domain (set BOTH to the same value, no trailing slash)
  */
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,6 +39,32 @@ for (const stale of ["sitemap.xml", "README_LOGO.txt"]) {
     console.log(`seo-prerender: removed dist/${stale}`);
   }
 }
+
+// ---- Content-Security-Policy ------------------------------------------------------------------------------------------
+// The sign-in tokens live in the browser, so the page is locked down: scripts may only be the site's own files or the exact
+// inline scripts that ship in index.html (allowed by their SHA-256 fingerprint — change one and the build recomputes it),
+// requests may only go to the site and the school server, and nothing can be framed, based or submitted elsewhere. A <meta>
+// tag is used (not a header) because the fingerprints are only known here, at build time; frame-ancestors is a header (vercel.json).
+const inlineScripts = [...template.matchAll(/<script(?![^>]*(?:\bsrc=|type="application\/ld\+json"|type="module"))[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+const sha = (code) => `'sha256-${createHash("sha256").update(code, "utf8").digest("base64")}'`;
+const apiOrigin = (() => { try { return new URL(API_BASE).origin; } catch { return ""; } })();
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' ${inlineScripts.map(sha).join(" ")}`,
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "media-src 'self' blob: https:",
+  `connect-src 'self' ${apiOrigin}`.trim(),
+  "frame-src https://www.google.com https://maps.google.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "manifest-src 'self'",
+  "worker-src 'self' blob:",
+].join("; ");
+template = template.replace(/(<meta charset="UTF-8" \/>)/, `$1\n    <meta http-equiv="Content-Security-Policy" content="${csp.replace(/"/g, "&quot;")}" />`);
+console.log(`seo-prerender: Content-Security-Policy added (${inlineScripts.length} inline scripts fingerprinted)`);
 
 // ---- site-wide structured data (the school + the website) is generated from routes.json → site, never hand-edited in HTML -------
 const siteLd = /<script type="application\/ld\+json" id="ld-site">[\s\S]*?<\/script>/;

@@ -77,7 +77,7 @@ export function HomePage() {
       <Section>
         <div className="cta-band" data-reveal>
           <div>
-            <h2>Ready to join {SITE.short}?</h2>
+            <h2>Ready to join {SITE.brand}?</h2>
             <p>Send an admission enquiry in two minutes, or write to the school office with any question.</p>
           </div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>

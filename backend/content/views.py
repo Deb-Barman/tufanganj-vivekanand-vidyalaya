@@ -3,10 +3,9 @@ from datetime import timedelta
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle
 
 from accounts.permissions import IsSuperAdmin, IsSuperAdminOrReadOnly
-from config.clientip import client_ip
+from config.clientip import SafeAnonRateThrottle, client_ip
 
 from .models import Achievement, Admission, AppRelease, Article, ContactMessage, Event, GalleryImage, SchoolForm
 from .serializers import (
@@ -180,7 +179,7 @@ class AppReleaseDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 # --- Admissions --------------------------------------------------------
 
-class AdmissionRateThrottle(AnonRateThrottle):
+class AdmissionRateThrottle(SafeAnonRateThrottle):
     """Deliberately tighter than the global anon default — this is a public
     write endpoint with no auth at all, the highest-risk surface in the API."""
 
@@ -228,7 +227,7 @@ class AdmissionDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 # --- Contact messages ------------------------------------------------------
 
-class ContactRateThrottle(AnonRateThrottle):
+class ContactRateThrottle(SafeAnonRateThrottle):
     scope = "contact_submit"
 
 

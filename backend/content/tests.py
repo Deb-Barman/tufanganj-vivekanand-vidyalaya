@@ -230,12 +230,13 @@ class PublicFormsBehindProxyTests(BaseAPITestCase):
     column rejected the comma-joined string -> every enquiry/message returned a 500."""
 
     XFF = "203.0.113.7, 172.70.1.2"
+    CF = "203.0.113.7"  # Cloudflare's own header: the visitor cannot choose it
 
     def test_admission_enquiry_stores_a_single_valid_ip(self):
         from .models import Admission
 
         body = {"applicant_name": "Deb Barman", "guardian_contact": "0987654321", "applying_for_class": "8", "message": "hi"}
-        res = APIClient().post("/api/content/admissions/submit/", body, format="json", HTTP_X_FORWARDED_FOR=self.XFF)
+        res = APIClient().post("/api/content/admissions/submit/", body, format="json", HTTP_X_FORWARDED_FOR=self.XFF, HTTP_CF_CONNECTING_IP=self.CF)
         self.assertEqual(res.status_code, 201)
         self.assertEqual(Admission.objects.get().submitted_from_ip, "203.0.113.7")
 
@@ -243,7 +244,7 @@ class PublicFormsBehindProxyTests(BaseAPITestCase):
         from .models import ContactMessage
 
         body = {"name": "Deb", "phone": "0987654321", "email": "deb@tvv.edu", "subject": "Test", "message": "hello there"}
-        res = APIClient().post("/api/content/contact/submit/", body, format="json", HTTP_X_FORWARDED_FOR=self.XFF)
+        res = APIClient().post("/api/content/contact/submit/", body, format="json", HTTP_X_FORWARDED_FOR=self.XFF, HTTP_CF_CONNECTING_IP=self.CF)
         self.assertEqual(res.status_code, 201)
         self.assertEqual(ContactMessage.objects.get().submitted_from_ip, "203.0.113.7")
 
@@ -253,4 +254,5 @@ class PublicFormsBehindProxyTests(BaseAPITestCase):
         body = {"applicant_name": "Deb", "guardian_contact": "0987654321", "applying_for_class": "8"}
         res = APIClient().post("/api/content/admissions/submit/", body, format="json", HTTP_X_FORWARDED_FOR="not-an-ip, ???")
         self.assertEqual(res.status_code, 201)
-        self.assertIsNone(Admission.objects.get().submitted_from_ip)
+        # Nothing usable in the header -> falls back to the connection's own address; the form still works.
+        self.assertEqual(Admission.objects.get().submitted_from_ip, "127.0.0.1")

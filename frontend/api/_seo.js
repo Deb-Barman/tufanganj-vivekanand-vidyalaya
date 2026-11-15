@@ -97,9 +97,16 @@ export function siteGraph() {
         description: SITE.description,
         inLanguage: "en-IN",
         publisher: orgRef,
+        creator: developerNode(),
       },
     ],
   };
+}
+
+/** The person who designed and built the website (facts he publishes himself: see routes.json → site.developer). */
+export function developerNode() {
+  const dev = SITE.developer;
+  return { "@type": "Person", name: dev.name, jobTitle: dev.jobTitle, url: dev.url, sameAs: dev.sameAs };
 }
 
 /** Compact copy of the school for Article / BlogPosting author + publisher (Google wants a name and a logo inline, not only an @id). */
@@ -110,6 +117,7 @@ export function extraFor(path) {
   if (path === "/faq") {
     return { mainEntity: faqs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) };
   }
+  if (path === "/developer") return { mainEntity: developerNode() };
   if (path === "/app") {
     return { mainEntity: { "@type": "MobileApplication", name: "TVV School", alternateName: `${SITE.name} school app`, operatingSystem: "Android", applicationCategory: "EducationalApplication", description: "Timetable, homework, projects, attendance and results for students, teachers and parents of Tufanganj Vivekananda Vidyalaya (H.S.).", publisher: orgRef } };
   }

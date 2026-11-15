@@ -40,7 +40,19 @@
       "longitude": "",
       "mapsUrl": ""
     },
-    "_contactNote": "Fill these ONLY with details the school office has confirmed. Every non-empty value is added to the School structured data on the next build; empty ones are left out. latitude/longitude are the school's own pin (not the town's)."
+    "_contactNote": "Fill these ONLY with details the school office has confirmed. Every non-empty value is added to the School structured data on the next build; empty ones are left out. latitude/longitude are the school's own pin (not the town's).",
+    "developer": {
+      "name": "Deb Barman",
+      "jobTitle": "Python Developer · AI & ML Builder",
+      "url": "https://deb-barman166.github.io",
+      "sameAs": [
+        "https://github.com/deb-barman166",
+        "https://github.com/Deb-Barman",
+        "https://www.linkedin.com/in/deb-barman166",
+        "https://x.com/debbarman166",
+        "https://www.reddit.com/user/Deb-Barman"
+      ]
+    }
   },
   "routes": [
     {
@@ -296,8 +308,8 @@
       "kw": [
         "brand"
       ],
-      "title": "Website Developer | Tufanganj Vivekananda Vidyalaya (H.S.)",
-      "description": "The Tufanganj Vivekananda Vidyalaya (H.S.) website and student portal: who designed and developed it."
+      "title": "Deb Barman – Website Developer | Tufanganj Vivekananda Vidyalaya (H.S.)",
+      "description": "Deb Barman designed and developed the Tufanganj Vivekananda Vidyalaya (H.S.) website and student portal. Python developer and AI & ML builder – portfolio and contact links."
     },
     {
       "path": "/find-profile",

@@ -7,6 +7,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 import { ALL_KEYWORDS, ROUTES, SITE, SITE_URL, applyHead } from "../api/_seo.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -51,6 +52,16 @@ for (const r of ROUTES) {
   if (!/<noscript id="seo-content"><main><h1>/.test(html)) fail(`${r.path}: <noscript> content with an H1 is missing`);
   if (!/<meta property="og:image" content="https:\/\/[^"]+og-image\.jpg"/.test(html)) fail(`${r.path}: og:image missing`);
   if (!/twitter:card" content="summary_large_image"/.test(html)) fail(`${r.path}: twitter:card missing`);
+  {
+    // Content-Security-Policy: every inline script must be allowed by its SHA-256 fingerprint, or the browser will refuse to run it.
+    const policy = (html.match(/http-equiv="Content-Security-Policy" content="([^"]*)"/) ?? [])[1] ?? "";
+    if (!policy) fail(`${r.path}: Content-Security-Policy missing`);
+    else {
+      const scripts = [...html.matchAll(/<script(?![^>]*(?:\bsrc=|type="application\/ld\+json"|type="module"))[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+      for (const code of scripts) if (!policy.includes(`'sha256-${createHash("sha256").update(code, "utf8").digest("base64")}'`)) fail(`${r.path}: an inline script is not covered by the Content-Security-Policy`);
+      if (/\son[a-z]+="/i.test(html.replace(/<noscript[\s\S]*?<\/noscript>/g, "").replace(/<script[\s\S]*?<\/script>/g, ""))) fail(`${r.path}: inline event handler (blocked by the Content-Security-Policy)`);
+    }
+  }
   if (/hreflang=/.test(html)) fail(`${r.path}: hreflang present (single-language site; a copy pointing at "/" is wrong)`);
   if (!hidden && !/<meta name="keywords" content="[^"]{10,}"/.test(html)) fail(`${r.path}: keywords meta missing`);
   if (!hidden && !/<h1>[^<]{5,}<\/h1>/.test(html)) fail(`${r.path}: <noscript> H1 missing`);

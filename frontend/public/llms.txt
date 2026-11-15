@@ -20,5 +20,8 @@ Facts on this site are published by the school office. No phone number, e-mail a
 - [Contact and map](https://tufanganj-vivekanand-vidyalaya.vercel.app/contact)
 - [TVV School app (Android)](https://tufanganj-vivekanand-vidyalaya.vercel.app/app)
 
+## Website developer
+This website and student portal were designed and developed by Deb Barman — Python developer and AI & ML builder. See [Developer](https://tufanganj-vivekanand-vidyalaya.vercel.app/developer) · portfolio: https://deb-barman166.github.io
+
 ## Not for indexing
 The student and staff portal (/portal) and personal profile pages (/profile/...) are private and are marked noindex.

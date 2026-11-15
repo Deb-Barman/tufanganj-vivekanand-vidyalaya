@@ -1,3 +1,4 @@
+import { SITE } from "../config/site";
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { MORE, NAV } from "../config/site";
@@ -88,7 +89,8 @@ export function SiteHeader() {
         <Link to="/" className="brand">
           <SchoolLogo size={34} />
           <span className="name">
-            T.V. Vidyalaya <small>Official Site</small>
+            <span className="name-main">{SITE.brand}</span>
+            <small>Official Site</small>
           </span>
         </Link>
 

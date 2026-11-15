@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { DeveloperNote } from "../components/site/DeveloperNote";
 import { PageHero, Section } from "../components/site/PageHero";
 import { SITE } from "../config/site";
 import { usePageMeta } from "../lib/usePageMeta";
@@ -85,6 +86,9 @@ export function GuidePage() {
             <Link to="/faq" className="btn btn-outline">Read the FAQ</Link>
           </div>
         </div>
+      </Section>
+      <Section>
+        <DeveloperNote />
       </Section>
     </>
   );

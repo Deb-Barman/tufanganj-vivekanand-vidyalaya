@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { DeveloperNote } from "../components/site/DeveloperNote";
 import { Admissions } from "../components/Admissions";
 import { PageHero, Section } from "../components/site/PageHero";
 import { SITE } from "../config/site";
@@ -25,6 +26,9 @@ export function AdmissionsPage() {
             <Link to="/school-in-tufanganj">checklist for choosing a school in Tufanganj</Link> and the <Link to="/faq">FAQ</Link>.
           </p>
         </div>
+      </Section>
+      <Section>
+        <DeveloperNote />
       </Section>
     </>
   );

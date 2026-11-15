@@ -23,19 +23,12 @@ LOCK_MESSAGE = "Too many failed attempts. Try again in {m} minute(s), or contact
 
 
 def attempt_ip(request) -> str:
-    """The network address the attempt came from. Behind a proxy the LAST X-Forwarded-For entry is the one the proxy
-    itself added (earlier ones can be typed by the visitor), so that is the one used — unless NUM_PROXIES is set, in
-    which case Django REST framework's own rule is followed."""
+    """The network address the attempt came from — the one a visitor cannot fake (see config/clientip.py)."""
     if request is None:
         return "unknown"
-    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    if forwarded:
-        if settings.REST_FRAMEWORK.get("NUM_PROXIES") is not None:
-            from config.clientip import client_ip
+    from config.clientip import client_ip
 
-            return client_ip(request) or "unknown"
-        return forwarded.split(",")[-1].strip()[:64] or "unknown"
-    return (request.META.get("REMOTE_ADDR") or "unknown")[:64]
+    return (client_ip(request) or "unknown")[:64]
 
 
 def _minutes(until, now) -> int:
