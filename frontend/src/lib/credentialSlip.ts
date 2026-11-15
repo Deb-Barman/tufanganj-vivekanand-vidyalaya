@@ -23,8 +23,15 @@ export const whatsappLink = (c: SlipData, origin: string) => `https://wa.me/?tex
 
 /** Opens a clean one-card page and the browser's print dialog (on a phone: "Save as PDF" or print). */
 export function printSlip(c: SlipData, origin: string): boolean {
-  const w = window.open("", "_blank", "noopener,noreferrer");
+  // NOT "noopener": that makes window.open() return null, so the slip could never be written (and the person was told to
+  // "allow pop-ups" even when they were allowed). The page we write is our own, so the link back is cut by hand instead.
+  const w = window.open("", "_blank");
   if (!w) return false;
+  try {
+    w.opener = null;
+  } catch {
+    /* already cut */
+  }
   w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sign-in details</title>
 <style>
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:24px;color:#1b1d2e;background:#fff}
@@ -41,7 +48,16 @@ export function printSlip(c: SlipData, origin: string): boolean {
 <div><dt>Password</dt><dd>${esc(c.password)}</dd></div>
 <div><dt>Sign in at</dt><dd style="font-size:14px">${esc(origin)}/portal</dd></div></dl>
 <p>Keep this password private and do not share it with anyone. If you forget it, use “Forgot password?” on the sign-in page or ask the school office.</p>
-</div><script>window.onload=function(){setTimeout(function(){window.print()},250)}<\/script></body></html>`);
+</div></body></html>`);
   w.document.close();
+  // Printing is started from here, not from a script inside the slip (the site's security policy forbids inline scripts).
+  setTimeout(() => {
+    try {
+      w.focus();
+      w.print();
+    } catch {
+      /* the person can still print with the browser menu */
+    }
+  }, 300);
   return true;
 }
