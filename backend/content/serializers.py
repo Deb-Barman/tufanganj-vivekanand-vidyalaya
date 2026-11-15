@@ -35,6 +35,8 @@ def validate_doc_upload(file):
         raise serializers.ValidationError("Only PDF or Word documents are allowed.")
     # The content type comes from the uploader's browser and can be faked, so
     # also check the file's real first bytes.
+    if not str(getattr(file, "name", "")).lower().endswith((".pdf", ".doc", ".docx")):
+        raise serializers.ValidationError("The file name must end in .pdf, .doc or .docx.")
     head = file.read(8)
     file.seek(0)
     if not head.startswith(_DOC_SIGNATURES):
