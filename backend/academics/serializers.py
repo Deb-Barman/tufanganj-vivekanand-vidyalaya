@@ -159,6 +159,8 @@ class MarksheetSerializer(LinkOrUploadMixin, serializers.ModelSerializer):
             return file
         if file.size > MAX_MARKSHEET_SIZE:
             raise serializers.ValidationError("File must be under 10 MB.")
+        if not str(getattr(file, "name", "")).lower().endswith((".pdf", ".png", ".jpg", ".jpeg", ".webp")):
+            raise serializers.ValidationError("The file name must end in .pdf, .png, .jpg, .jpeg or .webp.")
         head = file.read(12)
         file.seek(0)
         is_webp = head[:4] == b"RIFF" and head[8:12] == b"WEBP"
