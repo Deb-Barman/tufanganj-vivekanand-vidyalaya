@@ -80,10 +80,10 @@ export function Sidebar({ user, groups, open, onClose, rail, onToggleRail, onLog
   return (
     <aside className={`console-side sb${open ? " open" : ""}${rail ? " is-rail" : ""}`} aria-label="Dashboard navigation">
       <div className="sb-head">
-        <Link to="/" className="sb-brand" aria-label={`${SITE.short} — public website`}>
+        <Link to="/" className="sb-brand" aria-label={`${SITE.brand} — public website`}>
           <SchoolLogo size={36} />
           <span className="sb-brand-text">
-            <strong>{SITE.short}</strong>
+            <strong>{SITE.brand}</strong>
             <small>Dashboard</small>
           </span>
         </Link>
