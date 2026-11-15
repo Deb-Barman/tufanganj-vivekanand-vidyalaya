@@ -48,6 +48,17 @@ if not SECRET_KEY:
     else:
         raise RuntimeError("DJANGO_SECRET_KEY is not set. Required in production.")
 
+if IS_PRODUCTION:
+    # The secret key also signs every sign-in token: anyone who knows it can forge a Super Admin login. Refuse an obvious
+    # placeholder outright; warn (never crash the site) about one that is merely short.
+    _weak = SECRET_KEY.lower().startswith(("replace", "insecure", "changeme", "change-me", "secret", "django-insecure"))
+    if _weak:
+        raise RuntimeError("DJANGO_SECRET_KEY is still a placeholder. Set a long random value in Render → Environment.")
+    if len(SECRET_KEY) < 32:
+        import warnings
+
+        warnings.warn("DJANGO_SECRET_KEY is shorter than 32 characters; use a long random string (it signs the sign-in tokens).")
+
 DEBUG = _bool_env("DJANGO_DEBUG", not IS_PRODUCTION) and not IS_PRODUCTION  # never True in production, no matter what
 
 ALLOWED_HOSTS = _list_env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
@@ -102,6 +113,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "config.seo.NoIndexMiddleware",
+    "config.seo.ApiSecurityHeadersMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -226,8 +238,8 @@ REST_FRAMEWORK = {
     # it does NOT substitute for a real role check.
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_THROTTLE_CLASSES": (
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
+        "config.clientip.SafeAnonRateThrottle",
+        "config.clientip.SafeUserRateThrottle",
     ),
     "DEFAULT_THROTTLE_RATES": {
         # Rates are per network address. A whole school shares ONE public address (school Wi-Fi), so the everyday
