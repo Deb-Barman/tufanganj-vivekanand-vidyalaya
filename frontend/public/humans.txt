@@ -1,0 +1,12 @@
+/* TEAM */
+Developer: Deb Barman
+Role: Designed and developed the Tufanganj Vivekananda Vidyalaya (H.S.) website and student portal
+Portfolio: https://deb-barman166.github.io
+GitHub: https://github.com/deb-barman166
+LinkedIn: https://www.linkedin.com/in/deb-barman166
+X: https://x.com/debbarman166
+Location: India
+
+/* SITE */
+School: Tufanganj Vivekananda Vidyalaya (H.S.) (Tufanganj Vivekanand Vidyalaya), Tufanganj, Cooch Behar, West Bengal
+Standards: HTML5, CSS3, React, TypeScript, Django REST Framework
