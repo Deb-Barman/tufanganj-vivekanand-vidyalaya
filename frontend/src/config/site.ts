@@ -7,6 +7,8 @@ export const SITE = {
   name: "Tufanganj Vivekananda Vidyalaya",
   nameFull: "Tufanganj Vivekananda Vidyalaya (H.S.)",
   short: "T.V. Vidyalaya",
+  /** The name exactly as it is written on the school seal — shown in full in the site header, the dashboard and the home page. */
+  brand: "Tufanganj Vivekanand Vidyalaya (H.S.)",
   /** Other ways the same name is written — shown (visibly) in the footer and on the home page so people searching either spelling find the school. */
   alsoSpelt: "Tufanganj Vivekanand Vidyalaya",
   bengali: "তুফানগঞ্জ বিবেকানন্দ বিদ্যালয়",
