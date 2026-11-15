@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DeveloperNote } from "../components/site/DeveloperNote";
 import type { FormEvent } from "react";
 import { PageHero, Section } from "../components/site/PageHero";
 import { Spinner } from "../components/loading/Loading";
@@ -92,6 +93,9 @@ export function ContactPage() {
       </Section>
       <Section>
         <div data-reveal="up"><LocationMap /></div>
+      </Section>
+      <Section>
+        <DeveloperNote />
       </Section>
     </>
   );

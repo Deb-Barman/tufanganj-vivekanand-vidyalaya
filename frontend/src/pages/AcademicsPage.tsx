@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { DeveloperNote } from "../components/site/DeveloperNote";
 import { Academics } from "../components/Academics";
 import { PageHero, Section } from "../components/site/PageHero";
 import { SITE } from "../config/site";
@@ -26,6 +27,9 @@ export function AcademicsPage() {
             the end of Class XII. See the <Link to="/faq">FAQ</Link> for common questions, or <Link to="/admissions">send an admission enquiry</Link>.
           </p>
         </div>
+      </Section>
+      <Section>
+        <DeveloperNote />
       </Section>
     </>
   );

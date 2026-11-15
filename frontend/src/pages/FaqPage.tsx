@@ -1,6 +1,7 @@
+import { DeveloperNote } from "../components/site/DeveloperNote";
 import { Link } from "react-router-dom";
 import { Faq } from "../components/Faq";
-import { PageHero } from "../components/site/PageHero";
+import { PageHero, Section } from "../components/site/PageHero";
 import { SITE } from "../config/site";
 import { usePageMeta } from "../lib/usePageMeta";
 
@@ -12,6 +13,9 @@ export function FaqPage() {
         <Link to="/contact" className="btn btn-outline">Ask the office</Link>
       </PageHero>
       <Faq bare />
+      <Section>
+        <DeveloperNote />
+      </Section>
     </>
   );
 }

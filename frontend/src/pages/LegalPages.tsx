@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { PageHero, Section } from "../components/site/PageHero";
 import { SITE } from "../config/site";
+import { DeveloperNote } from "../components/site/DeveloperNote";
 import { usePageMeta } from "../lib/usePageMeta";
 
 const UPDATED = "October 2026";
@@ -24,6 +25,9 @@ export function PrivacyPage() {
           <h2>Your choices</h2>
           <p>To correct or delete something you sent us, <Link to="/contact" style={{ color: "var(--accent)" }}>write to the school office</Link>.</p>
         </div>
+      </Section>
+      <Section>
+        <DeveloperNote />
       </Section>
     </>
   );
@@ -49,6 +53,9 @@ export function TermsPage() {
           <h2>Questions</h2>
           <p>Contact the school office through the <Link to="/contact" style={{ color: "var(--accent)" }}>contact page</Link>.</p>
         </div>
+      </Section>
+      <Section>
+        <DeveloperNote />
       </Section>
     </>
   );
