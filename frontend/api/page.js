@@ -65,9 +65,18 @@ function build(kind, id, data) {
 
 export default async function handler(req, res) {
   const kind = String(req.query.t || "");
-  const id = decodeURIComponent(String(req.query.id || ""));
-  const host = req.headers["x-forwarded-host"] || req.headers.host || new URL(SITE_URL).host;
-  const origin = `${req.headers["x-forwarded-proto"] || "https"}://${host}`;
+  let id = "";
+  try {
+    id = decodeURIComponent(String(req.query.id || ""));
+  } catch {
+    id = ""; // a broken %-sequence in the address (e.g. /blog/%E0%A4%A) must be a clean 404, not a crashed function
+  }
+  // The app shell is fetched from "our own" address. Only trust the Host header when it really is one of ours (the site's
+  // own address or a Vercel preview address); anything else would make this function fetch pages from a stranger's server.
+  const ownHost = new URL(SITE_URL).host;
+  const askedHost = String(req.headers["x-forwarded-host"] || req.headers.host || "").toLowerCase();
+  const host = askedHost === ownHost || /^[a-z0-9-]+\.vercel\.app$/.test(askedHost) || /^localhost(:\d+)?$/.test(askedHost) ? askedHost : ownHost;
+  const origin = /^localhost/.test(host) ? `http://${host}` : `https://${host}`;
 
   const shell = await loadShell(origin);
   if (!shell) {
