@@ -35,6 +35,10 @@ export const keywordsFor = (route?: SeoRoute): string => {
 /** Page-specific structured data merged into the page node. Mirrors extraFor() in api/_seo.js. */
 export function extraFor(path: string): Record<string, unknown> {
   if (path === "/faq") return { mainEntity: faqs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) };
+  if (path === "/developer") {
+    const dev = (seo.site as unknown as { developer: { name: string; jobTitle: string; url: string; sameAs: string[] } }).developer;
+    return { mainEntity: { "@type": "Person", name: dev.name, jobTitle: dev.jobTitle, url: dev.url, sameAs: dev.sameAs } };
+  }
   if (path === "/app") {
     return { mainEntity: { "@type": "MobileApplication", name: "TVV School", alternateName: `${seo.site.name} school app`, operatingSystem: "Android", applicationCategory: "EducationalApplication", description: "Timetable, homework, projects, attendance and results for students, teachers and parents of Tufanganj Vivekananda Vidyalaya (H.S.).", publisher: { "@id": `${SEO_SITE.url}/#school` } } };
   }
