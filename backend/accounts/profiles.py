@@ -20,11 +20,11 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from urllib.parse import urlparse, urlunparse
 
+from config.clientip import SafeScopedRateThrottle
 from content.adjust import clean_adjust
 from content.links import LinkError, normalize_image_link
 from content.serializers import validate_image_upload
@@ -465,7 +465,7 @@ class PublicProfileFindView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes: list = []
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [SafeScopedRateThrottle]
     throttle_scope = "profile_view"
 
     def get(self, request):
@@ -499,7 +499,7 @@ class PublicProfileView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes: list = []  # a public page never needs (or trusts) a token
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = [SafeScopedRateThrottle]
     throttle_scope = "profile_view"
 
     def get(self, request, role, username):

@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 from rest_framework import serializers
@@ -9,6 +11,23 @@ from rest_framework_simplejwt.utils import get_md5_hash_password
 
 from .backends import lock_message
 from .models import Role, User
+
+
+_USERNAME = re.compile(r"^[\w.@+-]{3,150}$")  # letters, digits and . @ + - _ only: safe in a web address and in the profile link
+
+
+def clean_username(value, instance=None):
+    """One rule for every way an account gets its username: no spaces or odd characters, and unique ignoring upper/lower case
+    (so "Riya" and "riya" can never be two different people — nobody can impersonate a classmate)."""
+    value = (value or "").strip()
+    if not _USERNAME.match(value):
+        raise serializers.ValidationError("Username must be 3–150 characters: letters, numbers and . _ @ + - only (no spaces).")
+    clash = User.objects.filter(username__iexact=value)
+    if instance is not None:
+        clash = clash.exclude(pk=instance.pk)
+    if clash.exists():
+        raise serializers.ValidationError("That username is already taken.")
+    return value
 
 
 class RoleAwareTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -123,10 +142,7 @@ class AdminCreateUserSerializer(serializers.ModelSerializer):
         return value
 
     def validate_username(self, value):
-        value = value.strip()
-        if len(value) < 3:
-            raise serializers.ValidationError("Username must be at least 3 characters.")
-        return value
+        return clean_username(value)
 
     def create(self, validated_data):
         password = validated_data.pop("password")
@@ -161,10 +177,7 @@ class AdminUpdateUserSerializer(serializers.ModelSerializer):
         fields = ["username", "full_name", "phone", "email", "is_active_account"]
 
     def validate_username(self, value):
-        value = value.strip()
-        if len(value) < 3:
-            raise serializers.ValidationError("Username must be at least 3 characters.")
-        return value
+        return clean_username(value, self.instance)
 
     def validate(self, attrs):
         if self.instance and self.instance.is_super_admin:

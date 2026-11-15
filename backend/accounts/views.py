@@ -1,13 +1,14 @@
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from django.utils import timezone
+
+from config.clientip import SafeSimpleRateThrottle
 
 from .backends import forget_failures
 from .models import PasswordResetRequest, User
@@ -25,23 +26,18 @@ from .serializers import (
 )
 
 
-class LoginRateThrottle(SimpleRateThrottle):
+class LoginRateThrottle(SafeSimpleRateThrottle):
     """Per-IP cap on sign-in attempts (on top of the per-account lockout)."""
 
     scope = "login"
 
-    def get_cache_key(self, request, view):
-        return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
 
-
-class RefreshRateThrottle(SimpleRateThrottle):
+class RefreshRateThrottle(SafeSimpleRateThrottle):
     """Token refreshes get their own, roomier bucket — a whole class refreshing on school Wi-Fi must never be
     throttled by (or throttle) the sign-in attempts."""
 
     scope = "token_refresh"
 
-    def get_cache_key(self, request, view):
-        return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
 
 
 class AdminPortalLoginView(TokenObtainPairView):
@@ -76,8 +72,8 @@ class LogoutView(APIView):
     app can sign out locally even if the token was already expired."""
 
     def post(self, request):
-        refresh = request.data.get("refresh")
-        if refresh:
+        refresh = request.data.get("refresh") if isinstance(request.data, dict) else None
+        if refresh and isinstance(refresh, str):
             try:
                 RefreshToken(refresh).blacklist()
             except TokenError:
@@ -157,11 +153,9 @@ class AdminUnlockView(APIView):
         return Response({"detail": "Account unlocked."})
 
 
-class ForgotPasswordThrottle(SimpleRateThrottle):
+class ForgotPasswordThrottle(SafeSimpleRateThrottle):
     scope = "forgot_password"
 
-    def get_cache_key(self, request, view):
-        return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
 
 
 class ForgotPasswordView(APIView):
@@ -176,8 +170,9 @@ class ForgotPasswordView(APIView):
     throttle_classes = [ForgotPasswordThrottle]
 
     def post(self, request):
-        username = str(request.data.get("username", "")).strip().lstrip("@")[:150]
-        note = str(request.data.get("note", "")).strip()[:200]
+        body = request.data if isinstance(request.data, dict) else {}
+        username = str(body.get("username", "")).strip().lstrip("@")[:150]
+        note = str(body.get("note", "")).strip()[:200]
         if username:
             user = User.objects.exclude(role="SUPER_ADMIN").filter(username__iexact=username, is_active_account=True, is_active=True).first()
             open_requests = PasswordResetRequest.objects.filter(resolved_at__isnull=True)
